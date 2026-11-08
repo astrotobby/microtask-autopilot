@@ -34,6 +34,83 @@
       "automated_fetch_enabled": false,
       "reason": "Dashboard is account-facing; no public feed/API or permission for logged-in automated access has been established.",
       "use": "User signs in directly, completes truthful profile and reviews matching roles; monitor may store public role links only after verified discovery."
+    },
+    {
+      "id": "atlas_capture_discovery",
+      "platform_id": "atlas_capture",
+      "name": "Atlas Capture Opportunities",
+      "url": "https://www.atlascapture.io/opportunities",
+      "source_type": "official_opportunities_page",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "Tasks and payouts vary by country; consumer recording requires iPhone 11 or newer. User has a Samsung A05, so don't buy equipment without confirming an alternative workflow.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "clickworker_discovery",
+      "platform_id": "clickworker",
+      "name": "Clickworker Contributor Jobs",
+      "url": "https://www.clickworker.com/clickworker/",
+      "source_type": "official_contributor_page",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "Country registration can be paused; payment options vary by country. Verify payment details in account before working.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "microworkers_discovery",
+      "platform_id": "microworkers",
+      "name": "Microworkers",
+      "url": "https://www.microworkers.com/",
+      "source_type": "official_platform_home",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "No verified public jobs feed configured. Review current terms and task rules; logged-in task automation disabled.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "rapidworkers_discovery",
+      "platform_id": "rapidworkers",
+      "name": "RapidWorkers",
+      "url": "https://rapidworkers.io/",
+      "source_type": "user_confirmed_platform_domain",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "User confirmed this domain. Verify operator identity, terms, payment and task availability before relying on it.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "sproutgigs_discovery",
+      "platform_id": "sproutgigs",
+      "name": "SproutGigs",
+      "url": "https://sproutgigs.com/",
+      "source_type": "official_platform_home",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "No verified public jobs feed configured. Keep browsing, completion and proof submission manual unless current rules explicitly permit a specific integration.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "handshake_ai_discovery",
+      "platform_id": "handshake_ai",
+      "name": "Handshake AI Fellowship Opportunities",
+      "url": "https://joinhandshake.com/ai/opportunities/",
+      "source_type": "official_opportunities_page",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "This is the Handshake AI program hosted on joinhandshake.com, not the unrelated handshake.co.ke site. Check work authorization and role requirements; some opportunities have US student work authorization criteria.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "braintrust_discovery",
+      "platform_id": "braintrust",
+      "name": "Braintrust Talent",
+      "url": "https://www.usebraintrust.com/for-talent",
+      "source_type": "official_talent_page",
+      "access_mode": "public_page_manual_review",
+      "automated_fetch_enabled": false,
+      "reason": "Professional talent marketplace; role-specific country eligibility, vetting and payout route must be confirmed.",
+      "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
     }
   ],
   "current_reviewed_roles": [
