@@ -1,5 +1,7 @@
 import json
 import unittest
+
+from microtask_monitor.scan_feeds import render_html
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,6 +59,42 @@ class PlatformRegistryTests(unittest.TestCase):
         self.assertGreaterEqual(len(afterquery_roles), 1)
         for role in afterquery_roles:
             self.assertEqual(role["apply_via"], "https://experts.afterquery.com/home")
+
+
+    def test_html_report_lists_platforms_and_escapes_listing_content(self):
+        sample = {
+            "checked_at_utc": "20261108T100000Z",
+            "feed_count": 4,
+            "platforms": [{"id": "atlas_capture", "name": "Atlas Capture"}],
+            "discovery_sources": {
+                "sources": [{
+                    "platform_id": "atlas_capture",
+                    "name": "Atlas Capture <script>alert(1)</script>",
+                    "url": "https://www.atlascapture.io/opportunities",
+                    "use": "Review manually"
+                }],
+                "current_reviewed_roles": []
+            },
+            "items": [{
+                "title": "AI evaluator <script>alert(2)</script>",
+                "url": "https://example.com/job",
+                "priority": "high_review",
+                "relevance_score": 50,
+                "kenya_eligibility": "remote_scope_unclear_kenya_not_confirmed",
+                "source": "Test feed",
+                "summary": "Review <b>carefully</b>"
+            }],
+            "unique_listing_count": 1,
+            "high_review_count": 1,
+            "medium_review_count": 0,
+            "important_note": "Verify all listings."
+        }
+        output = render_html(sample)
+        self.assertIn("Atlas Capture", output)
+        self.assertIn("https://www.atlascapture.io/opportunities", output)
+        self.assertIn("&lt;script&gt;", output)
+        self.assertNotIn("<script>alert(1)</script>", output)
+        self.assertIn("remote_scope_unclear_kenya_not_confirmed", output)
 
     def test_each_target_platform_has_a_discovery_entry(self):
         sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
