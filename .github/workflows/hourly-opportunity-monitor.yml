@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: hourly-public-opportunity-monitor
+  cancel-in-progress: false
+
 jobs:
   scan-public-feeds:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -18,12 +23,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Scan configured public feeds
+      - name: Scan, score and classify public listings
         run: python microtask_monitor/scan_feeds.py
-      - name: Save scan report
+      - name: Save JSON and CSV reports
         uses: actions/upload-artifact@v4
         with:
           name: hourly-opportunity-report
-          path: microtask_monitor/reports/*.json
-          if-no-files-found: warn
+          path: |
+            microtask_monitor/reports/*.json
+            microtask_monitor/reports/*.csv
+          if-no-files-found: error
           retention-days: 14
