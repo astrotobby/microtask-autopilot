@@ -41,7 +41,7 @@ footer{padding:25px 0;color:#778398;font-size:12px}
 </head>
 <body>
 <header class="top">
- <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, opportunity and earnings tracker · Free local dashboard</div></div>
+ <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, opportunity and earnings tracker · Free local dashboard</div><div class="sub" id="agentStatus">Connecting to local agent…</div></div>
  <div class="row" style="flex:0 0 auto">
   <button class="btn" id="exportBackup">Export backup</button>
   <label class="btn" style="margin:0;cursor:pointer">Import backup <input id="importBackup" type="file" accept=".json,application/json" hidden></label>
@@ -234,7 +234,37 @@ document.getElementById("importBackup").addEventListener("change",async e=>{
   if(confirm("Replace the current local dashboard data with this backup?")){state={...blank(),...x};save();alert("Backup restored.")}
  }catch(err){alert("Backup import failed: "+err.message)}finally{e.target.value=""}
 });
+
+// When served by local_server.py, import the latest cloud report automatically.
+// No manual ZIP download or JSON import is needed.
+async function refreshFromLocalAgent(){
+ try{
+  const response=await fetch("/api/report",{cache:"no-store"});
+  if(!response.ok)throw new Error("Waiting for first successful cloud report sync");
+  const payload=await response.json();
+  if(!payload.ok||!payload.report||!Array.isArray(payload.report.items))throw new Error("Local agent returned an invalid report");
+  const checked=payload.report.checked_at_utc||"";
+  if(state.lastReport!==checked){
+   state.opportunities=payload.report.items;
+   state.lastReport=checked;
+   localStorage.setItem(KEY,JSON.stringify(state));
+   document.getElementById("importStatus").textContent="Automatically synced "+payload.report.items.length+" listings · report "+checked;
+   render();
+  }
+  const status=await fetch("/api/status",{cache:"no-store"});
+  if(status.ok){
+   const s=await status.json();
+   const el=document.getElementById("agentStatus");
+   if(el)el.textContent="Agent connected · "+(s.opportunity_count||0)+" stored leads · last sync "+(s.synced_at_utc||"starting");
+  }
+ }catch(err){
+  const el=document.getElementById("agentStatus");
+  if(el)el.textContent="Agent not connected yet · start open-dashboard.bat";
+ }
+}
+setInterval(refreshFromLocalAgent,60000);
 render();
+refreshFromLocalAgent();
 </script>
 </body>
 </html>
