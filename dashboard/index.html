@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>Microtask Autopilot — Control Dashboard</title>
+<style>
+:root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#172033;background:#f3f6fa;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}
+.top{background:#101827;color:#fff;padding:22px max(20px,calc((100vw - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:750}.sub{color:#b8c4d6;font-size:13px;margin-top:4px}
+main{max-width:1200px;margin:auto;padding:22px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.nav button,.btn{border:1px solid #d6deea;background:#fff;color:#243047;border-radius:8px;padding:9px 13px;cursor:pointer}
+.nav button.active,.btn.primary{background:#1c5caa;color:#fff;border-color:#1c5caa}
+.btn.danger{color:#a32323;border-color:#e7bcbc}.btn.small{padding:6px 9px;font-size:13px}
+.panel{display:none}.panel.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:16px;box-shadow:0 2px 8px #15233b08}
+.metric{font-size:28px;font-weight:750;margin-top:8px}.muted{color:#65738a;font-size:13px}
+h1{font-size:24px;margin:0 0 6px}h2{font-size:18px;margin:0 0 12px}h3{font-size:16px;margin:0 0 7px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 12px}
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.platform-card{background:white;border:1px solid #e0e6ef;border-radius:12px;padding:15px}
+.platform-card p{font-size:13px;line-height:1.45;color:#58677e;min-height:38px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
+label{display:block;font-size:13px;color:#536178;margin:9px 0 5px}
+input,select,textarea{width:100%;border:1px solid #ccd6e3;border-radius:8px;padding:9px;background:#fff;color:#172033}
+textarea{min-height:70px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.table-wrap{overflow-x:auto;background:#fff;border:1px solid #e0e6ef;border-radius:10px}
+table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f5;font-size:13px;vertical-align:top}
+th{background:#f8fafc;color:#526078}a{color:#145da0} .tag{display:inline-block;border-radius:99px;padding:3px 8px;background:#edf3fb;color:#284f7d;font-size:11px}
+.notice{background:#fff8e8;border:1px solid #f1dfb6;padding:12px;border-radius:9px;color:#684b17;font-size:13px;line-height:1.45}
+.empty{padding:24px;text-align:center;color:#718096}.right{text-align:right}
+footer{padding:25px 0;color:#778398;font-size:12px}
+.hidden{display:none!important}
+@media(max-width:600px){main{padding:14px}.top{padding:18px}.metric{font-size:24px}}
+</style>
+</head>
+<body>
+<header class="top">
+ <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, opportunity and earnings tracker · Free local dashboard</div></div>
+ <div class="row" style="flex:0 0 auto">
+  <button class="btn" id="exportBackup">Export backup</button>
+  <label class="btn" style="margin:0;cursor:pointer">Import backup <input id="importBackup" type="file" accept=".json,application/json" hidden></label>
+ </div>
+</header>
+<main>
+ <div class="notice">This dashboard stores your tracker data in this browser on this device. It does not sign in to work platforms or complete tasks. Never enter passwords, cookies, OTPs, identity documents or payment credentials here. Verify every opportunity and Kenya eligibility at the official source.</div>
+ <nav class="nav" aria-label="Dashboard sections">
+  <button class="active" data-tab="overview">Overview</button>
+  <button data-tab="platforms">Platforms (8)</button>
+  <button data-tab="opportunities">Opportunities</button>
+  <button data-tab="applications">Applications</button>
+  <button data-tab="earnings">Earnings</button>
+ </nav>
+
+ <section id="overview" class="panel active">
+  <h1>Workspace overview</h1><p class="muted">A single place to review work leads and keep your own progress records.</p>
+  <div class="grid" style="margin-top:16px">
+   <div class="card"><div class="muted">Tracked platforms</div><div class="metric" id="mPlatforms">8</div></div>
+   <div class="card"><div class="muted">Imported opportunities</div><div class="metric" id="mOpps">0</div></div>
+   <div class="card"><div class="muted">Applications tracked</div><div class="metric" id="mApps">0</div></div>
+   <div class="card"><div class="muted">Recorded earnings (KES)</div><div class="metric" id="mKes">0</div></div>
+  </div>
+  <div class="section-head"><h2>Latest opportunities</h2><button class="btn small" data-goto="opportunities">Review opportunities</button></div>
+  <div id="overviewOpps" class="table-wrap"></div>
+  <div class="section-head"><h2>Application pipeline</h2><button class="btn small" data-goto="applications">Open tracker</button></div>
+  <div id="overviewApps" class="table-wrap"></div>
+ </section>
+
+ <section id="platforms" class="panel">
+  <h1>Platform directory</h1><p class="muted">Update each platform's status after checking your account. Links open the service directly.</p>
+  <div id="platformGrid" class="platform-grid" style="margin-top:16px"></div>
+ </section>
+
+ <section id="opportunities" class="panel">
+  <h1>Opportunity inbox</h1><p class="muted">Import the JSON report from your GitHub Actions artifact. CSV and HTML are also available for viewing, but JSON is used for importing leads.</p>
+  <div class="card" style="margin:16px 0">
+   <div class="row"><div><strong>Import latest GitHub report (JSON)</strong><div class="muted">Choose the hourly-*.json file extracted from hourly-opportunity-report.zip.</div></div><label class="btn primary" style="margin:0;cursor:pointer;text-align:center">Choose JSON <input id="importReport" type="file" accept=".json,application/json" hidden></label></div>
+   <div id="importStatus" class="muted" style="margin-top:8px">No report imported yet.</div>
+  </div>
+  <div class="form-grid">
+   <div><label for="oppFilter">Priority</label><select id="oppFilter"><option value="all">All priorities</option><option value="high_review">High review</option><option value="medium_review">Medium review</option><option value="low_or_unrelated">Low / unrelated</option></select></div>
+   <div><label for="kenyaFilter">Kenya eligibility signal</label><select id="kenyaFilter"><option value="all">All signals</option><option value="kenya_mentioned_verify_requirements">Kenya mentioned — verify</option><option value="remote_scope_unclear_kenya_not_confirmed">Remote, Kenya unconfirmed</option><option value="likely_restricted_check_listing">Possible restriction</option><option value="location_not_established">Location not established</option></select></div>
+   <div><label for="oppSearch">Search</label><input id="oppSearch" placeholder="Title, skill, company, keyword"></div>
+  </div>
+  <div class="section-head"><h2 id="oppCount">0 opportunities</h2><span class="muted">Keyword relevance is not a legitimacy or eligibility guarantee.</span></div>
+  <div id="opportunityTable" class="table-wrap"></div>
+ </section>
+
+ <section id="applications" class="panel">
+  <h1>Application tracker</h1><p class="muted">Record opportunities you have personally reviewed or applied to.</p>
+  <form id="appForm" class="card" style="margin:16px 0">
+   <h2>Add application</h2>
+   <div class="form-grid">
+    <div><label for="appTitle">Role / task title *</label><input id="appTitle" required maxlength="140"></div>
+    <div><label for="appPlatform">Platform</label><select id="appPlatform"></select></div>
+    <div><label for="appStatus">Status</label><select id="appStatus"><option>Saved</option><option>Reviewing</option><option>Applied</option><option>Assessment</option><option>Interview</option><option>Accepted</option><option>Rejected</option><option>Withdrawn</option></select></div>
+    <div><label for="appDate">Date</label><input id="appDate" type="date"></div>
+    <div><label for="appUrl">Opportunity URL</label><input id="appUrl" type="url" placeholder="https://..."></div>
+    <div><label for="appNotes">Notes</label><input id="appNotes" maxlength="500" placeholder="Requirements, follow-up, etc."></div>
+   </div>
+   <div class="right" style="margin-top:12px"><button class="btn primary" type="submit">Save application</button></div>
+  </form>
+  <div class="section-head"><h2>My applications</h2><span id="appCount" class="muted">0 records</span></div>
+  <div id="applicationTable" class="table-wrap"></div>
+ </section>
+
+ <section id="earnings" class="panel">
+  <h1>Earnings ledger</h1><p class="muted">Log only payments you have actually received. USD and KES totals remain separate; no exchange rate is assumed.</p>
+  <div class="grid" style="margin:16px 0">
+   <div class="card"><div class="muted">Total recorded in KES</div><div class="metric" id="totalKES">KES 0.00</div></div>
+   <div class="card"><div class="muted">Total recorded in USD</div><div class="metric" id="totalUSD">USD 0.00</div></div>
+  </div>
+  <form id="earningForm" class="card" style="margin:16px 0">
+   <h2>Record received payment</h2>
+   <div class="form-grid">
+    <div><label for="earnPlatform">Platform</label><select id="earnPlatform"></select></div>
+    <div><label for="earnAmount">Amount received *</label><input id="earnAmount" type="number" min="0.01" step="0.01" required></div>
+    <div><label for="earnCurrency">Currency</label><select id="earnCurrency"><option>KES</option><option>USD</option></select></div>
+    <div><label for="earnDate">Payment date</label><input id="earnDate" type="date" required></div>
+    <div><label for="earnNotes">Reference / notes (no sensitive details)</label><input id="earnNotes" maxlength="250"></div>
+   </div>
+   <div class="right" style="margin-top:12px"><button class="btn primary" type="submit">Add payment</button></div>
+  </form>
+  <div class="section-head"><h2>Payment history</h2><span id="earnCount" class="muted">0 records</span></div>
+  <div id="earningTable" class="table-wrap"></div>
+ </section>
+ <footer>Microtask Autopilot · Local-only tracker · No paid services or external JavaScript libraries</footer>
+</main>
+<script>
+"use strict";
+const PLATFORMS = [
+ {id:"atlas_capture",name:"Atlas Capture",url:"https://www.atlascapture.io/opportunities",eligibility:"Kenya and supported-device availability must be confirmed. Standard consumer capture requires iPhone 11+.",automation:"Human-performed recording and submissions."},
+ {id:"clickworker",name:"Clickworker",url:"https://www.clickworker.com/clickworker/",eligibility:"Registration may pause by country; verify available payment methods in your account.",automation:"Keep account work manual unless current rules expressly allow an integration."},
+ {id:"microworkers",name:"Microworkers",url:"https://www.microworkers.com/",eligibility:"Verify country eligibility, current task rules and withdrawal options.",automation:"Manual-only; do not use bots or automated account access."},
+ {id:"rapidworkers",name:"RapidWorkers",url:"https://rapidworkers.io/",eligibility:"User-confirmed domain; operator, terms, Kenya eligibility and payout route still need verification.",automation:"Manual-only pending verification of current terms."},
+ {id:"sproutgigs",name:"SproutGigs",url:"https://sproutgigs.com/",eligibility:"Verify country availability and withdrawal methods in the official account.",automation:"Do not use bots or AI agents to browse logged-in data or complete tasks."},
+ {id:"afterquery",name:"AfterQuery Experts",url:"https://experts.afterquery.com/home",eligibility:"Eligibility and payout are role-specific; review each live role.",automation:"Public discovery only; applications and assessments remain human-reviewed."},
+ {id:"handshake_ai",name:"Handshake AI",url:"https://joinhandshake.com/ai/opportunities/",eligibility:"Check exact role, work authorization and country restrictions.",automation:"Manual review and applications."},
+ {id:"braintrust",name:"Braintrust",url:"https://app.usebraintrust.com/talent/dashboard/welcome/",eligibility:"Professional talent marketplace; confirm Kenya payout route and role eligibility.",automation:"Manual profile, assessment, application and contract decisions."}
+];
+const KEY="microtask_autopilot_local_v1";
+const blank=()=>({platforms:{},opportunities:[],applications:[],earnings:[],lastReport:null});
+let state=load();
+function load(){try{return {...blank(),...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){return blank()}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));render()}catch(e){alert("Could not save in browser storage. Export a backup and check browser storage settings.")}}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function safeUrl(v){try{const u=new URL(v);return u.protocol==="https:"?u.href:""}catch(e){return ""}}
+function money(n,c){return new Intl.NumberFormat("en-KE",{style:"currency",currency:c}).format(Number(n)||0)}
+function dateNow(){return new Date().toISOString().slice(0,10)}
+function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id))}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
+document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
+function platformName(id){return PLATFORMS.find(p=>p.id===id)?.name||id||"Not specified"}
+function platformOptions(){return '<option value="">Select platform</option>'+PLATFORMS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join("")}
+document.getElementById("appPlatform").innerHTML=platformOptions();
+document.getElementById("earnPlatform").innerHTML=platformOptions();
+document.getElementById("appDate").value=dateNow();document.getElementById("earnDate").value=dateNow();
+function renderPlatforms(){
+ const statuses=["Not checked","Account created","Needs verification","Active","Paused","Not eligible"];
+ document.getElementById("platformGrid").innerHTML=PLATFORMS.map(p=>{
+  const x=state.platforms[p.id]||{};const url=safeUrl(p.url);
+  return '<article class="platform-card"><div class="row"><h3>'+esc(p.name)+'</h3><span class="tag">'+esc(x.status||"Not checked")+'</span></div><p>'+esc(p.eligibility)+'</p><p><strong>Automation boundary:</strong> '+esc(p.automation)+'</p><label>Status</label><select data-platform-status="'+p.id+'">'+statuses.map(s=>'<option '+((x.status||"Not checked")===s?"selected":"")+'>'+s+'</option>').join("")+'</select><label>Last checked</label><input type="date" data-platform-date="'+p.id+'" value="'+esc(x.date||"")+'"><label>Notes</label><textarea maxlength="500" data-platform-notes="'+p.id+'" placeholder="Your progress notes">'+esc(x.notes||"")+'</textarea><div style="margin-top:10px"><a href="'+url+'" target="_blank" rel="noopener noreferrer">Open official page ↗</a></div></article>'
+ }).join("");
+ document.querySelectorAll("[data-platform-status],[data-platform-date],[data-platform-notes]").forEach(el=>el.addEventListener("change",()=>{
+  const id=el.dataset.platformStatus||el.dataset.platformDate||el.dataset.platformNotes;
+  state.platforms[id]=state.platforms[id]||{};
+  if(el.dataset.platformStatus)state.platforms[id].status=el.value;
+  if(el.dataset.platformDate)state.platforms[id].date=el.value;
+  if(el.dataset.platformNotes)state.platforms[id].notes=el.value;
+  save();
+ }));
+}
+function renderOpps(){
+ const priority=document.getElementById("oppFilter").value,kenya=document.getElementById("kenyaFilter").value,q=document.getElementById("oppSearch").value.toLowerCase();
+ const rows=state.opportunities.filter(o=>(priority==="all"||o.priority===priority)&&(kenya==="all"||o.kenya_eligibility===kenya)&&(!q||[o.title,o.summary,o.source].join(" ").toLowerCase().includes(q)));
+ document.getElementById("oppCount").textContent=rows.length+" opportunities";
+ document.getElementById("opportunityTable").innerHTML=rows.length?'<table><thead><tr><th>Priority</th><th>Kenya signal</th><th>Opportunity</th><th>Score</th></tr></thead><tbody>'+rows.map(o=>{
+  const u=safeUrl(o.url),link=u?'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(o.title)+'</a>':esc(o.title);
+  return '<tr><td>'+esc(o.priority)+'</td><td>'+esc(o.kenya_eligibility)+'</td><td>'+link+'<br><span class="muted">'+esc(o.source||"")+'</span><br>'+esc(o.summary||"")+'</td><td>'+esc(o.relevance_score)+'</td></tr>'
+ }).join("")+'</tbody></table>':'<div class="empty">No matching opportunities. Import the latest JSON report from GitHub Actions.</div>';
+}
+["oppFilter","kenyaFilter","oppSearch"].forEach(id=>document.getElementById(id).addEventListener("input",renderOpps));
+document.getElementById("importReport").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{const report=JSON.parse(await file.text());if(!Array.isArray(report.items))throw new Error("This does not look like a Microtask Autopilot report.");
+  state.opportunities=report.items;state.lastReport=report.checked_at_utc||file.name;save();
+  document.getElementById("importStatus").textContent="Imported "+report.items.length+" listings from "+(report.checked_at_utc||file.name)+".";
+ }catch(err){alert("Import failed: "+err.message)}finally{e.target.value=""}
+});
+function renderApps(){
+ const rows=state.applications;
+ document.getElementById("appCount").textContent=rows.length+" records";
+ document.getElementById("applicationTable").innerHTML=rows.length?'<table><thead><tr><th>Role</th><th>Platform</th><th>Status</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>'+rows.map(a=>{
+  const u=safeUrl(a.url);return '<tr><td>'+(u?'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(a.title)+'</a>':esc(a.title))+'</td><td>'+esc(platformName(a.platform))+'</td><td><select data-app-status="'+a.id+'">'+["Saved","Reviewing","Applied","Assessment","Interview","Accepted","Rejected","Withdrawn"].map(s=>'<option '+(s===a.status?"selected":"")+'>'+s+'</option>').join("")+'</select></td><td>'+esc(a.date)+'</td><td>'+esc(a.notes)+'</td><td><button class="btn danger small" data-delete-app="'+a.id+'">Delete</button></td></tr>'
+ }).join("")+'</tbody></table>':'<div class="empty">No applications tracked yet.</div>';
+ document.querySelectorAll("[data-app-status]").forEach(el=>el.addEventListener("change",()=>{const a=state.applications.find(x=>x.id===el.dataset.appStatus);if(a){a.status=el.value;save()}}));
+ document.querySelectorAll("[data-delete-app]").forEach(el=>el.addEventListener("click",()=>{if(confirm("Delete this application record?")){state.applications=state.applications.filter(x=>x.id!==el.dataset.deleteApp);save()}}));
+}
+document.getElementById("appForm").addEventListener("submit",e=>{
+ e.preventDefault();const url=document.getElementById("appUrl").value;
+ if(url&&!safeUrl(url)){alert("Use a valid HTTPS opportunity link.");return}
+ state.applications.unshift({id:crypto.randomUUID(),title:document.getElementById("appTitle").value.trim(),platform:document.getElementById("appPlatform").value,status:document.getElementById("appStatus").value,date:document.getElementById("appDate").value,url,notes:document.getElementById("appNotes").value.trim()});
+ e.target.reset();document.getElementById("appDate").value=dateNow();save();
+});
+function renderEarnings(){
+ const kes=state.earnings.filter(x=>x.currency==="KES").reduce((a,x)=>a+Number(x.amount),0),usd=state.earnings.filter(x=>x.currency==="USD").reduce((a,x)=>a+Number(x.amount),0);
+ document.getElementById("totalKES").textContent=money(kes,"KES");document.getElementById("totalUSD").textContent=money(usd,"USD");document.getElementById("mKes").textContent=money(kes,"KES");
+ document.getElementById("earnCount").textContent=state.earnings.length+" records";
+ document.getElementById("earningTable").innerHTML=state.earnings.length?'<table><thead><tr><th>Date</th><th>Platform</th><th>Amount</th><th>Notes</th><th></th></tr></thead><tbody>'+state.earnings.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(platformName(x.platform))+'</td><td>'+money(x.amount,x.currency)+'</td><td>'+esc(x.notes)+'</td><td><button class="btn danger small" data-delete-earn="'+x.id+'">Delete</button></td></tr>').join("")+'</tbody></table>':'<div class="empty">No payments recorded yet.</div>';
+ document.querySelectorAll("[data-delete-earn]").forEach(el=>el.addEventListener("click",()=>{if(confirm("Delete this payment record?")){state.earnings=state.earnings.filter(x=>x.id!==el.dataset.deleteEarn);save()}}));
+}
+document.getElementById("earningForm").addEventListener("submit",e=>{
+ e.preventDefault();state.earnings.unshift({id:crypto.randomUUID(),platform:document.getElementById("earnPlatform").value,amount:Number(document.getElementById("earnAmount").value),currency:document.getElementById("earnCurrency").value,date:document.getElementById("earnDate").value,notes:document.getElementById("earnNotes").value.trim()});
+ e.target.reset();document.getElementById("earnDate").value=dateNow();save();
+});
+function render(){
+ renderPlatforms();renderOpps();renderApps();renderEarnings();
+ document.getElementById("mOpps").textContent=state.opportunities.length;
+ document.getElementById("mApps").textContent=state.applications.length;
+ document.getElementById("overviewOpps").innerHTML=state.opportunities.length?'<table><thead><tr><th>Priority</th><th>Opportunity</th><th>Kenya signal</th></tr></thead><tbody>'+state.opportunities.slice(0,6).map(o=>'<tr><td>'+esc(o.priority)+'</td><td>'+esc(o.title)+'</td><td>'+esc(o.kenya_eligibility)+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">Import a report to see recent leads here.</div>';
+ document.getElementById("overviewApps").innerHTML=state.applications.length?'<table><thead><tr><th>Role</th><th>Platform</th><th>Status</th></tr></thead><tbody>'+state.applications.slice(0,6).map(a=>'<tr><td>'+esc(a.title)+'</td><td>'+esc(platformName(a.platform))+'</td><td>'+esc(a.status)+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">Your application pipeline will appear here.</div>';
+}
+document.getElementById("exportBackup").addEventListener("click",()=>{
+ const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="microtask-autopilot-backup.json";a.click();URL.revokeObjectURL(url);
+});
+document.getElementById("importBackup").addEventListener("change",async e=>{
+ const file=e.target.files[0];if(!file)return;
+ try{const x=JSON.parse(await file.text());if(!Array.isArray(x.applications)||!Array.isArray(x.earnings)||!Array.isArray(x.opportunities)||typeof x.platforms!=="object")throw new Error("Backup format not recognised.");
+  if(confirm("Replace the current local dashboard data with this backup?")){state={...blank(),...x};save();alert("Backup restored.")}
+ }catch(err){alert("Backup import failed: "+err.message)}finally{e.target.value=""}
+});
+render();
+</script>
+</body>
+</html>
