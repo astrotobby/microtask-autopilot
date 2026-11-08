@@ -1,0 +1,23 @@
+# Local runtime data and user records
+data/
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Local logs and temporary downloads
+*.log
+*.tmp
+*.zip
+
+# Local secrets
+.env
+.env.*
+!.env.example
