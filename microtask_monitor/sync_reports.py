@@ -11,6 +11,7 @@ import logging
 import sqlite3
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from datetime import datetime, timezone
@@ -42,22 +43,93 @@ def api_json(url: str) -> dict[str, Any]:
             "User-Agent": "Microtask-Autopilot-Local-Agent/1.0",
         },
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        payload = response.read(2_000_000)
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = response.read(2_000_000)
+    except urllib.error.HTTPError as exc:
+        body = exc.read(300).decode("utf-8", "replace")
+        raise SyncStageError("github-api", f"{exc.reason} for {url} {body}".strip(),
+                             exc.code) from exc
+    except urllib.error.URLError as exc:
+        raise SyncStageError("network", f"Could not reach api.github.com: {exc.reason}") from exc
     data = json.loads(payload.decode("utf-8"))
     if not isinstance(data, dict):
         raise ValueError("GitHub API returned an unexpected response")
     return data
 
 
-def download_archive(url: str) -> bytes:
+class SyncStageError(RuntimeError):
+    """A sync failure tagged with the stage that failed and any HTTP status."""
+
+    def __init__(self, stage: str, message: str, status: int | None = None):
+        self.stage = stage
+        self.status = status
+        prefix = f"[{stage}]" + (f" HTTP {status}" if status is not None else "")
+        super().__init__(f"{prefix}: {message}")
+
+
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
+def _open_no_redirect(request: urllib.request.Request, timeout: int):
+    opener = urllib.request.build_opener(_NoRedirect)
+    return opener.open(request, timeout=timeout)
+
+
+def download_archive(url: str, opener=_open_no_redirect,
+                     fetch_blob=urllib.request.urlopen) -> bytes:
+    """Download an artifact ZIP in two explicit stages.
+
+    Stage "github-artifact-api": GitHub must answer 302 with a Location header.
+    A 401/403 here means GitHub requires authentication for the download.
+    Stage "artifact-redirect": the signed storage URL is fetched without any
+    GitHub headers. A failure here is the storage host or the local network.
+    """
     request = urllib.request.Request(
         url,
         headers={"Accept": "application/vnd.github+json",
                  "User-Agent": "Microtask-Autopilot-Local-Agent/1.0"},
     )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        data = response.read(MAX_ARCHIVE_BYTES + 1)
+    location = ""
+    try:
+        with opener(request, timeout=60) as response:
+            # Some clients/proxies follow redirects themselves; accept a direct body.
+            data = response.read(MAX_ARCHIVE_BYTES + 1)
+            return _check_size(data)
+    except urllib.error.HTTPError as exc:
+        if exc.code in (301, 302, 303, 307, 308):
+            location = exc.headers.get("Location", "")
+        else:
+            body = exc.read(500).decode("utf-8", "replace")
+            hint = (" GitHub requires authentication to download this artifact."
+                    if exc.code in (401, 403) else "")
+            raise SyncStageError("github-artifact-api", f"{exc.reason}.{hint} {body}".strip(),
+                                 exc.code) from exc
+    except urllib.error.URLError as exc:
+        raise SyncStageError("network", f"Could not reach api.github.com: {exc.reason}") from exc
+    if not location.startswith("https://"):
+        raise SyncStageError("github-artifact-api", "Redirect had no HTTPS Location header")
+
+    host = urllib.parse.urlsplit(location).hostname or "unknown host"
+    blob_request = urllib.request.Request(location, headers={
+        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0"})
+    try:
+        with fetch_blob(blob_request, timeout=60) as response:
+            data = response.read(MAX_ARCHIVE_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        raise SyncStageError("artifact-redirect",
+                             f"Storage host {host} refused the download: {exc.reason}",
+                             exc.code) from exc
+    except (urllib.error.URLError, OSError) as exc:
+        reason = getattr(exc, "reason", exc)
+        raise SyncStageError("artifact-redirect",
+                             f"Could not reach storage host {host}: {reason}") from exc
+    return _check_size(data)
+
+
+def _check_size(data: bytes) -> bytes:
     if len(data) > MAX_ARCHIVE_BYTES:
         raise ValueError("Artifact archive exceeds the configured size limit")
     return data
@@ -268,15 +340,17 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     interval = max(300, args.interval)
     while True:
+        ok = False
         try:
             sync_once()
+            ok = True
         except (urllib.error.URLError, TimeoutError, ValueError, RuntimeError,
                 zipfile.BadZipFile, json.JSONDecodeError) as exc:
             LOG.warning("Sync did not complete: %s", exc)
         except Exception:
             LOG.exception("Unexpected sync error")
         if not args.loop:
-            break
+            raise SystemExit(0 if ok else 1)
         time.sleep(interval)
 
 

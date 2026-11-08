@@ -19,7 +19,8 @@ Build and maintain a reliable, free, Kenya-aware microtask opportunity workflow.
 7. `dashboard/open-dashboard.bat` starts the local server and opens the browser. `dashboard/install-autostart.bat` optionally registers a current-user Windows logon task.
 
 ## Windows commands
-Run from the repository root:
+Run from the repository root (commands fail with "path not found" from any other folder, e.g. C:\Users\<name>).
+Easiest: double-click `run-windows-checks.bat` in the repository root; it changes to its own folder, runs tests and two syncs, and prints a log to paste back.
 - Test suite: `py -3 -m unittest discover -s tests -v`
 - One-time cloud report sync: `py -3 microtask_monitor/sync_reports.py`
 - Local server and background sync: `py -3 microtask_monitor/local_server.py`
