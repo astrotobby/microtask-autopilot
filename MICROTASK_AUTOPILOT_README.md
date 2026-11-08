@@ -83,3 +83,30 @@ These are third-party listing summaries, not an offer, verified opening guarante
 Braintrust is a vetted professional talent marketplace, not a general microtask board. Its current talent overview describes profile creation, an AI skills interview, certification and matching to contract/full-time roles and AI gig work. The platform's Terms list restricted territories; Kenya is not named in the current listed territories, but eligibility for each role and the payout route must still be confirmed. Never use a VPN to evade location restrictions.
 
 The dashboard is account-facing. This project does not log in, read private account pages, complete assessments, submit applications, accept contracts or handle identity verification. The user must review and complete those steps personally and truthfully. Verify payout availability and method for Kenya inside official account settings before relying on Braintrust for income.
+
+## Eight-platform discovery coverage
+
+The report now carries discovery entry points for all eight target services:
+
+| Platform | Discovery entry point | Automation boundary |
+|---|---|---|
+| Atlas Capture | https://www.atlascapture.io/opportunities | Public information only; recording and submissions are human-performed. Standard consumer capture needs iPhone 11+; confirm country/device support. |
+| Clickworker | https://www.clickworker.com/clickworker/ | Public information only; registration and payment availability vary by country. Check account Payment details before doing work. |
+| Microworkers | https://www.microworkers.com/ | Manual account activity pending current terms review. |
+| RapidWorkers | https://rapidworkers.io/ | User-confirmed domain; verify operator, terms, payment and task availability. |
+| SproutGigs | https://sproutgigs.com/ | Manual account activity pending current terms review. |
+| AfterQuery Experts | https://experts.afterquery.com/home | Official portal; manual review and application. |
+| Handshake AI | https://joinhandshake.com/ai/opportunities/ | Official Handshake AI program page; check role requirements and work authorization. |
+| Braintrust | https://www.usebraintrust.com/for-talent | Professional talent marketplace; manual profile, vetting and applications. |
+
+The source directory is `microtask_monitor/discovery_sources.json`. The hourly report packages all eight platform records and discovery links alongside public-feed listings. It does not scrape account dashboards, infer that a remote listing accepts Kenyan applicants, or claim a job is open just because a platform landing page exists.
+
+## Eligibility and safety policy
+
+- Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.
+- Clickworker says country registration can be paused and payment methods vary; check the account's Payment details before doing work.
+- Atlas Capture's standard consumer capture requires iPhone 11 or newer; verify a supported device and country before investing in equipment.
+- Handshake AI is the program on joinhandshake.com; do not confuse it with unrelated similarly named sites. Some opportunities have specific work-authorization requirements.
+- Microworkers, SproutGigs and RapidWorkers remain manual-only until their current official terms and task rules are verified.
+- Never automate CAPTCHA, MFA, KYC, private account access, task completion or proof submission without explicit platform permission. No fake work, fabricated evidence or location circumvention.
+- Public discovery pages are navigation aids, not live feeds. The hourly workflow currently refreshes configured RSS sources; it does not promise hourly refresh of the eight account portals.
