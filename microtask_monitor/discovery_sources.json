@@ -23,6 +23,17 @@
       "automated_fetch_enabled": false,
       "reason": "Independent directory, not affiliated with AfterQuery; some links may be referral links and listings can be stale. Verify every role in AfterQuery before applying.",
       "use": "Discovery and initial screening only; not authoritative eligibility or payment evidence."
+    },
+    {
+      "id": "braintrust_talent_dashboard",
+      "platform_id": "braintrust",
+      "name": "Braintrust Talent Dashboard",
+      "url": "https://app.usebraintrust.com/talent/dashboard/welcome/",
+      "source_type": "official_talent_dashboard",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Dashboard is account-facing; no public feed/API or permission for logged-in automated access has been established.",
+      "use": "User signs in directly, completes truthful profile and reviews matching roles; monitor may store public role links only after verified discovery."
     }
   ],
   "current_reviewed_roles": [
@@ -76,6 +87,23 @@
       ],
       "apply_via": "https://experts.afterquery.com/home",
       "notes": "Do not apply unless all research credentials are genuinely held."
+    },
+    {
+      "title": "Braintrust talent marketplace — role matching",
+      "source_url": "https://www.usebraintrust.com/for-talent",
+      "advertised_rate": null,
+      "workload": "Varies by role",
+      "location_label": "Remote-first; role and country restrictions apply",
+      "posted_or_listed": "2026-11-08",
+      "fit_assessment": "potentially_relevant_profile_based",
+      "why": "User has stated experience in Python, JavaScript, TypeScript, Node.js, AI-assisted development, content strategy and AI automation.",
+      "gaps_to_verify": [
+        "At least three years of professional experience may be required for approval or specific roles",
+        "Complete skills profile and AI skills interview if requested",
+        "Confirm Kenya payout route and each role's location eligibility"
+      ],
+      "apply_via": "https://app.usebraintrust.com/talent/dashboard/welcome/",
+      "notes": "No guaranteed work or rate. Current official marketing describes an AI skills interview, certification, role matching and AI gig work. User must verify current account requirements and payment method before relying on this as income."
     }
   ]
 }
