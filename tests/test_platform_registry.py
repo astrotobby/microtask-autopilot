@@ -112,7 +112,7 @@ class PlatformRegistryTests(unittest.TestCase):
     def test_local_dashboard_does_not_request_secrets_or_external_scripts(self):
         page = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8").lower()
         self.assertNotIn("<script src=", page)
-        self.assertNotIn("password", page)
+        self.assertNotIn('type="password"', page)
         self.assertNotIn("session_token", page)
         self.assertIn("never enter passwords", page)
 
