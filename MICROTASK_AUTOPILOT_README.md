@@ -72,3 +72,14 @@ Initial role triage:
 - Algorithms and Theory Researcher: not recommended without a relevant PhD, published algorithms research and released research code.
 
 These are third-party listing summaries, not an offer, verified opening guarantee, or confirmation that a Kenyan applicant will be accepted.
+
+## Braintrust talent dashboard
+
+- Official talent dashboard supplied by the user: https://app.usebraintrust.com/talent/dashboard/welcome/
+- Public talent overview: https://www.usebraintrust.com/for-talent
+- Terms: https://www.usebraintrust.com/terms
+- Help centre: https://support.usebraintrust.com/hc/en-us
+
+Braintrust is a vetted professional talent marketplace, not a general microtask board. Its current talent overview describes profile creation, an AI skills interview, certification and matching to contract/full-time roles and AI gig work. The platform's Terms list restricted territories; Kenya is not named in the current listed territories, but eligibility for each role and the payout route must still be confirmed. Never use a VPN to evade location restrictions.
+
+The dashboard is account-facing. This project does not log in, read private account pages, complete assessments, submit applications, accept contracts or handle identity verification. The user must review and complete those steps personally and truthfully. Verify payout availability and method for Kenya inside official account settings before relying on Braintrust for income.
