@@ -66,7 +66,7 @@ def download_archive(url: str) -> bytes:
 def get_latest_report() -> tuple[dict[str, Any], dict[str, Any]]:
     runs_url = (
         f"{API}/repos/{OWNER}/{REPO}/actions/workflows/{WORKFLOW}/runs"
-        f"?branch={BRANCH}&status=success&per_page=10"
+        f"?branch={BRANCH}&status=completed&per_page=10"
     )
     runs = api_json(runs_url).get("workflow_runs", [])
     successful = [
