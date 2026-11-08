@@ -1,0 +1,156 @@
+{
+  "profile": {
+    "country": "Kenya",
+    "currency": "KES",
+    "purpose": "Track target work platforms; do not infer access or permission from a platform name."
+  },
+  "platforms": [
+    {
+      "id": "atlas_capture",
+      "name": "Atlas Capture",
+      "official_url": null,
+      "identity_status": "needs_user_confirmed_official_url",
+      "kenya_eligibility": "unverified",
+      "automation_status": "manual_only_pending_task_rules",
+      "allowed_actions": [
+        "track_status",
+        "open_official_site_after_url_verification"
+      ],
+      "blocked_actions": [
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "User refers to Atlas Capture hand-action labeling tasks. Confirm exact official site and task-specific rules before connecting."
+    },
+    {
+      "id": "clickworker",
+      "name": "Clickworker",
+      "official_url": "https://www.clickworker.com/",
+      "identity_status": "official_homepage_known",
+      "kenya_eligibility": "must_verify_per_task_and_account",
+      "automation_status": "manual_only_pending_current_terms_review",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review"
+      ],
+      "blocked_actions": [
+        "automated_logged_in_browsing",
+        "automated_task_completion",
+        "automated_submission",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Do not automate account activity unless current official terms and task rules explicitly permit it."
+    },
+    {
+      "id": "microworkers",
+      "name": "Microworkers",
+      "official_url": "https://www.microworkers.com/",
+      "identity_status": "official_homepage_known",
+      "kenya_eligibility": "must_verify_per_task_and_account",
+      "automation_status": "manual_only_pending_current_terms_review",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review"
+      ],
+      "blocked_actions": [
+        "automated_logged_in_browsing",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Keep logged-in work manual unless current official rules explicitly permit a specific integration."
+    },
+    {
+      "id": "rapidworkers",
+      "name": "RapidWorkers",
+      "official_url": "https://rapidworkers.io/",
+      "identity_status": "user_confirmed_domain",
+      "kenya_eligibility": "unverified",
+      "automation_status": "manual_only_pending_current_terms_review",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review"
+      ],
+      "blocked_actions": [
+        "automated_task_completion",
+        "automated_submission",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Domain supplied by user. Verify current terms, operator identity, payment rules and task eligibility before any account connection."
+    },
+    {
+      "id": "sproutgigs",
+      "name": "SproutGigs",
+      "official_url": "https://sproutgigs.com/",
+      "identity_status": "official_homepage_known",
+      "kenya_eligibility": "must_verify_per_task_and_account",
+      "automation_status": "manual_only_pending_current_terms_review",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review"
+      ],
+      "blocked_actions": [
+        "automated_logged_in_browsing",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Treat as manual-only until current official policy confirms otherwise."
+    },
+    {
+      "id": "afterquery",
+      "name": "AfterQuery",
+      "official_url": null,
+      "identity_status": "needs_user_confirmed_official_url",
+      "kenya_eligibility": "unverified",
+      "automation_status": "disabled_until_identity_and_policy_verified",
+      "allowed_actions": [
+        "track_status"
+      ],
+      "blocked_actions": [
+        "account_connection",
+        "automated_browsing",
+        "automated_task_completion",
+        "automated_submission"
+      ],
+      "notes": "Exact official URL is unknown. Do not connect to similarly named domains without confirmation."
+    },
+    {
+      "id": "handshake_ai",
+      "name": "Handshake AI",
+      "official_url": null,
+      "identity_status": "needs_exact_service_confirmation",
+      "kenya_eligibility": "unverified",
+      "automation_status": "disabled_until_identity_and_policy_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review_after_identity_confirmation"
+      ],
+      "blocked_actions": [
+        "account_connection",
+        "automated_task_completion",
+        "automated_submission"
+      ],
+      "notes": "Confirm the exact Handshake AI service; do not assume it is the same as the Handshake student recruiting platform."
+    },
+    {
+      "id": "braintrust",
+      "name": "Braintrust",
+      "official_url": "https://www.usebraintrust.com/",
+      "identity_status": "official_homepage_known",
+      "kenya_eligibility": "must_verify_per_role_and_contract",
+      "automation_status": "manual_application_only_pending_current_terms_review",
+      "allowed_actions": [
+        "track_status",
+        "public_role_discovery"
+      ],
+      "blocked_actions": [
+        "automated_identity_or_skill_claims",
+        "automated_contract_acceptance",
+        "automated_submission_without_review"
+      ],
+      "notes": "Treat as professional freelance roles rather than microtasks; user must review applications, skills, rates and contracts."
+    }
+  ]
+}
