@@ -1,4 +1,5 @@
 import gzip
+import http.client
 import io
 import json
 import unittest
@@ -37,6 +38,19 @@ class PublishedFallbackTests(unittest.TestCase):
         report, _ = sr.fetch_published_report({"id": 1}, {"id": 2},
                                               opener=lambda request, timeout: resp)
         self.assertEqual(report["items"][0]["title"], "AI evaluator")
+
+    def test_truncated_transfer_is_a_clean_stage_error(self):
+        def truncated(request, timeout):
+            raise http.client.IncompleteRead(b"partial")
+        with self.assertRaises(sr.SyncStageError) as ctx:
+            sr.fetch_published_report({"id": 1}, {"id": 2}, opener=truncated)
+        self.assertEqual(ctx.exception.stage, "published-report")
+
+    def test_corrupt_gzip_is_a_clean_stage_error(self):
+        resp = _Resp(gzip.compress(b"x" * 100)[:20])
+        resp.headers = {"Content-Encoding": "gzip"}
+        with self.assertRaises(sr.SyncStageError):
+            sr.fetch_published_report({"id": 1}, {"id": 2}, opener=lambda request, timeout: resp)
 
     def test_401_on_artifact_download_falls_back_to_published_report(self):
         runs = {"workflow_runs": [{"id": 1, "status": "completed", "conclusion": "success",

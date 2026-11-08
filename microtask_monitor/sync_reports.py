@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import http.client
+import zlib
 from contextlib import closing
 import json
 import logging
@@ -157,6 +159,9 @@ def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
         raise SyncStageError("published-report", f"{exc.reason} for {url}", exc.code) from exc
     except urllib.error.URLError as exc:
         raise SyncStageError("network", f"Could not reach raw.githubusercontent.com: {exc.reason}") from exc
+    except (http.client.HTTPException, EOFError, gzip.BadGzipFile, zlib.error, OSError) as exc:
+        # Truncated or corrupted transfer on a flaky connection: report it, retry next cycle.
+        raise SyncStageError("published-report", f"Incomplete download ({type(exc).__name__}: {exc})") from exc
     if len(payload) > MAX_JSON_BYTES:
         raise ValueError("Published report is too large")
     report = json.loads(payload.decode("utf-8"))
