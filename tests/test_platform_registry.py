@@ -39,5 +39,21 @@ class PlatformRegistryTests(unittest.TestCase):
             self.assertTrue(platform.get("automation_status"))
             self.assertTrue(platform.get("blocked_actions"))
 
+
+    def test_discovery_sources_are_manual_and_have_https_urls(self):
+        sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
+        sources = json.loads(sources_path.read_text(encoding="utf-8"))
+        for source in sources["sources"]:
+            self.assertTrue(source["url"].startswith("https://"))
+            self.assertFalse(source["automated_fetch_enabled"])
+
+    def test_afterquery_roles_have_official_apply_destination(self):
+        sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
+        sources = json.loads(sources_path.read_text(encoding="utf-8"))
+        afterquery_roles = sources["current_reviewed_roles"]
+        self.assertGreaterEqual(len(afterquery_roles), 1)
+        for role in afterquery_roles:
+            self.assertEqual(role["apply_via"], "https://experts.afterquery.com/home")
+
 if __name__ == "__main__":
     unittest.main()
