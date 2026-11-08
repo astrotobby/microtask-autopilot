@@ -3,6 +3,7 @@ import csv
 import html
 import json
 import re
+import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
@@ -10,10 +11,13 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:   # allow `python microtask_monitor/scan_feeds.py`
+    sys.path.insert(0, str(ROOT))
 FEEDS = ROOT / "microtask_monitor" / "feeds.json"
 PLATFORMS = ROOT / "microtask_monitor" / "platforms.json"
 DISCOVERY_SOURCES = ROOT / "microtask_monitor" / "discovery_sources.json"
 REPORTS = ROOT / "microtask_monitor" / "reports"
+INTEGRATIONS = ROOT / "microtask_monitor" / "integrations.json"
 
 MICROTASK_TERMS = [
     "microtask", "data annotation", "data annotator", "data labeling",
@@ -138,6 +142,50 @@ def parse_feed(feed):
     return parsed_items
 
 
+def run_integrations(platforms):
+    """Run every platform adapter. One adapter failing never stops the others."""
+    from microtask_monitor import opentrain, mindrift, manual_review
+    modes = json.loads(INTEGRATIONS.read_text(encoding="utf-8")).get("platforms", {})
+    health, items, eligibility = {}, [], {}
+    for platform in platforms:
+        pid = platform["id"]
+        health[pid] = {"platform_id": pid, "name": platform.get("name", pid),
+                       "platform_type": platform.get("platform_type", "unclassified"),
+                       "mode": modes.get(pid, {}), "status": modes.get(pid, {}).get("health", "manual_only"),
+                       "last_successful_scan": None, "error": None}
+    adapters = {
+        "opentrain_ai": opentrain.scan,
+        "gainworkers": lambda: manual_review.scan("gainworkers"),
+        "reworkio": lambda: manual_review.scan("reworkio"),
+        "mindrift": mindrift.scan,
+    }
+    for pid, run in adapters.items():
+        if pid not in health:
+            continue
+        try:
+            result = run()
+        except Exception as exc:                       # adapters should degrade, but never crash the scan
+            health[pid].update(status="error", error=f"{type(exc).__name__}: {exc}")
+            continue
+        items.extend(result.get("items", []))
+        if "health" in result:
+            health[pid].update(result["health"])
+        if "eligibility" in result:
+            eligibility[pid] = result["eligibility"]
+            ok = result["eligibility"].get("health") == "ok"
+            health[pid].update(status=result["eligibility"].get("health", "policy_monitor"),
+                               last_successful_scan=result["eligibility"].get("checked_at") if ok else None,
+                               error=result["eligibility"].get("error"))
+    return health, items, eligibility
+
+
+def active_kenya_eligible_sources(platforms, eligibility):
+    """Platforms that may be treated as live Kenya-eligible sources (Mindrift is never one)."""
+    restricted = {pid for pid, e in eligibility.items() if e.get("eligibility_status") == "restricted_for_user_location"}
+    return [p["id"] for p in platforms
+            if p["id"] not in restricted and p.get("kenya_eligibility") != "restricted_for_user_location"]
+
+
 def safe_link(url):
     """Return an escaped HTTPS URL, or an empty string for unsafe destinations."""
     parsed = urlparse(url or "")
@@ -182,10 +230,20 @@ def render_html(report):
             f"<td>{html.escape(item.get('priority', ''))}</td>"
             f"<td>{html.escape(str(item.get('relevance_score', '')))}</td>"
             f"<td>{html.escape(item.get('kenya_eligibility', ''))}</td>"
-            f"<td>{link}<br><small>{html.escape(item.get('source', ''))}</small></td>"
+            f"<td>{link}<br><small>{html.escape(item.get('source', ''))}"
+            f" · {html.escape(str(item.get('payment_display', '')))}</small></td>"
             f"<td>{html.escape(item.get('summary', ''))}</td>"
             "</tr>"
         )
+
+    health_rows = []
+    for entry in report.get("integrations", {}).values():
+        health_rows.append(
+            f"<tr><td>{html.escape(str(entry.get('name', '')))}</td>"
+            f"<td>{html.escape(str(entry.get('platform_type', '')))}</td>"
+            f"<td>{html.escape(str(entry.get('status', '')))}</td>"
+            f"<td>{html.escape(str(entry.get('last_successful_scan') or 'never'))}</td>"
+            f"<td>{html.escape(str(entry.get('error') or ''))}</td></tr>")
 
     checked = html.escape(report.get("checked_at_utc", "Unknown"))
     note = html.escape(report.get("important_note", "Verify every listing manually."))
@@ -210,12 +268,14 @@ th{background:#f7f9fb}a{color:#0759a5} .notice{background:#fff8e6;border-left:4p
 <div class="stat"><strong>""" + str(report.get("medium_review_count", 0)) + """</strong>Medium-priority reviews</div>
 </div>
 <p class="notice">""" + note + """ This report does not log in to platform accounts, accept tasks, or submit work.</p>
-<section><h2>Eight-platform discovery directory</h2><p class="muted">These are navigation links, not proof of live tasks or Kenya eligibility.</p>
+<section><h2>Twelve-platform discovery directory</h2><p class="muted">These are navigation links, not proof of live tasks or Kenya eligibility.</p>
 <table><thead><tr><th>Platform</th><th>Source and notes</th><th>Link</th></tr></thead><tbody>""" + "".join(source_rows) + """</tbody></table></section>
+<section><h2>Integration health</h2><p class="muted">Eligibility and integration health are separate: a healthy integration does not mean you are eligible.</p>
+<table><thead><tr><th>Platform</th><th>Type</th><th>Status</th><th>Last successful scan</th><th>Error</th></tr></thead><tbody>""" + ("".join(health_rows) or "<tr><td colspan='5'>No integration data in this report.</td></tr>") + """</tbody></table></section>
 <section><h2>Reviewed role snapshots</h2><p class="muted">Third-party listings may be stale. Verify availability, pay and eligibility on the official platform.</p>
 <table><thead><tr><th>Role</th><th>Advertised rate</th><th>Fit assessment</th><th>Links</th></tr></thead><tbody>""" + ("".join(role_rows) or "<tr><td colspan='4'>No reviewed role snapshots.</td></tr>") + """</tbody></table></section>
 <section><h2>Public-feed opportunities</h2><p class="muted">Keyword scoring is a triage aid, not a guarantee.</p>
-<table><thead><tr><th>Priority</th><th>Score</th><th>Kenya status</th><th>Listing</th><th>Summary</th></tr></thead><tbody>""" + ("".join(listing_rows) or "<tr><td colspan='5'>No listings found in the configured feeds.</td></tr>") + """</tbody></table></section>
+<table><thead><tr><th>Priority</th><th>Score</th><th>Kenya status</th><th>Listing / payment</th><th>Summary</th></tr></thead><tbody>""" + ("".join(listing_rows) or "<tr><td colspan='5'>No listings found in the configured feeds.</td></tr>") + """</tbody></table></section>
 </main></body></html>"""
 
 
@@ -230,6 +290,9 @@ def main():
             results.extend(parse_feed(feed))
         except Exception as exc:
             errors.append({"source": feed.get("name", "Unknown"), "error": str(exc)})
+
+    integration_health, adapter_items, eligibility = run_integrations(platforms)
+    results.extend(adapter_items)
 
     # Deduplicate by canonical URL while preserving source attribution.
     unique = {}
@@ -251,6 +314,11 @@ def main():
         "high_review_count": sum(x["priority"] == "high_review" for x in items),
         "medium_review_count": sum(x["priority"] == "medium_review" for x in items),
         "errors": errors,
+        "platform_counts_by_type": {t: sum(p.get("platform_type") == t for p in platforms)
+                                    for t in ("microtask", "ai_training", "professional_marketplace")},
+        "active_kenya_eligible_sources": active_kenya_eligible_sources(platforms, eligibility),
+        "integrations": integration_health,
+        "eligibility_monitors": eligibility,
         "important_note": "Scores are keyword triage, not proof of legitimacy, pay, availability, or Kenya eligibility. Verify every listing at its source.",
         "items": items
     }
@@ -258,8 +326,8 @@ def main():
     json_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     csv_path = REPORTS / f"hourly-{stamp}.csv"
-    fields = ["priority", "relevance_score", "category", "kenya_eligibility",
-              "title", "source", "published", "url", "summary",
+    fields = ["priority", "relevance_score", "category", "kenya_eligibility", "platform_id",
+              "payment_display", "status", "title", "source", "published", "url", "summary",
               "matched_microtask_terms", "matched_ai_terms", "restriction_phrases_found"]
     with csv_path.open("w", newline="", encoding="utf-8-sig") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")

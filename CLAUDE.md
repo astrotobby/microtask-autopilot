@@ -11,7 +11,7 @@ Build and maintain a reliable, free, Kenya-aware microtask opportunity workflow.
 
 ## Current architecture
 1. GitHub Actions runs `.github/workflows/hourly-opportunity-monitor.yml` hourly and on code pushes/manual dispatch.
-2. The cloud scanner reads four supplementary public RSS feeds. It does NOT scrape the eight platform accounts.
+2. The cloud scanner reads four supplementary public RSS feeds and runs the platform adapters: OpenTrain AI (documented public jobs API), a Mindrift eligibility-policy monitor (Kenya is unsupported; discovery disabled), and manual-review integrations for GainWorkers and REWORKIO (no network access). It does NOT scrape any platform account or logged-in area.
 3. Each successful run uploads `hourly-opportunity-report` with JSON, CSV and HTML.
 4. `microtask_monitor/sync_reports.py` polls the public GitHub Actions API, downloads the latest successful non-expired report artifact, validates it, writes `data/latest_report.json`, and deduplicates listings in `data/autopilot.sqlite3`.
 5. `microtask_monitor/local_server.py` binds only to 127.0.0.1:8765, runs report sync every 15 minutes, and serves the dashboard/API.
@@ -48,6 +48,10 @@ No third-party Python package is required for the current report sync/server com
 - AfterQuery Experts: https://experts.afterquery.com/home
 - Handshake AI: https://joinhandshake.com/ai/opportunities/
 - Braintrust: https://app.usebraintrust.com/talent/dashboard/welcome/
+- OpenTrain AI: https://app.opentrain.ai/ (public API: https://app.opentrain.ai/api/public/v1/jobs)
+- GainWorkers: https://www.gainworkers.com/ (manual portal review only; Terms prohibit scraping/bots)
+- Mindrift: https://mindrift.ai/ — RESTRICTED: Kenya is listed as unsupported in https://mindrift.ai/legal/eligibility-and-geographic-restrictions. Do not apply, create accounts, or use VPNs/proxies. Not an active Kenya-eligible source.
+- REWORKIO: https://reworkio.com/ (professional AI/automation marketplace; manual review, automated discovery unavailable; watch for fees/deposits)
 
 ## Platform and safety boundaries
 - Use only official APIs, public feeds, or public pages whose access is permitted.

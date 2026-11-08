@@ -1,0 +1,13 @@
+{
+  "mindrift": {
+    "user_location": "Kenya",
+    "status": "restricted_for_user_location",
+    "kenya_unsupported": true,
+    "verified_on": "2026-11-08",
+    "policy_url": "https://mindrift.ai/legal/eligibility-and-geographic-restrictions",
+    "policy_last_updated": "May 27, 2026",
+    "list_sha256": "1c8515ca37764ba6bb254f4a398e1c512b59f79644ea82b6713957d7a04ab580",
+    "entry_count": 59,
+    "note": "Reviewed baseline. Update only after a human reads the policy."
+  }
+}

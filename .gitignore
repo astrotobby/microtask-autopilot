@@ -21,3 +21,7 @@ venv/
 .env
 .env.*
 !.env.example
+
+# Adapter caches (restored by GitHub Actions cache)
+microtask_monitor/cache/
+microtask_monitor/reports/

@@ -23,7 +23,7 @@ concurrency:
 jobs:
   scan-public-feeds:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
@@ -33,9 +33,18 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Restore adapter cache (OpenTrain results, Mindrift policy check)
+        uses: actions/cache@v4
+        with:
+          path: microtask_monitor/cache
+          key: adapter-cache-${{ github.run_id }}
+          restore-keys: |
+            adapter-cache-
       - name: Validate platform registry safety rules
         run: python -m unittest discover -s tests -v
-      - name: Scan, score and classify public listings
+      - name: Scan feeds and run the 12-platform adapters
+        # OpenTrain: documented public API. Mindrift: public eligibility-policy monitor only.
+        # GainWorkers / REWORKIO: manual-review integrations, no network access.
         run: python microtask_monitor/scan_feeds.py
       - name: Save HTML, JSON and CSV reports
         uses: actions/upload-artifact@v4

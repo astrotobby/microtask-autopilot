@@ -67,7 +67,7 @@ The local agent must be running for automatic dashboard updates. If it is not ru
 
 ## Target platform registry
 
-The eight requested services are recorded in `microtask_monitor/platforms.json`: Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery, Handshake AI and Braintrust.
+The original eight services plus OpenTrain AI, GainWorkers, Mindrift and REWORKIO (twelve in total, see below) are recorded in `microtask_monitor/platforms.json`: Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery, Handshake AI and Braintrust.
 
 The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
 
@@ -119,6 +119,44 @@ The report now carries discovery entry points for all eight target services:
 | Braintrust | https://www.usebraintrust.com/for-talent | Professional talent marketplace; manual profile, vetting and applications. |
 
 The source directory is `microtask_monitor/discovery_sources.json`. The hourly report packages all eight platform records and discovery links alongside public-feed listings. It does not scrape account dashboards, infer that a remote listing accepts Kenyan applicants, or claim a job is open just because a platform landing page exists.
+
+## Twelve-platform registry and integration modes
+
+The registry (`microtask_monitor/platforms.json`) now holds 12 platforms in three groups, with eligibility and integration health tracked independently (`microtask_monitor/integrations.json`):
+
+| Group | Platforms |
+|---|---|
+| Microtask platforms | Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, GainWorkers |
+| AI training and evaluation | AfterQuery Experts, Handshake AI, OpenTrain AI, Mindrift |
+| Professional freelance and expert marketplaces | Braintrust, REWORKIO |
+
+Every platform is described by three separate boundaries:
+
+- **PUBLIC DISCOVERY** – unauthenticated, documented, permitted automated reads.
+- **AUTHENTICATED MANUAL REVIEW** – you sign in and review yourself; nothing here logs in for you.
+- **AUTOMATION PERMITTED** – only the read-only monitoring listed below. No platform permits automated applications, task acceptance, submissions, payments or contract acceptance.
+
+| Platform | Public discovery | Automation permitted | Status (verified 2026-11-08) |
+|---|---|---|---|
+| OpenTrain AI | Documented anonymous `GET /api/public/v1/jobs` (cursor paging, no key) | Read-only job listing | **Implemented and tested against the live API.** |
+| Mindrift | None – restricted for Kenya | Read-only watch of the public eligibility policy | **Restricted for user location.** Kenya is listed as unsupported in the official policy (page "Last updated: May 27, 2026"). Not counted as an active Kenya-eligible source. |
+| GainWorkers | None – task lists need login, `robots.txt` disallows them, the Terms prohibit scraping/bots; the `/api/v2` API is an employer/SMM-reseller API, not a worker-task API | None | **Manual portal review.** Optional local records in `data/manual/gainworkers_tasks.json` are scored, deduplicated and checked for expired/filled tasks. |
+| REWORKIO | None – `/projects/` and `/opportunities/` are client-rendered shells over an undocumented backend; the dashboard needs sign-in | None | **Manual review links only; automated discovery unavailable.** Optional local records in `data/manual/reworkio_briefs.json`. |
+
+### OpenTrain AI
+- Fetches `country=KE` first (small, complete), then the unfiltered list, with at most ~100 requests/minute (documented limit: 120/min/IP), `Retry-After` handling on HTTP 429, a repeated-cursor guard and a 45-minute cache.
+- Eligibility is always derived locally from each job's own country list: **Kenya listed** → `kenya_explicitly_eligible`; **other countries only** → `restricted_other_countries`; **empty list and the posting says it is open worldwide** → `worldwide_eligible`; **empty list with no statement** → `kenya_eligibility_unspecified` (never assumed eligible). A job's eligible countries are separate from OpenTrain's payout-country list.
+- Partner jobs (`EXTERNAL_AGGREGATED`) are flagged; jobs whose `applyMode` is `external` are flagged as external applications.
+- Payment is copied from the listing. Missing or invalid payment is shown as "Not disclosed"; unusually high amounts (over USD 150/hour) are flagged `suspicious_verify_manually` and earn no scoring bonus. No earnings are estimated.
+
+### Mindrift eligibility monitor
+`microtask_monitor/mindrift.py` compares the live public policy with the reviewed baseline in `microtask_monitor/eligibility_baseline.json`. If Kenya disappears from the list or the policy changes, the report carries an alert and `needs_manual_review`; **discovery stays disabled and no applications are recommended** until you review the policy yourself and update the baseline. A layout change that cannot be parsed is reported as an error, never as "Kenya removed". Do not create accounts, and do not use VPNs, proxies or alternate identities.
+
+### GainWorkers and REWORKIO manual records
+Optional JSON files under `data/manual/` (gitignored) let you record what you saw while signed in: `title`, `url`, `payment` or `budget`, `region`/`location`, `remaining_slots`, `status`, `description`, `skills`, `posted`/`discovered_at`, `last_verified`. They are scored on your skills, checked for expired/filled/closed items, deduplicated, and flagged for possible upfront costs (paid membership, deposits, escrow funding). Nothing is purchased, accepted or submitted.
+
+### Unified scoring
+Priority order: Kenya-explicit > worldwide > relevance to your skills (AI training/evaluation, annotation, prompting, Python, JavaScript, backend/full-stack, AI-assisted coding, AI automation, writing/research) > legitimate disclosed pay > recent posting > availability. Scores are triage aids, not guarantees; every item requires human verification and approval.
 
 ## Eligibility and safety policy
 

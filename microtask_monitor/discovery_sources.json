@@ -111,6 +111,50 @@
       "automated_fetch_enabled": false,
       "reason": "Professional talent marketplace; role-specific country eligibility, vetting and payout route must be confirmed.",
       "use": "Open source, inspect live opportunities, verify eligibility and apply manually."
+    },
+    {
+      "id": "opentrain_public_jobs",
+      "platform_id": "opentrain_ai",
+      "name": "OpenTrain AI public jobs",
+      "url": "https://app.opentrain.ai/find-job",
+      "source_type": "official_portal",
+      "access_mode": "public_discovery_via_documented_api",
+      "automated_fetch_enabled": false,
+      "reason": "The automated adapter is separate (opentrain.py) and uses only the documented anonymous API; this entry is the human-facing link.",
+      "use": "Open the official public job board; apply manually."
+    },
+    {
+      "id": "gainworkers_portal",
+      "platform_id": "gainworkers",
+      "name": "GainWorkers",
+      "url": "https://www.gainworkers.com/",
+      "source_type": "official_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Task lists require login, robots.txt disallows them and the Terms prohibit scraping/bots; the API is employer/reseller only.",
+      "use": "Sign in yourself and review tasks and geo rules manually."
+    },
+    {
+      "id": "mindrift_eligibility_policy",
+      "platform_id": "mindrift",
+      "name": "Mindrift eligibility policy",
+      "url": "https://mindrift.ai/legal/eligibility-and-geographic-restrictions",
+      "source_type": "official_policy",
+      "access_mode": "policy_monitor_only",
+      "automated_fetch_enabled": false,
+      "reason": "Kenya is listed as unsupported. Only the public policy page is monitored for changes (see mindrift.py); no opportunities are discovered.",
+      "use": "Read the policy; do not apply while Kenya is unsupported."
+    },
+    {
+      "id": "reworkio_projects",
+      "platform_id": "reworkio",
+      "name": "REWORKIO projects / briefs",
+      "url": "https://reworkio.com/projects/",
+      "source_type": "official_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Client-rendered page backed by an undocumented API; dashboard requires sign-in. Automated discovery is unavailable.",
+      "use": "Open the briefs page or your dashboard and review manually; check fees before applying."
     }
   ],
   "current_reviewed_roles": [

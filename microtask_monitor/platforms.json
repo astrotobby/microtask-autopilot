@@ -22,7 +22,8 @@
         "automated_proof_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Official site reviewed. Consumer capture tasks require an iPhone 11 or newer and task availability/pay vary by country. The standard consumer recording workflow requires a supported iPhone; verify device compatibility and country availability before spending money or attempting signup. Recording must be genuine and human-performed; do not automate task recording or submissions."
+      "notes": "Official site reviewed. Consumer capture tasks require an iPhone 11 or newer and task availability/pay vary by country. The standard consumer recording workflow requires a supported iPhone; verify device compatibility and country availability before spending money or attempting signup. Recording must be genuine and human-performed; do not automate task recording or submissions.",
+      "platform_type": "microtask"
     },
     {
       "id": "clickworker",
@@ -41,7 +42,8 @@
         "automated_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Do not automate account activity unless current official terms and task rules explicitly permit it."
+      "notes": "Do not automate account activity unless current official terms and task rules explicitly permit it.",
+      "platform_type": "microtask"
     },
     {
       "id": "microworkers",
@@ -60,7 +62,8 @@
         "automated_proof_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Keep logged-in work manual unless current official rules explicitly permit a specific integration."
+      "notes": "Keep logged-in work manual unless current official rules explicitly permit a specific integration.",
+      "platform_type": "microtask"
     },
     {
       "id": "rapidworkers",
@@ -78,7 +81,8 @@
         "automated_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Domain supplied by user. Verify current terms, operator identity, payment rules and task eligibility before any account connection."
+      "notes": "Domain supplied by user. Verify current terms, operator identity, payment rules and task eligibility before any account connection.",
+      "platform_type": "microtask"
     },
     {
       "id": "sproutgigs",
@@ -97,7 +101,8 @@
         "automated_proof_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Treat as manual-only until current official policy confirms otherwise."
+      "notes": "Treat as manual-only until current official policy confirms otherwise.",
+      "platform_type": "microtask"
     },
     {
       "id": "afterquery",
@@ -117,7 +122,8 @@
         "automated_task_completion",
         "automated_submission"
       ],
-      "notes": "Experts portal identity confirmed. Public listings include remote expert contracts, including a Content Writer and Evaluator - Global listing; requirements, pay, work location, weekly commitment and payout method vary by role. Applications, assessments, identity checks, contract acceptance and work submissions remain human-reviewed."
+      "notes": "Experts portal identity confirmed. Public listings include remote expert contracts, including a Content Writer and Evaluator - Global listing; requirements, pay, work location, weekly commitment and payout method vary by role. Applications, assessments, identity checks, contract acceptance and work submissions remain human-reviewed.",
+      "platform_type": "ai_training"
     },
     {
       "id": "handshake_ai",
@@ -135,7 +141,8 @@
         "automated_task_completion",
         "automated_submission"
       ],
-      "notes": "Confirm the exact Handshake AI service; do not assume it is the same as the Handshake student recruiting platform."
+      "notes": "Confirm the exact Handshake AI service; do not assume it is the same as the Handshake student recruiting platform.",
+      "platform_type": "ai_training"
     },
     {
       "id": "braintrust",
@@ -156,7 +163,100 @@
         "automated_contract_acceptance",
         "captcha_or_identity_bypass"
       ],
-      "notes": "User supplied the official Talent dashboard URL. Braintrust's current Terms list restricted territories (Cuba, Iran, North Korea, Syria and specified Ukrainian regions); Kenya is not named in that list, but account eligibility and role-specific country restrictions still need confirmation. Profile must be truthful; ID/location and financial-account verification may be requested. Treat Braintrust as a vetted professional talent marketplace, not a generic microtask site. Current public talent page describes AI skills interview and certification; profile creation and application remain human-reviewed. Verify Kenya payout method in the account before investing significant time."
+      "notes": "User supplied the official Talent dashboard URL. Braintrust's current Terms list restricted territories (Cuba, Iran, North Korea, Syria and specified Ukrainian regions); Kenya is not named in that list, but account eligibility and role-specific country restrictions still need confirmation. Profile must be truthful; ID/location and financial-account verification may be requested. Treat Braintrust as a vetted professional talent marketplace, not a generic microtask site. Current public talent page describes AI skills interview and certification; profile creation and application remain human-reviewed. Verify Kenya payout method in the account before investing significant time.",
+      "platform_type": "professional_marketplace"
+    },
+    {
+      "id": "opentrain_ai",
+      "name": "OpenTrain AI",
+      "platform_type": "ai_training",
+      "official_url": "https://app.opentrain.ai/",
+      "identity_status": "official_url_and_documentation_verified",
+      "kenya_eligibility": "job_specific_country_lists_checked_each_listing",
+      "automation_status": "public_job_discovery_only_manual_application",
+      "allowed_actions": [
+        "track_status",
+        "public_job_discovery_via_documented_api",
+        "open_official_job_page"
+      ],
+      "blocked_actions": [
+        "automated_application_submission",
+        "automated_contract_acceptance",
+        "automated_identity_or_location_checks",
+        "captcha_or_identity_bypass",
+        "account_connection"
+      ],
+      "notes": "Public discovery uses the documented anonymous GET https://app.opentrain.ai/api/public/v1/jobs (no key; documented 120 requests/minute/IP limit). A job's eligible countries are set by the employer and are separate from OpenTrain's payout-country list (Kenya is on the payout list as of 2026-11-08). An empty country list is never treated as Kenya-eligible. Applications, AI interviews, location checks and contracts remain human-performed."
+    },
+    {
+      "id": "gainworkers",
+      "name": "GainWorkers",
+      "platform_type": "microtask",
+      "official_url": "https://www.gainworkers.com/",
+      "identity_status": "official_homepage_and_terms_reviewed",
+      "kenya_eligibility": "task_specific_geo_rules_visible_only_after_login",
+      "automation_status": "manual_portal_review_required_no_automated_fetch",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "scraping",
+        "automated_logged_in_browsing",
+        "automated_task_acceptance",
+        "automated_proof_submission",
+        "engagement_manipulation",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Reviewed 2026-11-08. Task listings are behind login (/jobs redirects to /login; robots.txt disallows /jobs/ and other work areas). The Terms of Service prohibit scraping and bots and VPN/proxy use to bypass geo rules. The documented API (/api/v2) is an employer/SMM-reseller API (services, orders, wallet) and is not a worker-task discovery API, so it is not used. Review tasks manually in your own signed-in session; optionally record them in data/manual/gainworkers_tasks.json for scoring."
+    },
+    {
+      "id": "mindrift",
+      "name": "Mindrift",
+      "platform_type": "ai_training",
+      "official_url": "https://mindrift.ai/",
+      "identity_status": "official_website_dashboard_and_policy_urls_confirmed",
+      "kenya_eligibility": "restricted_for_user_location",
+      "automation_status": "disabled_restricted_for_user_location_policy_monitor_only",
+      "allowed_actions": [
+        "track_status",
+        "monitor_public_eligibility_policy"
+      ],
+      "blocked_actions": [
+        "opportunity_discovery",
+        "application_recommendations",
+        "account_creation",
+        "task_access",
+        "vpn_or_proxy_or_alternate_identity",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Kenya is explicitly listed as not currently supported in https://mindrift.ai/legal/eligibility-and-geographic-restrictions (policy 'Last updated: May 27, 2026'; verified 2026-11-08). The registry keeps the platform but it is NOT counted as an active Kenya-eligible source. The eligibility monitor only flags policy changes for manual review; it never enables discovery automatically."
+    },
+    {
+      "id": "reworkio",
+      "name": "REWORKIO",
+      "platform_type": "professional_marketplace",
+      "official_url": "https://reworkio.com/",
+      "identity_status": "official_website_faq_and_dashboard_urls_confirmed",
+      "kenya_eligibility": "claims_160_plus_countries_unverified_for_kenya_and_payout",
+      "automation_status": "manual_review_only_automated_discovery_unavailable",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_brief_record_import",
+        "open_official_brief_pages"
+      ],
+      "blocked_actions": [
+        "automated_discovery_of_private_endpoints",
+        "automated_logged_in_browsing",
+        "automated_applications",
+        "paid_membership_or_deposit_or_escrow_funding",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "AI/automation expert marketplace (not a microtask site). /projects/ and /opportunities/ are client-rendered shells whose briefs load from an undocumented backend, and the dashboard needs sign-in, so no supported public discovery interface exists. Use the manual-review links. Treat any paid membership, deposit, escrow funding or other upfront cost as a stop-and-decide item; nothing is purchased or paid automatically."
     }
   ]
 }

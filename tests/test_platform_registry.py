@@ -11,6 +11,8 @@ EXPECTED = {
     "atlas_capture", "clickworker", "microworkers", "rapidworkers",
     "sproutgigs", "afterquery", "handshake_ai", "braintrust"
 }
+NEW_FOUR = {"opentrain_ai", "gainworkers", "mindrift", "reworkio"}
+ALL_TWELVE = EXPECTED | NEW_FOUR
 
 
 class PlatformRegistryTests(unittest.TestCase):
@@ -19,8 +21,12 @@ class PlatformRegistryTests(unittest.TestCase):
         cls.data = json.loads(REGISTRY.read_text(encoding="utf-8"))
         cls.platforms = cls.data["platforms"]
 
-    def test_all_eight_requested_platforms_are_present(self):
-        self.assertEqual({p["id"] for p in self.platforms}, EXPECTED)
+    def test_original_eight_platforms_are_preserved(self):
+        self.assertTrue(EXPECTED.issubset({p["id"] for p in self.platforms}))
+
+    def test_registry_contains_exactly_twelve_platforms(self):
+        self.assertEqual({p["id"] for p in self.platforms}, ALL_TWELVE)
+        self.assertEqual(len(self.platforms), 12)
 
     def test_platform_ids_are_unique(self):
         ids = [p["id"] for p in self.platforms]
@@ -103,7 +109,7 @@ class PlatformRegistryTests(unittest.TestCase):
         page = dashboard.read_text(encoding="utf-8")
         for section in ("overview", "platforms", "opportunities", "applications", "earnings"):
             self.assertIn('id="' + section + '"', page)
-        for platform_id in EXPECTED:
+        for platform_id in ALL_TWELVE:
             self.assertIn('id:"' + platform_id + '"', page)
         self.assertIn("importReport", page)
         self.assertIn("exportBackup", page)

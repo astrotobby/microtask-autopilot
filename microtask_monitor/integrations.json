@@ -1,0 +1,78 @@
+{
+  "updated_at": "2026-11-08",
+  "note": "PUBLIC DISCOVERY = unauthenticated, documented, permitted automated reads. AUTHENTICATED MANUAL REVIEW = a human signs in and reviews. AUTOMATION PERMITTED = only the read-only monitoring listed here; no platform permits automated applications, task acceptance or submissions.",
+  "platforms": {
+    "atlas_capture": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "clickworker": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "microworkers": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "rapidworkers": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "sproutgigs": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "afterquery": {
+      "public_discovery": "manual_links_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "handshake_ai": {
+      "public_discovery": "none",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "disabled_pending_identity"
+    },
+    "braintrust": {
+      "public_discovery": "manual_links_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_only"
+    },
+    "opentrain_ai": {
+      "public_discovery": "documented_public_api",
+      "authenticated_manual_review": "applications_interview_contract",
+      "automation_permitted": "read_only_public_job_listing",
+      "health": "automated"
+    },
+    "gainworkers": {
+      "public_discovery": "none_task_lists_require_login",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "mindrift": {
+      "public_discovery": "disabled_restricted_for_user_location",
+      "authenticated_manual_review": "not_applicable_while_restricted",
+      "automation_permitted": "read_only_public_policy_monitor",
+      "health": "policy_monitor"
+    },
+    "reworkio": {
+      "public_discovery": "unavailable_no_supported_public_interface",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    }
+  }
+}
