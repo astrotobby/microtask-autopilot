@@ -1,0 +1,81 @@
+{
+  "updated_at": "2026-11-08",
+  "country_focus": "Kenya",
+  "sources": [
+    {
+      "id": "afterquery_experts_direct",
+      "platform_id": "afterquery",
+      "name": "AfterQuery Experts",
+      "url": "https://experts.afterquery.com/home",
+      "source_type": "official_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "The portal does not expose a verified public RSS/API feed in this setup; automated access is not assumed permitted.",
+      "use": "Open the official portal to inspect available projects and apply manually."
+    },
+    {
+      "id": "sidequest_afterquery_directory",
+      "platform_id": "afterquery",
+      "name": "Sidequest AfterQuery role directory",
+      "url": "https://www.sidequest.expert/roles?platform=afterquery",
+      "source_type": "independent_third_party_directory",
+      "access_mode": "manual_public_review",
+      "automated_fetch_enabled": false,
+      "reason": "Independent directory, not affiliated with AfterQuery; some links may be referral links and listings can be stale. Verify every role in AfterQuery before applying.",
+      "use": "Discovery and initial screening only; not authoritative eligibility or payment evidence."
+    }
+  ],
+  "current_reviewed_roles": [
+    {
+      "title": "Software Engineering Expert",
+      "source_url": "https://www.sidequest.expert/roles/software-engineering-expert-2",
+      "advertised_rate": "$75/hour",
+      "workload": "10-20 hours/week",
+      "location_label": "Worldwide",
+      "posted_or_listed": "2026-04-30",
+      "fit_assessment": "conditional_review",
+      "why": "Relevant to the user's stated Python, JavaScript, TypeScript, Node.js and GitHub/Codex/Claude Code experience.",
+      "gaps_to_verify": [
+        "1-3 years professional software engineering experience",
+        "independent debugging and code review evidence",
+        "data structures and basic system design"
+      ],
+      "apply_via": "https://experts.afterquery.com/home",
+      "notes": "Rate and availability are third-party reported, not guaranteed. Check live status and country eligibility at the official portal."
+    },
+    {
+      "title": "Content Writer & AI Evaluation Specialist (UK/US)",
+      "source_url": "https://www.sidequest.expert/roles/content-writer-ai-evaluation-specialist-uk-us",
+      "advertised_rate": "$43/hour",
+      "workload": "40 hours/week",
+      "location_label": "UK/US target candidates; location details need confirmation",
+      "posted_or_listed": "2025-09-25",
+      "fit_assessment": "low_priority_location_and_age_unclear",
+      "why": "Writing and LLM evaluation overlap with the user's content and prompt-engineering background.",
+      "gaps_to_verify": [
+        "3+ years verifiable professional English writing",
+        "40 hours/week for 3-6 months",
+        "explicit eligibility for Kenya"
+      ],
+      "apply_via": "https://experts.afterquery.com/home",
+      "notes": "Do not treat as Kenya-eligible; listing is old and explicitly targets UK/US candidates."
+    },
+    {
+      "title": "Algorithms and Theory Researcher (Research Coding Tasks)",
+      "source_url": "https://www.sidequest.expert/roles/algorithms-and-theory-researcher-research-coding-tasks",
+      "advertised_rate": "$50/hour",
+      "workload": "About 15 hours/week",
+      "location_label": "Worldwide",
+      "posted_or_listed": "2026-10-29",
+      "fit_assessment": "not_recommended_without_research_credentials",
+      "why": "Requires a PhD in computer science or related field and published algorithms research with released code.",
+      "gaps_to_verify": [
+        "PhD or in-progress PhD",
+        "published algorithms research",
+        "released research implementation"
+      ],
+      "apply_via": "https://experts.afterquery.com/home",
+      "notes": "Do not apply unless all research credentials are genuinely held."
+    }
+  ]
+}
