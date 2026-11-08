@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 FEEDS = ROOT / "microtask_monitor" / "feeds.json"
+PLATFORMS = ROOT / "microtask_monitor" / "platforms.json"
 REPORTS = ROOT / "microtask_monitor" / "reports"
 
 MICROTASK_TERMS = [
@@ -137,6 +138,8 @@ def parse_feed(feed):
 
 def main():
     config = json.loads(FEEDS.read_text(encoding="utf-8"))
+    platform_config = json.loads(PLATFORMS.read_text(encoding="utf-8"))
+    platforms = platform_config.get("platforms", [])
     results, errors = [], []
     for feed in config.get("feeds", []):
         try:
@@ -157,6 +160,8 @@ def main():
     report = {
         "checked_at_utc": stamp,
         "feed_count": len(config.get("feeds", [])),
+        "platform_registry_count": len(platforms),
+        "platforms": platforms,
         "unique_listing_count": len(items),
         "high_review_count": sum(x["priority"] == "high_review" for x in items),
         "medium_review_count": sum(x["priority"] == "medium_review" for x in items),
@@ -180,7 +185,7 @@ def main():
                 row[field] = "; ".join(row.get(field, []))
             writer.writerow(row)
 
-    print(f"Scanned {len(config.get('feeds', []))} feeds")
+    print(f"Scanned {len(config.get('feeds', []))} feeds; loaded {len(platforms)} target platform records")
     print(f"Saved {len(items)} unique listings ({report['high_review_count']} high-review, {report['medium_review_count']} medium-review)")
     print(f"Feed errors: {len(errors)}")
     print(f"JSON report: {json_path}")
