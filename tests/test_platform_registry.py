@@ -10,6 +10,7 @@ EXPECTED = {
     "sproutgigs", "afterquery", "handshake_ai", "braintrust"
 }
 
+
 class PlatformRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -30,7 +31,7 @@ class PlatformRegistryTests(unittest.TestCase):
 
     def test_unknown_identity_cannot_be_enabled(self):
         for platform in self.platforms:
-            if platform["identity_status"] != "official_homepage_known" and platform["identity_status"] != "user_confirmed_domain":
+            if platform["identity_status"] not in ("official_homepage_known", "user_confirmed_domain"):
                 self.assertNotIn("automated_task_completion", platform["allowed_actions"])
                 self.assertNotIn("automated_browsing", platform["allowed_actions"])
 
@@ -38,7 +39,6 @@ class PlatformRegistryTests(unittest.TestCase):
         for platform in self.platforms:
             self.assertTrue(platform.get("automation_status"))
             self.assertTrue(platform.get("blocked_actions"))
-
 
     def test_discovery_sources_are_manual_and_have_https_urls(self):
         sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
@@ -50,11 +50,13 @@ class PlatformRegistryTests(unittest.TestCase):
     def test_afterquery_roles_have_official_apply_destination(self):
         sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
         sources = json.loads(sources_path.read_text(encoding="utf-8"))
-        afterquery_roles = sources["current_reviewed_roles"]
+        afterquery_roles = [
+            role for role in sources["current_reviewed_roles"]
+            if "sidequest.expert" in role.get("source_url", "")
+        ]
         self.assertGreaterEqual(len(afterquery_roles), 1)
         for role in afterquery_roles:
             self.assertEqual(role["apply_via"], "https://experts.afterquery.com/home")
-
 
     def test_each_target_platform_has_a_discovery_entry(self):
         sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
@@ -68,6 +70,7 @@ class PlatformRegistryTests(unittest.TestCase):
         sources = json.loads(sources_path.read_text(encoding="utf-8"))
         for source in sources["sources"]:
             self.assertFalse(source.get("automated_fetch_enabled", False), source["id"])
+
 
 if __name__ == "__main__":
     unittest.main()
