@@ -4,15 +4,18 @@ from __future__ import annotations
 import json
 import logging
 import sqlite3
+import sys
 import threading
 import time
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from microtask_monitor.sync_reports import DB_PATH, LATEST_REPORT, sync_once
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from microtask_monitor.sync_reports import DB_PATH, LATEST_REPORT, sync_once
 DASHBOARD = ROOT / "dashboard"
 HOST = "127.0.0.1"
 PORT = 8765
