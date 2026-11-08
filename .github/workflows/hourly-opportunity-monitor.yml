@@ -1,0 +1,29 @@
+name: Hourly public opportunity monitor
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan-public-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Scan configured public feeds
+        run: python microtask_monitor/scan_feeds.py
+      - name: Save scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: hourly-opportunity-report
+          path: microtask_monitor/reports/*.json
+          if-no-files-found: warn
+          retention-days: 14
