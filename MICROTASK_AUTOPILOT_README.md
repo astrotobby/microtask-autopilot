@@ -34,7 +34,7 @@ These are supplementary remote-job sources, not direct task feeds from Atlas Cap
 2. Select **Hourly public opportunity monitor**.
 3. Click **Run workflow**, choose `main`, and confirm.
 4. Open the completed run and download `hourly-opportunity-report`.
-5. The artifact contains a JSON report and a spreadsheet-friendly CSV.
+5. The artifact contains a JSON report, a spreadsheet-friendly CSV, and a standalone HTML dashboard. Open the HTML file in a browser for a readable overview of the eight-platform directory, reviewed role snapshots, and public-feed results.
 
 Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may delay scheduled runs, and usage is subject to account/repository limits.
 
