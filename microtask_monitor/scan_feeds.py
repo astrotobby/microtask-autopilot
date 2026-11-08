@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 ROOT = Path(__file__).resolve().parents[1]
 FEEDS = ROOT / "microtask_monitor" / "feeds.json"
 PLATFORMS = ROOT / "microtask_monitor" / "platforms.json"
+DISCOVERY_SOURCES = ROOT / "microtask_monitor" / "discovery_sources.json"
 REPORTS = ROOT / "microtask_monitor" / "reports"
 
 MICROTASK_TERMS = [
@@ -140,6 +141,7 @@ def main():
     config = json.loads(FEEDS.read_text(encoding="utf-8"))
     platform_config = json.loads(PLATFORMS.read_text(encoding="utf-8"))
     platforms = platform_config.get("platforms", [])
+    discovery_config = json.loads(DISCOVERY_SOURCES.read_text(encoding="utf-8"))
     results, errors = [], []
     for feed in config.get("feeds", []):
         try:
@@ -162,6 +164,7 @@ def main():
         "feed_count": len(config.get("feeds", [])),
         "platform_registry_count": len(platforms),
         "platforms": platforms,
+        "discovery_sources": discovery_config,
         "unique_listing_count": len(items),
         "high_review_count": sum(x["priority"] == "high_review" for x in items),
         "medium_review_count": sum(x["priority"] == "medium_review" for x in items),
