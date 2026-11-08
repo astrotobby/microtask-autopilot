@@ -42,16 +42,20 @@ Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may de
 
 A no-dependency dashboard is available at `dashboard/index.html`.
 
-### Open on Windows
+### Automatic local agent on Windows
 
-1. Download or clone this repository.
+1. Download or clone this repository and extract it.
 2. Open the `dashboard` folder.
-3. Double-click `open-dashboard.bat` (or open `index.html` in Chrome).
-4. In **Opportunities**, import the JSON file from a downloaded `hourly-opportunity-report` artifact.
-5. Update platform statuses, track applications, and record payments actually received.
-6. Use **Export backup** regularly to save your local records as a JSON backup.
+3. Double-click `open-dashboard.bat`.
+4. The launcher starts the local Python server at `http://127.0.0.1:8765` and opens the dashboard.
+5. The local agent checks GitHub Actions for the latest successful run every 15 minutes, downloads the public report artifact automatically, validates it, and stores opportunities in SQLite at `data/autopilot.sqlite3`.
+6. The dashboard fetches the latest synchronized report automatically. Manual artifact downloads and JSON imports are no longer required for normal operation.
+7. For automatic startup after Windows sign-in, double-click `install-autostart.bat` once. This creates a current-user scheduled task; it does not require a paid host.
+8. Use **Export backup** regularly for browser-side application and earnings records.
 
-The dashboard runs locally in your browser and uses browser local storage. Its records do not automatically sync to GitHub or another device. The opportunity inbox refreshes only when you import a newer JSON report. Do not store passwords, cookies, tokens, OTPs, identity documents or payment credentials in the dashboard. Currency totals are kept separate; no exchange rate is assumed.
+The report sync uses the public GitHub REST API and needs no GitHub token because this repository is public. If the repository becomes private, the sync design will need an approved read-only authentication method. The server binds only to `127.0.0.1`, not your local network. It syncs public opportunity reports; it does not sign in to platform accounts, complete tasks or submit applications. The SQLite database stores deduplicated opportunities and report history. The dashboard's application and earnings records remain in this browser's local storage; those records are not yet synchronized into SQLite or between devices.
+
+The local agent must be running for automatic dashboard updates. If it is not running, double-click `open-dashboard.bat` again. Do not store passwords, cookies, tokens, OTPs, identity documents or payment credentials in the dashboard. Currency totals are kept separate; no exchange rate is assumed.
 
 ## Scope and safety
 
