@@ -22,6 +22,13 @@ class WindowsLauncherTests(unittest.TestCase):
         self.assertIn("-Force", text)
         self.assertIn("-User $env:USERNAME", text)
 
+    def test_autostart_builds_balanced_task_argument_quotes(self):
+        # Regression: doubled quotes inside powershell -Command "..." were stripped,
+        # leaving an unbalanced quote in the scheduled task arguments.
+        text = (ROOT / "dashboard" / "install-autostart.bat").read_text(encoding="ascii")
+        self.assertNotIn('""', text)
+        self.assertIn("[char]34", text)
+
     def test_batch_files_are_checked_out_with_crlf(self):
         attrs = (ROOT / ".gitattributes").read_text(encoding="ascii")
         self.assertIn("*.bat text eol=crlf", attrs)
