@@ -1,3 +1,4 @@
+import gzip
 import io
 import json
 import unittest
@@ -8,6 +9,8 @@ import test_sync_reports
 
 
 class _Resp(io.BytesIO):
+    headers = {}
+
     def __enter__(self):
         return self
 
@@ -26,6 +29,14 @@ class PublishedFallbackTests(unittest.TestCase):
         report, meta = sr.fetch_published_report(run, {"id": 9}, opener=opener)
         self.assertEqual(report["items"][0]["title"], "AI evaluator")
         self.assertEqual((meta["run_id"], meta["artifact_id"]), (7, 9))
+
+    def test_gzip_encoded_published_report_is_decoded(self):
+        body = gzip.compress(json.dumps(self.sample()).encode())
+        resp = _Resp(body)
+        resp.headers = {"Content-Encoding": "gzip"}
+        report, _ = sr.fetch_published_report({"id": 1}, {"id": 2},
+                                              opener=lambda request, timeout: resp)
+        self.assertEqual(report["items"][0]["title"], "AI evaluator")
 
     def test_401_on_artifact_download_falls_back_to_published_report(self):
         runs = {"workflow_runs": [{"id": 1, "status": "completed", "conclusion": "success",

@@ -6,6 +6,7 @@ Only report artifacts from successful runs on the configured branch are consumed
 from __future__ import annotations
 
 import argparse
+import gzip
 from contextlib import closing
 import json
 import logging
@@ -49,7 +50,7 @@ def api_json(url: str) -> dict[str, Any]:
         },
     )
     try:
-        with urllib.request.urlopen(request, timeout=30) as response:
+        with urllib.request.urlopen(request, timeout=60) as response:
             payload = response.read(2_000_000)
     except urllib.error.HTTPError as exc:
         body = exc.read(300).decode("utf-8", "replace")
@@ -145,10 +146,13 @@ def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
                            ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Fetch the unauthenticated report copy the workflow publishes to report-data."""
     request = urllib.request.Request(url, headers={
-        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0"})
+        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0",
+        "Accept-Encoding": "gzip"})
     try:
-        with opener(request, timeout=30) as response:
+        with opener(request, timeout=180) as response:
             payload = response.read(MAX_JSON_BYTES + 1)
+            if response.headers.get("Content-Encoding", "").lower() == "gzip":
+                payload = gzip.GzipFile(fileobj=BytesIO(payload)).read(MAX_JSON_BYTES + 1)
     except urllib.error.HTTPError as exc:
         raise SyncStageError("published-report", f"{exc.reason} for {url}", exc.code) from exc
     except urllib.error.URLError as exc:
