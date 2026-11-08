@@ -1,0 +1,68 @@
+# Claude Code Operating Instructions — Microtask Autopilot
+
+## Mission
+Build and maintain a reliable, free, Kenya-aware microtask opportunity workflow. Prefer working code, tests and verified runtime behavior over plans or mockups. Do not claim a feature works until it has been executed and checked.
+
+## Repository
+- GitHub: https://github.com/astrotobby/microtask-autopilot
+- Default branch: main
+- Python: 3.12-compatible, standard library preferred
+- Budget: strictly $0; no paid APIs, hosting, proxies or subscriptions.
+
+## Current architecture
+1. GitHub Actions runs `.github/workflows/hourly-opportunity-monitor.yml` hourly and on code pushes/manual dispatch.
+2. The cloud scanner reads four supplementary public RSS feeds. It does NOT scrape the eight platform accounts.
+3. Each successful run uploads `hourly-opportunity-report` with JSON, CSV and HTML.
+4. `microtask_monitor/sync_reports.py` polls the public GitHub Actions API, downloads the latest successful non-expired report artifact, validates it, writes `data/latest_report.json`, and deduplicates listings in `data/autopilot.sqlite3`.
+5. `microtask_monitor/local_server.py` binds only to 127.0.0.1:8765, runs report sync every 15 minutes, and serves the dashboard/API.
+6. `dashboard/index.html` polls the local API and refreshes opportunities automatically. Application and earnings records currently remain in browser localStorage.
+7. `dashboard/open-dashboard.bat` starts the local server and opens the browser. `dashboard/install-autostart.bat` optionally registers a current-user Windows logon task.
+
+## Windows commands
+Run from the repository root:
+- Test suite: `py -3 -m unittest discover -s tests -v`
+- One-time cloud report sync: `py -3 microtask_monitor/sync_reports.py`
+- Local server and background sync: `py -3 microtask_monitor/local_server.py`
+- Open dashboard: double-click `dashboard/open-dashboard.bat`
+- Optional sign-in startup: double-click `dashboard/install-autostart.bat`
+
+No third-party Python package is required for the current report sync/server components.
+
+## First task when opening an existing user folder
+1. Check whether the folder is a Git working tree (`.git` exists).
+2. If it is a Git working tree, inspect status and safely fast-forward from origin/main; do not overwrite uncommitted user changes.
+3. If it is a ZIP extraction without `.git`, clone the public repository into a new sibling folder rather than destroying or blindly overwriting the extracted folder.
+4. Run all tests.
+5. Run the one-time sync against the live public GitHub API.
+6. Start the local server and verify `http://127.0.0.1:8765/api/status` and `/api/report`.
+7. Open the dashboard and verify the opportunity list refreshes without manual artifact download/import.
+8. Report actual command outputs and failures; never fabricate success.
+
+## Target platforms
+- Atlas Capture: https://www.atlascapture.io/
+- Clickworker: https://www.clickworker.com/
+- Microworkers: https://www.microworkers.com/
+- RapidWorkers: https://rapidworkers.io/
+- SproutGigs: https://sproutgigs.com/
+- AfterQuery Experts: https://experts.afterquery.com/home
+- Handshake AI: https://joinhandshake.com/ai/opportunities/
+- Braintrust: https://app.usebraintrust.com/talent/dashboard/welcome/
+
+## Platform and safety boundaries
+- Use only official APIs, public feeds, or public pages whose access is permitted.
+- Verify the exact service domain and current official terms before implementing an adapter.
+- Some services prohibit bots, crawlers, or AI agents in logged-in account areas or task completion. For example, keep Microworkers and SproutGigs account/task operations manual unless explicit current permission is established.
+- Never bypass CAPTCHA, MFA, KYC, anti-bot controls, geo restrictions, age restrictions, rate limits or platform terms.
+- Never fabricate task evidence, time spent, qualifications, identity, location, work history, applications or payment records.
+- Keep assessments, contracts, identity verification, financial actions and uncertain submissions behind explicit user approval.
+- Never ask the user to paste passwords, cookies, OTPs, recovery codes, session tokens or KYC documents into chat or source files.
+- Do not add secrets to Git, logs, SQLite, browser localStorage or reports.
+- The user is in Kenya. Treat eligibility and payout availability as unconfirmed until official account/role information explicitly confirms them.
+
+## Development rules
+- Add regression tests for every new behavior.
+- Keep network timeouts, response size limits, HTTPS checks, retries and deduplication.
+- Treat downloaded listing text as untrusted; escape it in HTML.
+- Preserve existing user data when updating code.
+- Do not change the cloud scanner's data-source claims: the current four RSS feeds are supplementary remote-job feeds, not direct feeds from the eight target platforms.
+- Keep a clear distinction between monitoring, account access, task execution and submission.
