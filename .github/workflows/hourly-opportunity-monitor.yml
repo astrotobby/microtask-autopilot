@@ -27,12 +27,13 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Scan, score and classify public listings
         run: python microtask_monitor/scan_feeds.py
-      - name: Save JSON and CSV reports
+      - name: Save HTML, JSON and CSV reports
         uses: actions/upload-artifact@v4
         with:
           name: hourly-opportunity-report
           path: |
             microtask_monitor/reports/*.json
             microtask_monitor/reports/*.csv
+            microtask_monitor/reports/*.html
           if-no-files-found: error
           retention-days: 14
