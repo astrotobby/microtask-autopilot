@@ -6,6 +6,7 @@ Only report artifacts from successful runs on the configured branch are consumed
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import json
 import logging
 import sqlite3
@@ -29,6 +30,10 @@ REPO = "microtask-autopilot"
 BRANCH = "main"
 WORKFLOW = "hourly-opportunity-monitor.yml"
 ARTIFACT_NAME = "hourly-opportunity-report"
+REPORT_DATA_BRANCH = "report-data"
+RAW_REPORT_URL = (
+    f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{REPORT_DATA_BRANCH}/latest.json"
+)
 MAX_ARCHIVE_BYTES = 15 * 1024 * 1024
 MAX_JSON_BYTES = 8 * 1024 * 1024
 LOG = logging.getLogger("microtask_autopilot.sync")
@@ -135,6 +140,35 @@ def _check_size(data: bytes) -> bytes:
     return data
 
 
+def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
+                           url: str = RAW_REPORT_URL, opener=urllib.request.urlopen,
+                           ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Fetch the unauthenticated report copy the workflow publishes to report-data."""
+    request = urllib.request.Request(url, headers={
+        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0"})
+    try:
+        with opener(request, timeout=30) as response:
+            payload = response.read(MAX_JSON_BYTES + 1)
+    except urllib.error.HTTPError as exc:
+        raise SyncStageError("published-report", f"{exc.reason} for {url}", exc.code) from exc
+    except urllib.error.URLError as exc:
+        raise SyncStageError("network", f"Could not reach raw.githubusercontent.com: {exc.reason}") from exc
+    if len(payload) > MAX_JSON_BYTES:
+        raise ValueError("Published report is too large")
+    report = json.loads(payload.decode("utf-8"))
+    validate_report(report)
+    metadata = {
+        "run_id": run["id"],
+        "run_url": run.get("html_url", ""),
+        "run_created_at": run.get("created_at", ""),
+        "artifact_id": artifact["id"],
+        "artifact_created_at": artifact.get("created_at", ""),
+        "artifact_expires_at": artifact.get("expires_at", ""),
+        "report_file": f"{REPORT_DATA_BRANCH}/latest.json",
+    }
+    return report, metadata
+
+
 def get_latest_report() -> tuple[dict[str, Any], dict[str, Any]]:
     runs_url = (
         f"{API}/repos/{OWNER}/{REPO}/actions/workflows/{WORKFLOW}/runs"
@@ -164,9 +198,19 @@ def get_latest_report() -> tuple[dict[str, Any], dict[str, Any]]:
         if not usable:
             continue
         artifact = max(usable, key=lambda item: item.get("created_at", ""))
-        archive = download_archive(
-            f"{API}/repos/{OWNER}/{REPO}/actions/artifacts/{artifact['id']}/zip"
-        )
+        try:
+            archive = download_archive(
+                f"{API}/repos/{OWNER}/{REPO}/actions/artifacts/{artifact['id']}/zip"
+            )
+        except SyncStageError as exc:
+            if exc.status not in (401, 403):
+                raise
+            # GitHub requires authentication to download artifacts, even for public
+            # repositories. Fall back to the workflow-published copy on report-data.
+            LOG.info("Artifact download needs authentication (HTTP %s); "
+                     "using the public %s branch copy instead", exc.status,
+                     REPORT_DATA_BRANCH)
+            return fetch_published_report(run, artifact)
         with zipfile.ZipFile(BytesIO(archive)) as bundle:
             candidates = [
                 info for info in bundle.infolist()
@@ -209,7 +253,7 @@ def validate_report(report: Any) -> None:
 
 def init_db(db_path: Path = DB_PATH) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(db_path) as conn:
+    with closing(sqlite3.connect(db_path)) as conn, conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS sync_state (
                 key TEXT PRIMARY KEY,
@@ -265,7 +309,7 @@ def import_report(report: dict[str, Any], metadata: dict[str, Any],
     latest_payload = {"report": report, "sync": metadata, "synced_at_utc": now}
     latest_path.write_text(json.dumps(latest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    with sqlite3.connect(db_path) as conn:
+    with closing(sqlite3.connect(db_path)) as conn, conn:
         existing = conn.execute(
             "SELECT 1 FROM reports WHERE report_key = ?", (f"{run_id}:{artifact_id}",)
         ).fetchone()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import closing
 import logging
 import sqlite3
 import sys
@@ -61,7 +62,7 @@ class Handler(SimpleHTTPRequestHandler):
                       "latest_report": LATEST_REPORT.exists(),
                       "sync_interval_seconds": INTERVAL_SECONDS}
             if DB_PATH.exists():
-                with sqlite3.connect(DB_PATH) as conn:
+                with closing(sqlite3.connect(DB_PATH)) as conn, conn:
                     status["opportunity_count"] = conn.execute(
                         "SELECT COUNT(*) FROM opportunities").fetchone()[0]
                     status["report_count"] = conn.execute(

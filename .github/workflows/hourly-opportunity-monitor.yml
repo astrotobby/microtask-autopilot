@@ -24,6 +24,8 @@ jobs:
   scan-public-feeds:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: write
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -45,3 +47,17 @@ jobs:
             microtask_monitor/reports/*.html
           if-no-files-found: error
           retention-days: 14
+      - name: Publish latest report JSON to report-data branch
+        # Artifact downloads need authentication; this public copy does not.
+        run: |
+          set -e
+          latest=$(ls microtask_monitor/reports/*.json | sort | tail -n 1)
+          cp "$latest" "$RUNNER_TEMP/latest.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan report-data-tmp
+          git rm -rf --quiet .
+          cp "$RUNNER_TEMP/latest.json" latest.json
+          git add latest.json
+          git commit --quiet -m "Publish latest opportunity report"
+          git push --force origin HEAD:refs/heads/report-data

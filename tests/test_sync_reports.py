@@ -48,6 +48,15 @@ class SyncReportTests(unittest.TestCase):
             self.assertEqual(second["already_imported"], 1)
             self.assertEqual(second["inserted"], 0)
 
+    def test_import_releases_database_file_lock(self):
+        # Regression: connections must be closed so Windows can delete the file.
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            db, latest = root / "agent.sqlite3", root / "latest.json"
+            import_report(self.sample(), self.metadata(), db, latest)
+            db.unlink()
+            self.assertFalse(db.exists())
+
     def test_new_report_updates_existing_url_without_duplicate(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
