@@ -55,3 +55,20 @@ The hourly report includes this registry so the monitor can distinguish target p
 The registry is intentionally conservative: it tracks platform status and allowed/blocked actions but does not sign in, scrape private dashboards, accept tasks, complete work or submit proofs. Platform automation must remain disabled unless the exact service identity, current official terms and task-specific instructions explicitly permit the proposed action.
 
 The workflow runs unit tests against the registry before each scan.
+
+## AfterQuery discovery
+
+- Official portal: https://experts.afterquery.com/home
+- Independent discovery directory: https://www.sidequest.expert/roles?platform=afterquery
+- Reviewed role snapshots and fit notes: `microtask_monitor/discovery_sources.json`
+
+The official Experts portal is the only application destination. The third-party directory is independent, is not affiliated with AfterQuery, may use referral links, and may contain stale or incomplete listings. Verify live status, pay, requirements and Kenya eligibility in the official portal before applying.
+
+The current setup does not scrape the logged-in Experts portal or the third-party directory. No verified public RSS/API endpoint or permission for automated fetching has been established. The report includes the discovery links and dated role snapshots for human review; these snapshots are not refreshed hourly. You can use the directory's free daily role-alert signup to receive updates, then review alerts and applications yourself.
+
+Initial role triage:
+- Software Engineering Expert: conditional review; listed as worldwide at $75/hour, but the listing asks for 1–3 years of professional software engineering experience and independent debugging/code-review evidence. The rate is not guaranteed.
+- Content Writer & AI Evaluation Specialist (UK/US): low priority until Kenya eligibility is explicitly confirmed; older listing, 40 hours/week, and targets UK/US candidates.
+- Algorithms and Theory Researcher: not recommended without a relevant PhD, published algorithms research and released research code.
+
+These are third-party listing summaries, not an offer, verified opening guarantee, or confirmation that a Kenyan applicant will be accepted.
