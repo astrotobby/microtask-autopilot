@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from microtask_monitor.sync_reports import import_report, validate_report
+from microtask_monitor.local_server import HOST, PORT
 
 
 class SyncReportTests(unittest.TestCase):
@@ -59,6 +60,11 @@ class SyncReportTests(unittest.TestCase):
             result = import_report(second_report, self.metadata("102", "202"), db, latest)
             self.assertEqual(result["inserted"], 0)
             self.assertEqual(result["updated"], 1)
+
+
+    def test_local_server_is_loopback_only(self):
+        self.assertEqual(HOST, "127.0.0.1")
+        self.assertEqual(PORT, 8765)
 
     def test_rejects_non_https_listing_url(self):
         report = self.sample()
