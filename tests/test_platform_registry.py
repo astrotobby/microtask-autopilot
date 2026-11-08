@@ -55,5 +55,19 @@ class PlatformRegistryTests(unittest.TestCase):
         for role in afterquery_roles:
             self.assertEqual(role["apply_via"], "https://experts.afterquery.com/home")
 
+
+    def test_each_target_platform_has_a_discovery_entry(self):
+        sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
+        sources = json.loads(sources_path.read_text(encoding="utf-8"))
+        platform_ids = {p["id"] for p in self.platforms}
+        discovered_ids = {s["platform_id"] for s in sources["sources"]}
+        self.assertTrue(platform_ids.issubset(discovered_ids), platform_ids - discovered_ids)
+
+    def test_no_account_portal_is_marked_for_automated_fetch(self):
+        sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
+        sources = json.loads(sources_path.read_text(encoding="utf-8"))
+        for source in sources["sources"]:
+            self.assertFalse(source.get("automated_fetch_enabled", False), source["id"])
+
 if __name__ == "__main__":
     unittest.main()
