@@ -45,3 +45,13 @@ Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may de
 - No bypassing CAPTCHA, MFA, anti-bot controls, identity checks, or platform rules.
 - Only add feeds whose use is permitted by their publisher.
 - Never store passwords, cookies, session tokens, API keys, or identity documents in this repository.
+
+## Target platform registry
+
+The eight requested services are recorded in `microtask_monitor/platforms.json`: Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery, Handshake AI and Braintrust.
+
+The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
+
+The registry is intentionally conservative: it tracks platform status and allowed/blocked actions but does not sign in, scrape private dashboards, accept tasks, complete work or submit proofs. Platform automation must remain disabled unless the exact service identity, current official terms and task-specific instructions explicitly permit the proposed action.
+
+The workflow runs unit tests against the registry before each scan.
