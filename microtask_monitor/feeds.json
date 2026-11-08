@@ -1,3 +1,28 @@
 {
-  "feeds": []
+  "feeds": [
+    {
+      "name": "We Work Remotely - Programming",
+      "category": "supplementary_remote_jobs",
+      "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+      "attribution": "We Work Remotely"
+    },
+    {
+      "name": "We Work Remotely - Design",
+      "category": "supplementary_remote_jobs",
+      "url": "https://weworkremotely.com/categories/remote-design-jobs.rss",
+      "attribution": "We Work Remotely"
+    },
+    {
+      "name": "We Work Remotely - Sales and Marketing",
+      "category": "supplementary_remote_jobs",
+      "url": "https://weworkremotely.com/categories/remote-sales-and-marketing-jobs.rss",
+      "attribution": "We Work Remotely"
+    },
+    {
+      "name": "Himalayas - Remote Jobs",
+      "category": "supplementary_remote_jobs",
+      "url": "https://himalayas.app/jobs/rss",
+      "attribution": "Himalayas"
+    }
+  ]
 }
