@@ -38,6 +38,21 @@ These are supplementary remote-job sources, not direct task feeds from Atlas Cap
 
 Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may delay scheduled runs, and usage is subject to account/repository limits.
 
+## Local control dashboard
+
+A no-dependency dashboard is available at `dashboard/index.html`.
+
+### Open on Windows
+
+1. Download or clone this repository.
+2. Open the `dashboard` folder.
+3. Double-click `open-dashboard.bat` (or open `index.html` in Chrome).
+4. In **Opportunities**, import the JSON file from a downloaded `hourly-opportunity-report` artifact.
+5. Update platform statuses, track applications, and record payments actually received.
+6. Use **Export backup** regularly to save your local records as a JSON backup.
+
+The dashboard runs locally in your browser and uses browser local storage. Its records do not automatically sync to GitHub or another device. The opportunity inbox refreshes only when you import a newer JSON report. Do not store passwords, cookies, tokens, OTPs, identity documents or payment credentials in the dashboard. Currency totals are kept separate; no exchange rate is assumed.
+
 ## Scope and safety
 
 - Public feeds only; no worker-account logins or private dashboards.
