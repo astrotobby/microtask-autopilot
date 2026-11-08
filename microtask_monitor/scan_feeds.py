@@ -137,6 +137,88 @@ def parse_feed(feed):
         }))
     return parsed_items
 
+
+def safe_link(url):
+    """Return an escaped HTTPS URL, or an empty string for unsafe destinations."""
+    parsed = urlparse(url or "")
+    if parsed.scheme != "https" or not parsed.netloc:
+        return ""
+    return html.escape(url, quote=True)
+
+
+def render_html(report):
+    """Render a self-contained human-readable dashboard from a report dictionary."""
+    platform_names = {p.get("id"): p.get("name", p.get("id", "Platform"))
+                      for p in report.get("platforms", [])}
+    source_rows = []
+    for source in report.get("discovery_sources", {}).get("sources", []):
+        url = safe_link(source.get("url"))
+        name = html.escape(source.get("name", "Discovery source"))
+        platform = html.escape(platform_names.get(source.get("platform_id"), source.get("platform_id", "Other")))
+        purpose = html.escape(source.get("use", source.get("reason", "")))
+        link = f'<a href="{url}" target="_blank" rel="noopener noreferrer">Open official/source page</a>' if url else "Link unavailable"
+        source_rows.append(
+            f"<tr><td>{platform}</td><td><strong>{name}</strong><br>{purpose}</td><td>{link}</td></tr>"
+        )
+
+    role_rows = []
+    for role in report.get("discovery_sources", {}).get("current_reviewed_roles", []):
+        title = html.escape(role.get("title", "Untitled role"))
+        rate = html.escape(str(role.get("advertised_rate") or "Not stated"))
+        fit = html.escape(role.get("fit_assessment", "Review manually"))
+        source_url = safe_link(role.get("source_url"))
+        apply_url = safe_link(role.get("apply_via"))
+        source_link = f'<a href="{source_url}" target="_blank" rel="noopener noreferrer">Listing</a>' if source_url else "—"
+        apply_link = f'<a href="{apply_url}" target="_blank" rel="noopener noreferrer">Apply/review</a>' if apply_url else "—"
+        role_rows.append(f"<tr><td>{title}</td><td>{rate}</td><td>{fit}</td><td>{source_link} · {apply_link}</td></tr>")
+
+    listing_rows = []
+    for item in report.get("items", []):
+        title = html.escape(item.get("title", "Untitled listing"))
+        url = safe_link(item.get("url"))
+        link = f'<a href="{url}" target="_blank" rel="noopener noreferrer">{title}</a>' if url else title
+        listing_rows.append(
+            "<tr>"
+            f"<td>{html.escape(item.get('priority', ''))}</td>"
+            f"<td>{html.escape(str(item.get('relevance_score', '')))}</td>"
+            f"<td>{html.escape(item.get('kenya_eligibility', ''))}</td>"
+            f"<td>{link}<br><small>{html.escape(item.get('source', ''))}</small></td>"
+            f"<td>{html.escape(item.get('summary', ''))}</td>"
+            "</tr>"
+        )
+
+    checked = html.escape(report.get("checked_at_utc", "Unknown"))
+    note = html.escape(report.get("important_note", "Verify every listing manually."))
+    return """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Microtask Autopilot Opportunity Report</title>
+<style>
+:root{color-scheme:light}body{font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;background:#f4f6f8;color:#17202a}
+main{max-width:1180px;margin:auto;padding:24px}h1{margin-bottom:4px}h2{margin-top:30px}
+.muted,small{color:#596579}.stats{display:flex;gap:12px;flex-wrap:wrap;margin:18px 0}
+.stat{background:white;border:1px solid #dce2e8;border-radius:10px;padding:14px 18px;min-width:140px}
+.stat strong{display:block;font-size:24px}section{background:white;border:1px solid #dce2e8;border-radius:10px;padding:16px;margin-top:18px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e8edf1;vertical-align:top}
+th{background:#f7f9fb}a{color:#0759a5} .notice{background:#fff8e6;border-left:4px solid #d59b22;padding:12px}
+</style></head><body><main>
+<h1>Microtask Autopilot</h1><div class="muted">Report generated (UTC): """ + checked + """</div>
+<div class="stats">
+<div class="stat"><strong>""" + str(len(report.get("platforms", []))) + """</strong>Target platforms</div>
+<div class="stat"><strong>""" + str(report.get("feed_count", 0)) + """</strong>Public feeds scanned</div>
+<div class="stat"><strong>""" + str(report.get("unique_listing_count", 0)) + """</strong>Unique listings</div>
+<div class="stat"><strong>""" + str(report.get("high_review_count", 0)) + """</strong>High-priority reviews</div>
+<div class="stat"><strong>""" + str(report.get("medium_review_count", 0)) + """</strong>Medium-priority reviews</div>
+</div>
+<p class="notice">""" + note + """ This report does not log in to platform accounts, accept tasks, or submit work.</p>
+<section><h2>Eight-platform discovery directory</h2><p class="muted">These are navigation links, not proof of live tasks or Kenya eligibility.</p>
+<table><thead><tr><th>Platform</th><th>Source and notes</th><th>Link</th></tr></thead><tbody>""" + "".join(source_rows) + """</tbody></table></section>
+<section><h2>Reviewed role snapshots</h2><p class="muted">Third-party listings may be stale. Verify availability, pay and eligibility on the official platform.</p>
+<table><thead><tr><th>Role</th><th>Advertised rate</th><th>Fit assessment</th><th>Links</th></tr></thead><tbody>""" + ("".join(role_rows) or "<tr><td colspan='4'>No reviewed role snapshots.</td></tr>") + """</tbody></table></section>
+<section><h2>Public-feed opportunities</h2><p class="muted">Keyword scoring is a triage aid, not a guarantee.</p>
+<table><thead><tr><th>Priority</th><th>Score</th><th>Kenya status</th><th>Listing</th><th>Summary</th></tr></thead><tbody>""" + ("".join(listing_rows) or "<tr><td colspan='5'>No listings found in the configured feeds.</td></tr>") + """</tbody></table></section>
+</main></body></html>"""
+
+
 def main():
     config = json.loads(FEEDS.read_text(encoding="utf-8"))
     platform_config = json.loads(PLATFORMS.read_text(encoding="utf-8"))
@@ -192,7 +274,11 @@ def main():
     print(f"Saved {len(items)} unique listings ({report['high_review_count']} high-review, {report['medium_review_count']} medium-review)")
     print(f"Feed errors: {len(errors)}")
     print(f"JSON report: {json_path}")
+    html_path = REPORTS / f"hourly-{stamp}.html"
+    html_path.write_text(render_html(report), encoding="utf-8")
+
     print(f"CSV report: {csv_path}")
+    print(f"HTML dashboard: {html_path}")
 
 if __name__ == "__main__":
     main()
