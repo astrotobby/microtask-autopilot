@@ -77,7 +77,7 @@ footer{padding:25px 0;color:#778398;font-size:12px}
  </section>
 
  <section id="opportunities" class="panel">
-  <h1>Opportunity inbox</h1><p class="muted">Import the JSON report from your GitHub Actions artifact. CSV and HTML are also available for viewing, but JSON is used for importing leads.</p>
+  <h1>Opportunity inbox</h1><p class="muted">When the local agent is running, new GitHub Actions reports appear here automatically. Manual JSON import remains available as a fallback.</p>
   <div class="card" style="margin:16px 0">
    <div class="row"><div><strong>Import latest GitHub report (JSON)</strong><div class="muted">Choose the hourly-*.json file extracted from hourly-opportunity-report.zip.</div></div><label class="btn primary" style="margin:0;cursor:pointer;text-align:center">Choose JSON <input id="importReport" type="file" accept=".json,application/json" hidden></label></div>
    <div id="importStatus" class="muted" style="margin-top:8px">No report imported yet.</div>
@@ -259,7 +259,7 @@ async function refreshFromLocalAgent(){
   }
  }catch(err){
   const el=document.getElementById("agentStatus");
-  if(el)el.textContent="Agent not connected yet · start open-dashboard.bat";
+  if(el)el.textContent="Local agent not reachable · start open-dashboard.bat";
  }
 }
 setInterval(refreshFromLocalAgent,60000);
