@@ -140,20 +140,23 @@
     {
       "id": "braintrust",
       "name": "Braintrust",
-      "official_url": "https://www.usebraintrust.com/",
-      "identity_status": "official_homepage_known",
-      "kenya_eligibility": "must_verify_per_role_and_contract",
-      "automation_status": "manual_application_only_pending_current_terms_review",
+      "official_url": "https://app.usebraintrust.com/talent/dashboard/welcome/",
+      "identity_status": "user_confirmed_official_talent_dashboard",
+      "kenya_eligibility": "not_in_restricted_territories_but_verify_role_and_payment_method",
+      "automation_status": "public_role_discovery_only_manual_profile_and_applications",
       "allowed_actions": [
         "track_status",
-        "public_role_discovery"
+        "public_role_discovery",
+        "open_official_talent_dashboard"
       ],
       "blocked_actions": [
         "automated_identity_or_skill_claims",
+        "automated_profile_submission",
+        "automated_assessment_answers",
         "automated_contract_acceptance",
-        "automated_submission_without_review"
+        "captcha_or_identity_bypass"
       ],
-      "notes": "Treat as professional freelance roles rather than microtasks; user must review applications, skills, rates and contracts."
+      "notes": "User supplied the official Talent dashboard URL. Braintrust's current Terms list restricted territories (Cuba, Iran, North Korea, Syria and specified Ukrainian regions); Kenya is not named in that list, but account eligibility and role-specific country restrictions still need confirmation. Profile must be truthful; ID/location and financial-account verification may be requested. Treat Braintrust as a vetted professional talent marketplace, not a generic microtask site. Current public talent page describes AI skills interview and certification; profile creation and application remain human-reviewed. Verify Kenya payout method in the account before investing significant time."
     }
   ]
 }
