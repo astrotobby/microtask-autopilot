@@ -8,20 +8,21 @@
     {
       "id": "atlas_capture",
       "name": "Atlas Capture",
-      "official_url": null,
-      "identity_status": "needs_user_confirmed_official_url",
-      "kenya_eligibility": "unverified",
+      "official_url": "https://www.atlascapture.io/",
+      "identity_status": "user_confirmed_official_url",
+      "kenya_eligibility": "not_confirmed_check_country_availability",
       "automation_status": "manual_only_pending_task_rules",
       "allowed_actions": [
         "track_status",
-        "open_official_site_after_url_verification"
+        "public_information_review",
+        "open_official_site"
       ],
       "blocked_actions": [
         "automated_task_completion",
         "automated_proof_submission",
         "captcha_or_identity_bypass"
       ],
-      "notes": "User refers to Atlas Capture hand-action labeling tasks. Confirm exact official site and task-specific rules before connecting."
+      "notes": "Official site reviewed. Consumer capture tasks require an iPhone 11 or newer and task availability/pay vary by country. The standard consumer recording workflow requires a supported iPhone; verify device compatibility and country availability before spending money or attempting signup. Recording must be genuine and human-performed; do not automate task recording or submissions."
     },
     {
       "id": "clickworker",
@@ -101,12 +102,14 @@
     {
       "id": "afterquery",
       "name": "AfterQuery",
-      "official_url": null,
-      "identity_status": "needs_user_confirmed_official_url",
-      "kenya_eligibility": "unverified",
-      "automation_status": "disabled_until_identity_and_policy_verified",
+      "official_url": "https://experts.afterquery.com/home",
+      "identity_status": "user_confirmed_official_url",
+      "kenya_eligibility": "role_specific_global_roles_exist_verify_each_opening",
+      "automation_status": "public_role_discovery_only_manual_application",
       "allowed_actions": [
-        "track_status"
+        "track_status",
+        "public_role_discovery",
+        "open_official_role_page"
       ],
       "blocked_actions": [
         "account_connection",
@@ -114,7 +117,7 @@
         "automated_task_completion",
         "automated_submission"
       ],
-      "notes": "Exact official URL is unknown. Do not connect to similarly named domains without confirmation."
+      "notes": "Experts portal identity confirmed. Public listings include remote expert contracts, including a Content Writer and Evaluator - Global listing; requirements, pay, work location, weekly commitment and payout method vary by role. Applications, assessments, identity checks, contract acceptance and work submissions remain human-reviewed."
     },
     {
       "id": "handshake_ai",
