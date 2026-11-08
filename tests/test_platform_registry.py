@@ -96,6 +96,26 @@ class PlatformRegistryTests(unittest.TestCase):
         self.assertNotIn("<script>alert(1)</script>", output)
         self.assertIn("remote_scope_unclear_kenya_not_confirmed", output)
 
+
+    def test_local_dashboard_has_all_core_workspaces_and_backup(self):
+        dashboard = ROOT / "dashboard" / "index.html"
+        self.assertTrue(dashboard.exists())
+        page = dashboard.read_text(encoding="utf-8")
+        for section in ("overview", "platforms", "opportunities", "applications", "earnings"):
+            self.assertIn('id="' + section + '"', page)
+        for platform_id in EXPECTED:
+            self.assertIn('id:"' + platform_id + '"', page)
+        self.assertIn("importReport", page)
+        self.assertIn("exportBackup", page)
+        self.assertIn("localStorage", page)
+
+    def test_local_dashboard_does_not_request_secrets_or_external_scripts(self):
+        page = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8").lower()
+        self.assertNotIn("<script src=", page)
+        self.assertNotIn("password", page)
+        self.assertNotIn("session_token", page)
+        self.assertIn("never enter passwords", page)
+
     def test_each_target_platform_has_a_discovery_entry(self):
         sources_path = ROOT / "microtask_monitor" / "discovery_sources.json"
         sources = json.loads(sources_path.read_text(encoding="utf-8"))
