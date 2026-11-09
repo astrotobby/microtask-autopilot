@@ -15,7 +15,8 @@ Build and maintain a reliable, free, Kenya-aware microtask opportunity workflow.
 3. Each successful run uploads `hourly-opportunity-report` with JSON, CSV and HTML.
 4. `microtask_monitor/sync_reports.py` polls the public GitHub Actions API, downloads the latest successful non-expired report artifact, validates it, writes `data/latest_report.json`, and deduplicates listings in `data/autopilot.sqlite3`.
 5. `microtask_monitor/local_server.py` binds only to 127.0.0.1:8765, runs report sync every 15 minutes, and serves the dashboard/API.
-6. `dashboard/index.html` polls the local API and refreshes opportunities automatically. Application and earnings records currently remain in browser localStorage.
+6. `dashboard/index.html` is the control panel (Overview, Opportunity Explorer, Application Manager, Task Workspace, Earnings, Platform Monitor, Notifications). All business records live in SQLite via `microtask_monitor/api.py`; browser localStorage holds only UI conveniences and old records that are imported once and never deleted.
+   Backend modules: `db.py` (versioned migrations with automatic backup), `intelligence.py` (eligibility classes, scoring, change/expiry/duplicate tracking), `policy.py` + `capabilities.json` (platform capability records and hard enforcement), `workflow.py` (applications, tasks, evidence, earnings with human-approval gates), `assistant.py` (local rule-based AI layer), `notify.py` (deduplicated notifications), `reliability.py` (backoff, resumable downloads, atomic writes).
 7. `dashboard/open-dashboard.bat` starts the local server and opens the browser. `dashboard/install-autostart.bat` optionally registers a current-user Windows logon task.
 
 ## Windows commands
@@ -71,3 +72,8 @@ No third-party Python package is required for the current report sync/server com
 - Preserve existing user data when updating code.
 - Do not change the cloud scanner's data-source claims: the current four RSS feeds are supplementary remote-job feeds, not direct feeds from the eight target platforms.
 - Keep a clear distinction between monitoring, account access, task execution and submission.
+- Every platform action must pass `policy.check_action`; unknown platforms/actions fail closed. Never add code that applies, accepts tasks, submits evidence, pays or logs in on the user's behalf.
+- Eligibility classes (KENYA_CONFIRMED, WORLDWIDE_CONFIRMED, KENYA_UNVERIFIED, KENYA_UNSUPPORTED, EXPIRED, MANUAL_REVIEW_REQUIRED) must never be inferred from site accessibility or keywords.
+- Advertised pay is never "earnings"; only a recorded payment is received money.
+- Database changes require a new migration in `db.py` (never edit an applied one) plus a data-preservation test.
+- Tests that touch sync/DB should set `AUTOPILOT_NO_SLEEP=1`, `AUTOPILOT_NO_NOTIFY=1`, `AUTOPILOT_SQLITE_SYNCHRONOUS=OFF` and use temp paths, never `data/`.

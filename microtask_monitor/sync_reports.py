@@ -7,7 +7,10 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import http.client
+import os
+import sys
 import zlib
 from contextlib import closing
 import json
@@ -24,6 +27,9 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:      # allow `python microtask_monitor/sync_reports.py`
+    sys.path.insert(0, str(ROOT))
+from microtask_monitor import db as _db, intelligence as _ig, reliability as _rel  # noqa: E402
 DATA_DIR = ROOT / "data"
 DB_PATH = DATA_DIR / "autopilot.sqlite3"
 LATEST_REPORT = DATA_DIR / "latest_report.json"
@@ -37,12 +43,16 @@ REPORT_DATA_BRANCH = "report-data"
 RAW_REPORT_URL = (
     f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{REPORT_DATA_BRANCH}/latest.json"
 )
+RAW_BASE = f"https://raw.githubusercontent.com/{OWNER}/{REPO}/{REPORT_DATA_BRANCH}"
+MANIFEST_URL = RAW_BASE + "/latest.manifest.json"
+GZ_URL = RAW_BASE + "/latest.json.gz"
+DOWNLOAD_DIR = DATA_DIR / "downloads"
 MAX_ARCHIVE_BYTES = 15 * 1024 * 1024
 MAX_JSON_BYTES = 8 * 1024 * 1024
 LOG = logging.getLogger("microtask_autopilot.sync")
 
 
-def api_json(url: str) -> dict[str, Any]:
+def _api_json_once(url: str) -> dict[str, Any]:
     request = urllib.request.Request(
         url,
         headers={
@@ -56,10 +66,14 @@ def api_json(url: str) -> dict[str, Any]:
             payload = response.read(2_000_000)
     except urllib.error.HTTPError as exc:
         body = exc.read(300).decode("utf-8", "replace")
+        try:
+            retry_after = float(exc.headers.get("Retry-After", ""))
+        except (TypeError, ValueError):
+            retry_after = None
         raise SyncStageError("github-api", f"{exc.reason} for {url} {body}".strip(),
-                             exc.code) from exc
-    except urllib.error.URLError as exc:
-        raise SyncStageError("network", f"Could not reach api.github.com: {exc.reason}") from exc
+                             exc.code, retry_after=retry_after) from exc
+    except (http.client.HTTPException, OSError) as exc:      # URLError, timeouts, resets, DNS, TLS
+        raise SyncStageError("network", f"Could not reach api.github.com: {getattr(exc, 'reason', exc)}") from exc
     data = json.loads(payload.decode("utf-8"))
     if not isinstance(data, dict):
         raise ValueError("GitHub API returned an unexpected response")
@@ -69,11 +83,24 @@ def api_json(url: str) -> dict[str, Any]:
 class SyncStageError(RuntimeError):
     """A sync failure tagged with the stage that failed and any HTTP status."""
 
-    def __init__(self, stage: str, message: str, status: int | None = None):
+    def __init__(self, stage: str, message: str, status: int | None = None, retry_after: float | None = None):
         self.stage = stage
         self.status = status
+        self.retry_after = retry_after
         prefix = f"[{stage}]" + (f" HTTP {status}" if status is not None else "")
         super().__init__(f"{prefix}: {message}")
+
+
+def is_retryable(exc: BaseException) -> bool:
+    """Network trouble, rate limits and 5xx are retried; auth/not-found/validation errors are not."""
+    return isinstance(exc, SyncStageError) and (
+        exc.stage in ("network", "published-report") and exc.status in (None, 429, 500, 502, 503, 504)
+        or exc.status in (429, 500, 502, 503, 504))
+
+
+def api_json(url: str) -> dict[str, Any]:
+    return _rel.with_retries(lambda: _api_json_once(url), attempts=4, retry_if=is_retryable,
+                             retry_after=lambda e: getattr(e, "retry_after", None))
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -143,16 +170,24 @@ def _check_size(data: bytes) -> bytes:
     return data
 
 
-def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
-                           url: str = RAW_REPORT_URL, opener=urllib.request.urlopen,
-                           ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Fetch the unauthenticated report copy the workflow publishes to report-data."""
+def _published_metadata(run: dict[str, Any], artifact: dict[str, Any], report_file: str) -> dict[str, Any]:
+    return {
+        "run_id": run["id"], "run_url": run.get("html_url", ""), "run_created_at": run.get("created_at", ""),
+        "artifact_id": artifact["id"], "artifact_created_at": artifact.get("created_at", ""),
+        "artifact_expires_at": artifact.get("expires_at", ""), "report_file": report_file,
+    }
+
+
+def _fetch_published_once(url: str, opener) -> bytes:
     request = urllib.request.Request(url, headers={
-        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0",
-        "Accept-Encoding": "gzip"})
+        "User-Agent": "Microtask-Autopilot-Local-Agent/1.0", "Accept-Encoding": "gzip"})
     try:
         with opener(request, timeout=180) as response:
             payload = response.read(MAX_JSON_BYTES + 1)
+            declared = response.headers.get("Content-Length")
+            # http.client returns short data silently when a connection drops mid-body; detect it explicitly.
+            if declared and declared.isdigit() and len(payload) < int(declared):
+                raise http.client.IncompleteRead(payload, int(declared) - len(payload))
             if response.headers.get("Content-Encoding", "").lower() == "gzip":
                 payload = gzip.GzipFile(fileobj=BytesIO(payload)).read(MAX_JSON_BYTES + 1)
     except urllib.error.HTTPError as exc:
@@ -160,22 +195,75 @@ def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
     except urllib.error.URLError as exc:
         raise SyncStageError("network", f"Could not reach raw.githubusercontent.com: {exc.reason}") from exc
     except (http.client.HTTPException, EOFError, gzip.BadGzipFile, zlib.error, OSError) as exc:
-        # Truncated or corrupted transfer on a flaky connection: report it, retry next cycle.
+        # Truncated or corrupted transfer on a flaky connection: report it, retry.
         raise SyncStageError("published-report", f"Incomplete download ({type(exc).__name__}: {exc})") from exc
+    return payload
+
+
+def fetch_published_report(run: dict[str, Any], artifact: dict[str, Any],
+                           url: str = RAW_REPORT_URL, opener=urllib.request.urlopen,
+                           ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Fetch the unauthenticated whole-JSON report copy the workflow publishes to report-data."""
+    payload = _rel.with_retries(lambda: _fetch_published_once(url, opener), attempts=3, retry_if=is_retryable)
     if len(payload) > MAX_JSON_BYTES:
         raise ValueError("Published report is too large")
     report = json.loads(payload.decode("utf-8"))
     validate_report(report)
-    metadata = {
-        "run_id": run["id"],
-        "run_url": run.get("html_url", ""),
-        "run_created_at": run.get("created_at", ""),
-        "artifact_id": artifact["id"],
-        "artifact_created_at": artifact.get("created_at", ""),
-        "artifact_expires_at": artifact.get("expires_at", ""),
-        "report_file": f"{REPORT_DATA_BRANCH}/latest.json",
-    }
-    return report, metadata
+    return report, _published_metadata(run, artifact, f"{REPORT_DATA_BRANCH}/latest.json")
+
+
+def fetch_manifest_report(run: dict[str, Any], artifact: dict[str, Any], manifest_url: str = MANIFEST_URL,
+                          gz_url: str = GZ_URL, opener=urllib.request.urlopen, download_dir: Path = DOWNLOAD_DIR,
+                          ) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Resumable, integrity-checked download: small manifest first, then the gzip with HTTP Range resume.
+
+    Partial progress survives timeouts and restarts. The size and SHA-256 of both the compressed and the
+    decompressed report must match the manifest, otherwise the partial file is discarded and nothing is imported.
+    """
+    manifest_raw = _rel.with_retries(lambda: _fetch_published_once(manifest_url, opener), attempts=3, retry_if=is_retryable)
+    try:
+        manifest = json.loads(manifest_raw.decode("utf-8"))
+        gz_size, gz_sha, json_sha = int(manifest["gz_size"]), str(manifest["gz_sha256"]), str(manifest["sha256"])
+    except (ValueError, KeyError, TypeError) as exc:
+        raise SyncStageError("integrity", f"Report manifest is invalid: {exc}") from exc
+    if gz_size <= 0 or gz_size > MAX_ARCHIVE_BYTES:
+        raise SyncStageError("integrity", "Report manifest declares an unreasonable size")
+    part = Path(download_dir) / f"latest-{gz_sha[:12]}.json.gz.part"
+    for stale in Path(download_dir).glob("latest-*.part") if Path(download_dir).exists() else []:
+        if stale != part:
+            stale.unlink(missing_ok=True)             # leftovers from older reports
+    try:
+        blob = _rel.ranged_download(gz_url, part, expected_size=gz_size, opener=opener)
+    except _rel.DownloadIncomplete as exc:
+        raise SyncStageError("published-report", f"Incomplete download: {exc} (progress kept; will resume)") from exc
+    except urllib.error.HTTPError as exc:
+        raise SyncStageError("published-report", f"{exc.reason} for {gz_url}", exc.code) from exc
+    if _rel.sha256_hex(blob) != gz_sha:
+        part.unlink(missing_ok=True)
+        raise SyncStageError("integrity", "Downloaded report failed its checksum (the CDN may still be updating); will retry")
+    try:
+        payload = gzip.GzipFile(fileobj=BytesIO(blob)).read(MAX_JSON_BYTES + 1)
+    except (OSError, EOFError, zlib.error) as exc:
+        part.unlink(missing_ok=True)
+        raise SyncStageError("integrity", f"Report archive is corrupt: {exc}") from exc
+    if len(payload) > MAX_JSON_BYTES or _rel.sha256_hex(payload) != json_sha:
+        part.unlink(missing_ok=True)
+        raise SyncStageError("integrity", "Decompressed report does not match the manifest checksum")
+    report = json.loads(payload.decode("utf-8"))
+    validate_report(report)
+    part.unlink(missing_ok=True)
+    return report, _published_metadata(run, artifact, f"{REPORT_DATA_BRANCH}/latest.json.gz")
+
+
+def fetch_best_published_report(run: dict[str, Any], artifact: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Prefer the resumable manifest path; fall back to the whole-JSON copy only if no manifest is published yet."""
+    try:
+        return fetch_manifest_report(run, artifact)
+    except SyncStageError as exc:
+        if exc.status == 404:
+            LOG.info("No report manifest published yet; using the whole-JSON copy")
+            return fetch_published_report(run, artifact)
+        raise
 
 
 def get_latest_report() -> tuple[dict[str, Any], dict[str, Any]]:
@@ -219,7 +307,7 @@ def get_latest_report() -> tuple[dict[str, Any], dict[str, Any]]:
             LOG.info("Artifact download needs authentication (HTTP %s); "
                      "using the public %s branch copy instead", exc.status,
                      REPORT_DATA_BRANCH)
-            return fetch_published_report(run, artifact)
+            return fetch_best_published_report(run, artifact)
         with zipfile.ZipFile(BytesIO(archive)) as bundle:
             candidates = [
                 info for info in bundle.infolist()
@@ -260,128 +348,89 @@ def validate_report(report: Any) -> None:
             raise ValueError("Report contains a non-HTTPS listing URL")
 
 
-def init_db(db_path: Path = DB_PATH) -> None:
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    with closing(sqlite3.connect(db_path)) as conn, conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS sync_state (
-                key TEXT PRIMARY KEY,
-                value TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS reports (
-                report_key TEXT PRIMARY KEY,
-                checked_at_utc TEXT NOT NULL,
-                run_id TEXT NOT NULL,
-                run_url TEXT,
-                artifact_id TEXT NOT NULL,
-                imported_at_utc TEXT NOT NULL,
-                listing_count INTEGER NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS opportunities (
-                url TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                source TEXT,
-                summary TEXT,
-                priority TEXT,
-                relevance_score INTEGER,
-                category TEXT,
-                kenya_eligibility TEXT,
-                published TEXT,
-                first_seen_utc TEXT NOT NULL,
-                last_seen_utc TEXT NOT NULL,
-                report_checked_at_utc TEXT NOT NULL,
-                raw_json TEXT NOT NULL
-            )
-        """)
-        conn.execute("""
-            CREATE INDEX IF NOT EXISTS idx_opportunities_priority
-            ON opportunities(priority, relevance_score DESC)
-        """)
-        conn.commit()
+def init_db(db_path: Path | None = None) -> None:
+    """Create or upgrade the database (versioned migrations; existing records are preserved)."""
+    with closing(_db.connect(db_path or DB_PATH)):
+        pass
 
 
 def import_report(report: dict[str, Any], metadata: dict[str, Any],
-                  db_path: Path = DB_PATH, latest_path: Path = LATEST_REPORT) -> dict[str, int]:
-    validate_report(report)
-    init_db(db_path)
+                  db_path: Path | None = None, latest_path: Path | None = None) -> dict[str, int]:
+    """Validate, then import atomically. A failed or invalid report never touches existing data."""
+    db_path, latest_path = db_path or DB_PATH, latest_path or LATEST_REPORT    # resolved at call time
+    validate_report(report)                              # raises before anything is written
     checked = report["checked_at_utc"]
-    now = datetime.now(timezone.utc).isoformat()
-    run_id = str(metadata["run_id"])
-    artifact_id = str(metadata["artifact_id"])
-    inserted = updated = 0
-    latest_path.parent.mkdir(parents=True, exist_ok=True)
-    latest_payload = {"report": report, "sync": metadata, "synced_at_utc": now}
-    latest_path.write_text(json.dumps(latest_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    now_dt = datetime.now(timezone.utc)
+    now = now_dt.isoformat()
+    run_id, artifact_id = str(metadata["run_id"]), str(metadata["artifact_id"])
+    report_key = f"{run_id}:{artifact_id}"
+    encoded = json.dumps({"report": report, "sync": metadata, "synced_at_utc": now}, ensure_ascii=False, indent=2).encode("utf-8")
+    with closing(_db.connect(db_path)) as conn:
+        if conn.execute("SELECT 1 FROM reports WHERE report_key = ?", (report_key,)).fetchone():
+            if not Path(latest_path).exists():            # heal a missing file without re-importing
+                _rel.atomic_write_bytes(latest_path, encoded)
+            return {"inserted": 0, "updated": 0, "already_imported": 1, "total_items": len(report["items"])}
+        # Only trust "vanished" for platforms whose scan completed (OpenTrain reports open_listings when ok).
+        complete = {pid for pid, h in (report.get("integrations") or {}).items()
+                    if isinstance(h, dict) and h.get("status") == "ok" and "open_listings" in h}
+        items = [dict(i, report_checked_at_utc=checked) for i in report["items"]]
+        with _db.tx(conn):                               # all-or-nothing
+            stats = _ig.ingest(conn, items, now=now_dt, complete_platforms=complete)
+            conn.execute("""INSERT INTO reports(report_key,checked_at_utc,run_id,run_url,artifact_id,imported_at_utc,listing_count)
+                            VALUES(?,?,?,?,?,?,?)""", (report_key, checked, run_id, metadata.get("run_url", ""), artifact_id, now, len(items)))
+            _db.set_state(conn, "integrations", report.get("integrations", {}))
+            _db.set_state(conn, "eligibility_monitors", report.get("eligibility_monitors", {}))
+            _db.set_state(conn, "last_report", {"checked_at_utc": checked, "run_id": run_id, "run_url": metadata.get("run_url", ""),
+                                                "synced_at_utc": now, "listing_count": len(items), "report_file": metadata.get("report_file")})
+            _db.audit(conn, "report.import", "report", report_key, {"items": len(items), **stats}, actor="system")
+    _rel.atomic_write_bytes(latest_path, encoded)         # written only after the DB commit; replace is atomic
+    return {"inserted": stats["new"], "updated": stats["updated"], "already_imported": 0, "total_items": len(items),
+            "changed": stats["changed"], "expired": stats["expired"], "duplicates": stats["duplicates"]}
 
-    with closing(sqlite3.connect(db_path)) as conn, conn:
-        existing = conn.execute(
-            "SELECT 1 FROM reports WHERE report_key = ?", (f"{run_id}:{artifact_id}",)
-        ).fetchone()
-        if existing:
-            return {"inserted": 0, "updated": 0, "already_imported": 1,
-                    "total_items": len(report["items"])}
-        for item in report["items"]:
-            url = item["url"].split("#", 1)[0].rstrip("/")
-            row = conn.execute(
-                "SELECT first_seen_utc FROM opportunities WHERE url = ?", (url,)
-            ).fetchone()
-            first_seen = row[0] if row else now
-            if row:
-                updated += 1
+
+def _record_sync(ok: bool, error: BaseException | None = None, result: dict[str, Any] | None = None,
+                 db_path: Path | None = None) -> None:
+    """Persist sync health. Failures here must never mask the real sync outcome."""
+    try:
+        with closing(_db.connect(db_path or DB_PATH)) as conn, _db.tx(conn):
+            health = _db.get_state(conn, "sync_health", {}) or {}
+            now = _db.now_iso()
+            health["last_attempt_utc"] = now
+            if ok:
+                health.update(last_success_utc=now, consecutive_failures=0, last_error=None, last_error_stage=None,
+                              failure_streak_started=None, last_result=result or {})
             else:
-                inserted += 1
-            conn.execute("""
-                INSERT INTO opportunities (
-                    url,title,source,summary,priority,relevance_score,category,
-                    kenya_eligibility,published,first_seen_utc,last_seen_utc,
-                    report_checked_at_utc,raw_json
-                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
-                ON CONFLICT(url) DO UPDATE SET
-                    title=excluded.title, source=excluded.source,
-                    summary=excluded.summary, priority=excluded.priority,
-                    relevance_score=excluded.relevance_score,
-                    category=excluded.category,
-                    kenya_eligibility=excluded.kenya_eligibility,
-                    published=excluded.published,
-                    last_seen_utc=excluded.last_seen_utc,
-                    report_checked_at_utc=excluded.report_checked_at_utc,
-                    raw_json=excluded.raw_json
-            """, (
-                url, item.get("title", "Untitled"), item.get("source", ""),
-                item.get("summary", ""), item.get("priority", ""),
-                int(item.get("relevance_score", 0)), item.get("category", ""),
-                item.get("kenya_eligibility", ""), item.get("published", ""),
-                first_seen, now, checked,
-                json.dumps(item, ensure_ascii=False),
-            ))
-        conn.execute("""
-            INSERT INTO reports(report_key,checked_at_utc,run_id,run_url,
-                                 artifact_id,imported_at_utc,listing_count)
-            VALUES(?,?,?,?,?,?,?)
-        """, (f"{run_id}:{artifact_id}", checked, run_id, metadata.get("run_url", ""),
-              artifact_id, now, len(report["items"])))
-        conn.execute("""
-            INSERT INTO sync_state(key,value,updated_at) VALUES('last_sync',?,?)
-            ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at
-        """, (json.dumps(latest_payload, ensure_ascii=False), now))
-        conn.commit()
-    return {"inserted": inserted, "updated": updated, "already_imported": 0,
-            "total_items": len(report["items"])}
+                if not health.get("consecutive_failures"):
+                    health["failure_streak_started"] = now
+                health["consecutive_failures"] = int(health.get("consecutive_failures") or 0) + 1
+                health["last_error"] = str(error)[:500]
+                health["last_error_stage"] = getattr(error, "stage", type(error).__name__)
+                health["last_failure_utc"] = now
+            _db.set_state(conn, "sync_health", health)
+    except Exception:                                    # noqa: BLE001
+        LOG.exception("Could not record sync health")
 
 
-def sync_once() -> dict[str, Any]:
-    report, metadata = get_latest_report()
-    result = import_report(report, metadata)
+def sync_once(notify_after: bool = True) -> dict[str, Any]:
+    try:
+        report, metadata = get_latest_report()
+        result = import_report(report, metadata)
+    except Exception as exc:
+        _record_sync(False, exc)                         # a failed download is NEVER recorded as success
+        raise
+    _record_sync(True, result=result)
     LOG.info(
         "Sync complete: %s new, %s updated, %s already imported; %s total listings; run %s",
         result["inserted"], result["updated"], result["already_imported"],
         result["total_items"], metadata["run_id"],
     )
+    if notify_after and os.environ.get("AUTOPILOT_NO_NOTIFY") != "1":
+        try:
+            from microtask_monitor import notify
+            with closing(_db.connect(DB_PATH)) as conn, _db.tx(conn):
+                notify.generate(conn)
+        except Exception:                                # noqa: BLE001
+            LOG.exception("Notification generation failed")
     return {**result, **metadata, "checked_at_utc": report["checked_at_utc"]}
 
 

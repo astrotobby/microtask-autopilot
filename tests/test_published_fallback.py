@@ -1,3 +1,7 @@
+import os
+os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
+os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
+os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 import gzip
 import http.client
 import io
@@ -47,10 +51,12 @@ class PublishedFallbackTests(unittest.TestCase):
         self.assertEqual(ctx.exception.stage, "published-report")
 
     def test_corrupt_gzip_is_a_clean_stage_error(self):
-        resp = _Resp(gzip.compress(b"x" * 100)[:20])
-        resp.headers = {"Content-Encoding": "gzip"}
+        def fresh(request, timeout):               # a real opener returns a new response on every attempt
+            resp = _Resp(gzip.compress(b"x" * 100)[:20])
+            resp.headers = {"Content-Encoding": "gzip"}
+            return resp
         with self.assertRaises(sr.SyncStageError):
-            sr.fetch_published_report({"id": 1}, {"id": 2}, opener=lambda request, timeout: resp)
+            sr.fetch_published_report({"id": 1}, {"id": 2}, opener=fresh)
 
     def test_401_on_artifact_download_falls_back_to_published_report(self):
         runs = {"workflow_runs": [{"id": 1, "status": "completed", "conclusion": "success",

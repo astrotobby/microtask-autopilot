@@ -158,6 +158,40 @@ Optional JSON files under `data/manual/` (gitignored) let you record what you sa
 ### Unified scoring
 Priority order: Kenya-explicit > worldwide > relevance to your skills (AI training/evaluation, annotation, prompting, Python, JavaScript, backend/full-stack, AI-assisted coding, AI automation, writing/research) > legitimate disclosed pay > recent posting > availability. Scores are triage aids, not guarantees; every item requires human verification and approval.
 
+## Phase 2: persistent work management (applications, tasks, evidence, earnings)
+
+The dashboard is now a control panel backed by the local SQLite database (`data/autopilot.sqlite3`), not browser storage.
+
+| Area | What it does | What stays manual |
+|---|---|---|
+| **Opportunity Explorer** | Stores every discovered opportunity with a transparent score, an eligibility class and its reason, requirements found in the text, change history and expiry. Filter by platform, eligibility, skill, pay, category; sort by score, date or pay. | Opening the original link and applying. |
+| **Application Manager** | Prepares a tailored draft from your *established* profile only, lists what is missing, lets you edit and approve it, and records when you submitted and what the platform answered. | Submitting. Approval never sends anything. |
+| **Task Workspace** | Paste task instructions: get a simplified summary, rules, materials, evidence needs, common mistakes and a checklist; track work sessions, evidence (stored locally with a SHA-256) and your submission record. | Doing and submitting the work. |
+| **Earnings** | Separates *expected*, *pending* and *received*. Only a payment you record (with a received date, not in the future) counts as received. Advertised pay is never earnings. | Receiving and verifying payment. |
+| **Platform Monitor** | All 12 platforms: Kenya status, capability levels, integration health, policy verification date, restrictions, required manual action. | Everything the platform requires. |
+| **Notifications** | Dashboard (always), Windows desktop balloon, optional email and Telegram. Deduplicated; a first run gives the top few plus one digest. | – |
+
+### Eligibility classes (never guessed)
+`KENYA_CONFIRMED` (the listing's own country list includes Kenya) · `WORLDWIDE_CONFIRMED` (it says open worldwide) · `KENYA_UNVERIFIED` · `KENYA_UNSUPPORTED` (country list excludes Kenya, or the platform policy lists Kenya as unsupported, e.g. Mindrift) · `EXPIRED` · `MANUAL_REVIEW_REQUIRED`. A site being reachable from Kenya, or a keyword like "Africa", never confirms eligibility.
+
+### Platform capability records and enforcement
+`microtask_monitor/capabilities.json` records, for each platform, discovery, API, login, permitted and prohibited automation, submission rules, country eligibility, payment verification, the last policy verification date and the policy URLs, using the levels `PUBLIC_DISCOVERY_ALLOWED`, `DOCUMENTED_API_ALLOWED`, `MANUAL_ONLY`, `HUMAN_APPROVAL_REQUIRED`, `AUTOMATION_PROHIBITED`, `UNVERIFIED`. Only platforms whose policy was actually read are marked verified; the others say `UNVERIFIED` honestly. `microtask_monitor/policy.py` enforces this in code: unknown platforms/actions fail closed, automated submission, task acceptance, CAPTCHA/MFA/KYC bypass, VPN/proxy use, scraping logged-in areas and probing private endpoints are blocked for every platform, and no platform currently permits automated application submission. Atlas Capture records that your Samsung A05 cannot run iPhone-only workflows.
+
+### Reliability
+Report downloads use retries with exponential backoff, resumable HTTP Range downloads of a gzip + manifest published by the workflow, SHA-256 verification of both files, an atomic all-or-nothing database import, and an atomic replace of `data/latest_report.json` only after the database commit. A failed or invalid download is never recorded as success and never replaces the last good report. `GET /api/health` shows the last success, failure streak and a plain-language explanation. GitHub scheduled workflows can be delayed; hourly execution is not guaranteed.
+
+### AI assistance ($0)
+`microtask_monitor/assistant.py` is rule-based and fully local by default (no model, no network, no paid API). Optionally set `AUTOPILOT_AI_PROVIDER=ollama` (and `AUTOPILOT_OLLAMA_MODEL`) to let a *local* Ollama model polish wording; its output is discarded if it adds numbers, links or length not in your draft. A 1-3B model needs roughly 2-4 GB of free RAM and runs slowly on a CPU-only laptop; it is optional.
+
+### Notifications setup (all optional, free)
+Desktop notifications work on Windows by default (disable with `{"desktop_notifications": false}` in `data/settings.json`). Email: set `AUTOPILOT_SMTP_HOST`, `AUTOPILOT_SMTP_PORT`, `AUTOPILOT_SMTP_USER`, `AUTOPILOT_SMTP_PASSWORD` (an app password), `AUTOPILOT_SMTP_TO`. Telegram: create your own bot with @BotFather and set `AUTOPILOT_TELEGRAM_BOT_TOKEN` and `AUTOPILOT_TELEGRAM_CHAT_ID`. Credentials come only from environment variables and are never stored or logged.
+
+### Security
+The server binds to 127.0.0.1 only, requires a loopback `Host` header, rejects cross-origin and non-JSON writes (CSRF/DNS-rebinding protection), has no endpoint that contacts a platform, and offers no delete endpoint. Never put passwords, cookies, OTPs or identity documents anywhere in this project.
+
+### Profile
+`microtask_monitor/profile.json` lists the skills established for matching and drafting, and `not_established` items (degrees, years of experience, certifications, portfolio links) that are never claimed without your confirmation.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.

@@ -8,320 +8,444 @@
 <style>
 :root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#172033;background:#f3f6fa;font-synthesis:none}
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}
-.top{background:#101827;color:#fff;padding:22px max(20px,calc((100vw - 1200px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.brand{font-size:21px;font-weight:750}.sub{color:#b8c4d6;font-size:13px;margin-top:4px}
-main{max-width:1200px;margin:auto;padding:22px}
-.nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-.nav button,.btn{border:1px solid #d6deea;background:#fff;color:#243047;border-radius:8px;padding:9px 13px;cursor:pointer}
+.top{background:#101827;color:#fff;padding:18px max(16px,calc((100vw - 1240px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:750}.sub{color:#b8c4d6;font-size:13px;margin-top:3px}
+main{max-width:1240px;margin:auto;padding:18px 16px}
+.nav{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 18px}
+.nav button,.btn{border:1px solid #d6deea;background:#fff;color:#243047;border-radius:8px;padding:8px 12px;cursor:pointer}
 .nav button.active,.btn.primary{background:#1c5caa;color:#fff;border-color:#1c5caa}
-.btn.danger{color:#a32323;border-color:#e7bcbc}.btn.small{padding:6px 9px;font-size:13px}
+.btn.danger{color:#a32323;border-color:#e7bcbc}.btn.small{padding:5px 8px;font-size:12.5px}.btn:disabled{opacity:.5;cursor:not-allowed}
+.badge{display:inline-block;min-width:18px;padding:1px 6px;border-radius:99px;background:#c0392b;color:#fff;font-size:11px;margin-left:4px}
 .panel{display:none}.panel.active{display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
-.card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:16px;box-shadow:0 2px 8px #15233b08}
-.metric{font-size:28px;font-weight:750;margin-top:8px}.muted{color:#65738a;font-size:13px}
-h1{font-size:24px;margin:0 0 6px}h2{font-size:18px;margin:0 0 12px}h3{font-size:16px;margin:0 0 7px}
-.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0 12px}
-.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
-.platform-card{background:white;border:1px solid #e0e6ef;border-radius:12px;padding:15px}
-.platform-card p{font-size:13px;line-height:1.45;color:#58677e;min-height:38px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:14px;box-shadow:0 2px 8px #15233b08}
+.metric{font-size:26px;font-weight:750;margin-top:6px}.muted{color:#65738a;font-size:13px}
+h1{font-size:23px;margin:0 0 6px}h2{font-size:17px;margin:0 0 10px}h3{font-size:15px;margin:0 0 6px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 10px}
+.platform-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.platform-card{background:#fff;border:1px solid #e0e6ef;border-radius:12px;padding:14px}
+.platform-card.restricted{border-color:#e7bcbc;background:#fffafa}
+.platform-card p{font-size:13px;line-height:1.45;color:#58677e}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1}
-label{display:block;font-size:13px;color:#536178;margin:9px 0 5px}
-input,select,textarea{width:100%;border:1px solid #ccd6e3;border-radius:8px;padding:9px;background:#fff;color:#172033}
-textarea{min-height:70px;resize:vertical}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+label{display:block;font-size:12.5px;color:#536178;margin:8px 0 4px}
+input,select,textarea{width:100%;border:1px solid #ccd6e3;border-radius:8px;padding:8px;background:#fff;color:#172033}
+textarea{min-height:90px;resize:vertical}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
 .table-wrap{overflow-x:auto;background:#fff;border:1px solid #e0e6ef;border-radius:10px}
-table{width:100%;border-collapse:collapse;min-width:680px}th,td{text-align:left;padding:11px;border-bottom:1px solid #edf0f5;font-size:13px;vertical-align:top}
-th{background:#f8fafc;color:#526078}a{color:#145da0} .tag{display:inline-block;border-radius:99px;padding:3px 8px;background:#edf3fb;color:#284f7d;font-size:11px}
-.notice{background:#fff8e8;border:1px solid #f1dfb6;padding:12px;border-radius:9px;color:#684b17;font-size:13px;line-height:1.45}
-.empty{padding:24px;text-align:center;color:#718096}.right{text-align:right}
-footer{padding:25px 0;color:#778398;font-size:12px}
-.hidden{display:none!important}
-.tag.ok{background:#e6f5ea;color:#1d5c2e}.tag.warn{background:#fff3d6;color:#7a5200}.tag.bad{background:#fde8e8;color:#8a1f1f}
-.group-title{margin:26px 0 4px}.platform-card.restricted{border-color:#e7bcbc;background:#fffafa}
-.tags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.filters-wide{margin-top:10px}
-@media(max-width:600px){main{padding:14px}.top{padding:18px}.metric{font-size:24px}}
+table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:10px;border-bottom:1px solid #edf0f5;font-size:13px;vertical-align:top}
+th{background:#f8fafc;color:#526078}a{color:#145da0}
+.tag{display:inline-block;border-radius:99px;padding:2px 8px;background:#edf3fb;color:#284f7d;font-size:11px;margin:1px 2px 1px 0}
+.tag.ok{background:#e6f5ea;color:#1d5c2e}.tag.warn{background:#fff3d6;color:#7a5200}.tag.bad{background:#fde8e8;color:#8a1f1f}.tag.info{background:#e8f0fb;color:#1c4f8a}
+.notice{background:#fff8e8;border:1px solid #f1dfb6;padding:11px;border-radius:9px;color:#684b17;font-size:13px;line-height:1.45}
+.banner{border-radius:9px;padding:10px 12px;margin:10px 0;font-size:13px}.banner.bad{background:#fde8e8;border:1px solid #f0b8b8;color:#7a1c1c}.banner.ok{background:#e9f6ec;border:1px solid #bfe0c7;color:#1d5c2e}
+.empty{padding:22px;text-align:center;color:#718096}.right{text-align:right}.hidden{display:none!important}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.group-title{margin:24px 0 4px}
+.split{display:grid;grid-template-columns:minmax(260px,1fr) minmax(0,2fr);gap:14px;align-items:start}
+.list-item{padding:10px;border-bottom:1px solid #edf0f5;cursor:pointer}.list-item:hover,.list-item.sel{background:#f1f6fd}
+.check{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:13.5px}.check input{width:auto;margin-top:3px}
+.check.done span{text-decoration:line-through;color:#8a97ab}
+pre.draft{white-space:pre-wrap;background:#f8fafc;border:1px solid #e0e6ef;border-radius:8px;padding:10px;font-size:13px}
+dialog{border:1px solid #cfd8e6;border-radius:12px;max-width:760px;width:94vw}dialog::backdrop{background:#10182766}
+#toast{position:fixed;right:14px;bottom:14px;max-width:420px;z-index:50}#toast div{background:#101827;color:#fff;padding:10px 12px;border-radius:8px;margin-top:6px;font-size:13px}#toast div.bad{background:#8a1f1f}
+footer{padding:22px 0;color:#778398;font-size:12px}
+@media(max-width:820px){.split{grid-template-columns:1fr}.metric{font-size:22px}}
 </style>
 </head>
 <body>
 <header class="top">
- <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, opportunity and earnings tracker · Free local dashboard</div><div class="sub" id="agentStatus">Connecting to local agent…</div></div>
+ <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, application, task and earnings manager · Free local dashboard</div><div class="sub" id="agentStatus">Connecting to local agent…</div></div>
  <div class="row" style="flex:0 0 auto">
-  <button class="btn" id="exportBackup">Export backup</button>
-  <label class="btn" style="margin:0;cursor:pointer">Import backup <input id="importBackup" type="file" accept=".json,application/json" hidden></label>
+  <button class="btn" id="syncNow">Sync now</button>
+  <button class="btn" id="exportBackup">Export data</button>
+  <label class="btn" style="margin:0;cursor:pointer">Import old backup <input id="importBackup" type="file" accept=".json,application/json" hidden></label>
  </div>
 </header>
 <main>
- <div class="notice">This dashboard stores your tracker data in this browser on this device. It does not sign in to work platforms or complete tasks. Never enter passwords, cookies, OTPs, identity documents or payment credentials here. Verify every opportunity and Kenya eligibility at the official source.</div>
+ <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program never logs in to work platforms, applies, accepts or submits tasks, or handles payments for you: you do those steps yourself and record them here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
  <nav class="nav" aria-label="Dashboard sections">
   <button class="active" data-tab="overview">Overview</button>
-  <button data-tab="platforms">Platforms (12)</button>
   <button data-tab="opportunities">Opportunities</button>
   <button data-tab="applications">Applications</button>
+  <button data-tab="tasks">Tasks</button>
   <button data-tab="earnings">Earnings</button>
+  <button data-tab="platforms">Platforms (12)</button>
+  <button data-tab="notifications">Notifications <span class="badge hidden" id="notifBadge">0</span></button>
  </nav>
 
  <section id="overview" class="panel active">
-  <h1>Workspace overview</h1><p class="muted">A single place to review work leads and keep your own progress records.</p>
-  <div class="grid" style="margin-top:16px">
+  <h1>Operations overview</h1><p class="muted">Everything below comes from the persistent local database.</p>
+  <div id="syncBanner"></div>
+  <div class="grid" style="margin-top:12px" id="overviewCards"></div>
+  <div class="grid" style="margin-top:12px">
    <div class="card"><div class="muted">Tracked platforms</div><div class="metric" id="mPlatforms">12</div></div>
    <div class="card"><div class="muted">Active Kenya-eligible sources</div><div class="metric" id="mActive">11</div><div class="muted">Mindrift is restricted for Kenya and not counted</div></div>
-   <div class="card"><div class="muted">New in last 24h</div><div class="metric" id="mNew">0</div></div>
-   <div class="card"><div class="muted">Imported opportunities</div><div class="metric" id="mOpps">0</div></div>
-   <div class="card"><div class="muted">Applications tracked</div><div class="metric" id="mApps">0</div></div>
-   <div class="card"><div class="muted">Recorded earnings (KES)</div><div class="metric" id="mKes">0</div></div>
   </div>
-  <div class="section-head"><h2>Latest opportunities</h2><button class="btn small" data-goto="opportunities">Review opportunities</button></div>
+  <div class="section-head"><h2>Best current opportunities</h2><button class="btn small" data-goto="opportunities">Open explorer</button></div>
   <div id="overviewOpps" class="table-wrap"></div>
-  <div class="section-head"><h2>Application pipeline</h2><button class="btn small" data-goto="applications">Open tracker</button></div>
-  <div id="overviewApps" class="table-wrap"></div>
+  <div class="section-head"><h2>Work in progress</h2><button class="btn small" data-goto="tasks">Open task workspace</button></div>
+  <div id="overviewTasks" class="table-wrap"></div>
+ </section>
+
+ <section id="opportunities" class="panel">
+  <h1>Opportunity Explorer</h1><p class="muted">Eligibility is never guessed: only KENYA_CONFIRMED (the listing's own country list includes Kenya) and WORLDWIDE_CONFIRMED (it says open worldwide) are treated as eligible. Verify everything on the original page.</p>
+  <div class="card" style="margin:12px 0">
+   <div class="row"><div><strong>Import a report file</strong><div class="muted">Fallback if cloud sync is blocked: choose a hourly-*.json file you downloaded yourself. It is validated before import.</div></div><label class="btn primary" style="margin:0;cursor:pointer;text-align:center">Choose JSON <input id="importReport" type="file" accept=".json,application/json" hidden></label></div>
+   <div id="importStatus" class="muted" style="margin-top:6px"></div>
+  </div>
+  <div class="form-grid">
+   <div><label for="platformFilter">Platform</label><select id="platformFilter"></select></div>
+   <div><label for="kenyaFilter">Kenya eligibility</label><select id="kenyaFilter">
+    <option value="">All classes</option><option value="KENYA_CONFIRMED">KENYA_CONFIRMED</option><option value="WORLDWIDE_CONFIRMED">WORLDWIDE_CONFIRMED</option>
+    <option value="KENYA_UNVERIFIED">KENYA_UNVERIFIED</option><option value="MANUAL_REVIEW_REQUIRED">MANUAL_REVIEW_REQUIRED</option>
+    <option value="KENYA_UNSUPPORTED">KENYA_UNSUPPORTED</option><option value="EXPIRED">EXPIRED</option><option value="KENYA_CONFIRMED,WORLDWIDE_CONFIRMED">Confirmed (Kenya or worldwide)</option></select></div>
+   <div><label for="categoryFilter">Category</label><select id="categoryFilter"><option value="">All categories</option></select></div>
+   <div><label for="skillFilter">My skill</label><select id="skillFilter"><option value="">Any skill</option><option value="python">Python</option><option value="javascript">JavaScript / TypeScript</option><option value="backend_fullstack">Backend / full-stack</option><option value="web_development">Web development</option><option value="ai_tools">ChatGPT / Claude / Gemini / Cursor</option><option value="ai_assisted_coding">AI-assisted coding</option><option value="ai_automation">n8n / Make / automation / LLM</option><option value="ai_video_creation">AI video / CapCut / Canva</option><option value="writing_research">Writing</option><option value="data_entry">Data entry</option><option value="ai_training_evaluation">AI training / evaluation</option><option value="data_annotation">Annotation</option><option value="prompt_engineering">Prompt engineering</option></select></div>
+   <div><label for="paymentFilter">Payment</label><select id="paymentFilter"><option value="">Any</option><option value="disclosed">Disclosed</option><option value="undisclosed">Not disclosed</option></select></div>
+   <div><label for="minRate">Min USD/hour</label><input id="minRate" type="number" min="0" step="1" placeholder="e.g. 20"></div>
+   <div><label for="sortBy">Sort by</label><select id="sortBy"><option value="score">Opportunity score</option><option value="date">Date discovered</option><option value="published">Published date</option><option value="pay">Pay (USD/hour)</option><option value="title">Title</option></select></div>
+   <div><label for="statusFilter">Status</label><select id="statusFilter"><option value="open">Open</option><option value="expired">Expired</option><option value="all">All</option></select></div>
+   <div><label for="oppSearch">Search</label><input id="oppSearch" placeholder="Title, skill, company"></div>
+  </div>
+  <div class="section-head"><h2 id="oppCount">0 opportunities</h2><div class="row" style="flex:0 0 auto"><button class="btn small" id="oppPrev">← Prev</button><span class="muted" id="oppPage"></span><button class="btn small" id="oppNext">Next →</button></div></div>
+  <div id="opportunityTable" class="table-wrap"></div>
+ </section>
+
+ <section id="applications" class="panel">
+  <h1>Application Manager</h1><p class="muted">Drafts are prepared from your established profile only. You review, approve and submit yourself on the platform, then record it here.</p>
+  <div class="split">
+   <div class="card" style="padding:0"><div style="padding:10px;border-bottom:1px solid #edf0f5"><strong id="appCount">0 applications</strong></div><div id="applicationList"><div class="empty">No applications yet. Use “Prepare application” in the Opportunity Explorer.</div></div></div>
+   <div id="applicationDetail"><div class="empty">Select an application.</div></div>
+  </div>
+ </section>
+
+ <section id="tasks" class="panel">
+  <h1>Task Workspace</h1><p class="muted">Paste the original task instructions to get a simplified breakdown, checklist and quality checks. Evidence and completion records stay on this PC.</p>
+  <div class="split">
+   <div>
+    <form id="taskForm" class="card">
+     <h3>Add a task I am working on</h3>
+     <label for="taskTitle">Title *</label><input id="taskTitle" required maxlength="200">
+     <div class="form-grid"><div><label for="taskPlatform">Platform</label><select id="taskPlatform"></select></div><div><label for="taskDue">Due date</label><input id="taskDue" type="date"></div></div>
+     <label for="taskInstructions">Original instructions</label><textarea id="taskInstructions" placeholder="Paste the task instructions exactly as the platform shows them"></textarea>
+     <div class="right" style="margin-top:8px"><button class="btn primary" type="submit">Create task workspace</button></div>
+    </form>
+    <div class="card" style="padding:0;margin-top:12px"><div style="padding:10px;border-bottom:1px solid #edf0f5"><strong id="taskCount">0 tasks</strong></div><div id="taskList"></div></div>
+   </div>
+   <div id="taskDetail"><div class="empty">Select a task.</div></div>
+  </div>
+ </section>
+
+ <section id="earnings" class="panel">
+  <h1>Earnings</h1><p class="muted">Advertised or estimated pay is never counted as received. Only payments you record with a received date count as Received.</p>
+  <div class="grid" id="earningCards" style="margin:12px 0"></div>
+  <div class="split">
+   <div>
+    <form id="earningForm" class="card"><h3>Add expected / pending earning</h3>
+     <div class="form-grid"><div><label for="earnPlatform">Platform</label><select id="earnPlatform"></select></div>
+     <div><label for="earnStatus">Type</label><select id="earnStatus"><option value="expected">Expected (not yet worked)</option><option value="pending">Pending (work submitted, unpaid)</option></select></div>
+     <div><label for="earnAmount">Amount *</label><input id="earnAmount" type="number" min="0" step="0.01" required></div>
+     <div><label for="earnCurrency">Currency</label><select id="earnCurrency"><option>USD</option><option>KES</option></select></div></div>
+     <label for="earnDesc">Description</label><input id="earnDesc" maxlength="300">
+     <div class="right" style="margin-top:8px"><button class="btn primary" type="submit">Add</button></div></form>
+    <form id="paymentForm" class="card" style="margin-top:12px"><h3>Record a payment I actually received</h3>
+     <div class="form-grid"><div><label for="payPlatform">Platform</label><select id="payPlatform"></select></div>
+     <div><label for="payEarning">Settles earning</label><select id="payEarning"><option value="">None / standalone</option></select></div>
+     <div><label for="payAmount">Amount received *</label><input id="payAmount" type="number" min="0.01" step="0.01" required></div>
+     <div><label for="payCurrency">Currency</label><select id="payCurrency"><option>USD</option><option>KES</option></select></div>
+     <div><label for="payDate">Received date *</label><input id="payDate" type="date" required></div>
+     <div><label for="payMethod">Method</label><input id="payMethod" maxlength="60" placeholder="e.g. M-Pesa, PayPal"></div></div>
+     <label for="payRef">Reference (no sensitive details)</label><input id="payRef" maxlength="120">
+     <div class="right" style="margin-top:8px"><button class="btn primary" type="submit">Record payment</button></div></form>
+   </div>
+   <div><h2>Earnings (expected / pending)</h2><div id="earningTable" class="table-wrap"></div><h2 style="margin-top:14px">Payments received</h2><div id="paymentTable" class="table-wrap"></div></div>
+  </div>
  </section>
 
  <section id="platforms" class="panel">
-  <h1>Platform directory</h1><p class="muted">Update each platform's status after checking your account. Links open the service directly.</p>
+  <h1>Platform Monitor</h1><p class="muted">Eligibility and integration health are independent: a healthy integration does not mean you are eligible. Capability levels come from the recorded platform terms.</p>
   <div class="section-head"><h2>Integration health</h2><span class="muted" id="healthNote">Eligibility and integration health are independent.</span></div>
   <div id="healthTable" class="table-wrap"></div>
   <div id="platformGrid" style="margin-top:16px"></div>
  </section>
 
- <section id="opportunities" class="panel">
-  <h1>Opportunity inbox</h1><p class="muted">When the local agent is running, new GitHub Actions reports appear here automatically. Manual JSON import remains available as a fallback.</p>
-  <div class="card" style="margin:16px 0">
-   <div class="row"><div><strong>Import latest GitHub report (JSON)</strong><div class="muted">Choose the hourly-*.json file extracted from hourly-opportunity-report.zip.</div></div><label class="btn primary" style="margin:0;cursor:pointer;text-align:center">Choose JSON <input id="importReport" type="file" accept=".json,application/json" hidden></label></div>
-   <div id="importStatus" class="muted" style="margin-top:8px">No report imported yet.</div>
-  </div>
-  <div class="form-grid">
-   <div><label for="oppFilter">Priority</label><select id="oppFilter"><option value="all">All priorities</option><option value="high_review">High review</option><option value="medium_review">Medium review</option><option value="low_or_unrelated">Low / unrelated</option></select></div>
-   <div><label for="kenyaFilter">Kenya eligibility signal</label><select id="kenyaFilter"><option value="all">All signals</option><option value="kenya_explicitly_eligible">Explicitly eligible for Kenya</option><option value="worldwide_eligible">Worldwide</option><option value="kenya_mentioned_verify_requirements">Kenya mentioned — verify</option><option value="remote_scope_unclear_kenya_not_confirmed">Remote, Kenya unconfirmed</option><option value="kenya_eligibility_unspecified">Country list absent — unconfirmed</option><option value="restricted_other_countries">Other countries only</option><option value="likely_restricted_check_listing">Possible restriction</option><option value="location_not_established">Location not established</option></select></div>
-   <div><label for="oppSearch">Search</label><input id="oppSearch" placeholder="Title, skill, company, keyword"></div>
-   <div><label for="platformFilter">Platform</label><select id="platformFilter"></select></div>
-   <div><label for="categoryFilter">Category</label><select id="categoryFilter"><option value="all">All categories</option></select></div>
-   <div><label for="paymentFilter">Payment</label><select id="paymentFilter"><option value="all">Any</option><option value="disclosed">Disclosed</option><option value="undisclosed">Not disclosed</option><option value="flagged">Flagged — verify manually</option></select></div>
-   <div><label for="minRate">Min USD/hour</label><input id="minRate" type="number" min="0" step="1" placeholder="e.g. 20"></div>
-  </div>
-  <div class="section-head"><h2 id="oppCount">0 opportunities</h2><span class="muted">Keyword relevance is not a legitimacy or eligibility guarantee.</span></div>
-  <div id="opportunityTable" class="table-wrap"></div>
+ <section id="notifications" class="panel">
+  <div class="section-head"><h1>Notifications</h1><button class="btn small" id="markAllRead">Mark all read</button></div>
+  <div id="notificationList" class="table-wrap"></div>
  </section>
-
- <section id="applications" class="panel">
-  <h1>Application tracker</h1><p class="muted">Record opportunities you have personally reviewed or applied to.</p>
-  <form id="appForm" class="card" style="margin:16px 0">
-   <h2>Add application</h2>
-   <div class="form-grid">
-    <div><label for="appTitle">Role / task title *</label><input id="appTitle" required maxlength="140"></div>
-    <div><label for="appPlatform">Platform</label><select id="appPlatform"></select></div>
-    <div><label for="appStatus">Status</label><select id="appStatus"><option>Saved</option><option>Reviewing</option><option>Applied</option><option>Assessment</option><option>Interview</option><option>Accepted</option><option>Rejected</option><option>Withdrawn</option></select></div>
-    <div><label for="appDate">Date</label><input id="appDate" type="date"></div>
-    <div><label for="appUrl">Opportunity URL</label><input id="appUrl" type="url" placeholder="https://..."></div>
-    <div><label for="appNotes">Notes</label><input id="appNotes" maxlength="500" placeholder="Requirements, follow-up, etc."></div>
-   </div>
-   <div class="right" style="margin-top:12px"><button class="btn primary" type="submit">Save application</button></div>
-  </form>
-  <div class="section-head"><h2>My applications</h2><span id="appCount" class="muted">0 records</span></div>
-  <div id="applicationTable" class="table-wrap"></div>
- </section>
-
- <section id="earnings" class="panel">
-  <h1>Earnings ledger</h1><p class="muted">Log only payments you have actually received. USD and KES totals remain separate; no exchange rate is assumed.</p>
-  <div class="grid" style="margin:16px 0">
-   <div class="card"><div class="muted">Total recorded in KES</div><div class="metric" id="totalKES">KES 0.00</div></div>
-   <div class="card"><div class="muted">Total recorded in USD</div><div class="metric" id="totalUSD">USD 0.00</div></div>
-  </div>
-  <form id="earningForm" class="card" style="margin:16px 0">
-   <h2>Record received payment</h2>
-   <div class="form-grid">
-    <div><label for="earnPlatform">Platform</label><select id="earnPlatform"></select></div>
-    <div><label for="earnAmount">Amount received *</label><input id="earnAmount" type="number" min="0.01" step="0.01" required></div>
-    <div><label for="earnCurrency">Currency</label><select id="earnCurrency"><option>KES</option><option>USD</option></select></div>
-    <div><label for="earnDate">Payment date</label><input id="earnDate" type="date" required></div>
-    <div><label for="earnNotes">Reference / notes (no sensitive details)</label><input id="earnNotes" maxlength="250"></div>
-   </div>
-   <div class="right" style="margin-top:12px"><button class="btn primary" type="submit">Add payment</button></div>
-  </form>
-  <div class="section-head"><h2>Payment history</h2><span id="earnCount" class="muted">0 records</span></div>
-  <div id="earningTable" class="table-wrap"></div>
- </section>
- <footer>Microtask Autopilot · Local-only tracker · No paid services or external JavaScript libraries</footer>
+ <footer>Microtask Autopilot · Local-only · $0 · No external JavaScript libraries · It records what you do; you perform every application, task and submission yourself.</footer>
 </main>
+<dialog id="detailDialog"><div id="detailBody"></div><div class="right" style="margin-top:10px"><button class="btn" id="closeDetail">Close</button></div></dialog>
+<div id="toast"></div>
 <script>
 "use strict";
 const PLATFORMS = [
- {id:"atlas_capture",type:"microtask",health:"manual_only",name:"Atlas Capture",url:"https://www.atlascapture.io/opportunities",eligibility:"Kenya and supported-device availability must be confirmed. Standard consumer capture requires iPhone 11+.",automation:"Human-performed recording and submissions."},
- {id:"clickworker",type:"microtask",health:"manual_only",name:"Clickworker",url:"https://www.clickworker.com/clickworker/",eligibility:"Registration may pause by country; verify available payment methods in your account.",automation:"Keep account work manual unless current rules expressly allow an integration."},
- {id:"microworkers",type:"microtask",health:"manual_only",name:"Microworkers",url:"https://www.microworkers.com/",eligibility:"Verify country eligibility, current task rules and withdrawal options.",automation:"Manual-only; do not use bots or automated account access."},
- {id:"rapidworkers",type:"microtask",health:"manual_only",name:"RapidWorkers",url:"https://rapidworkers.io/",eligibility:"User-confirmed domain; operator, terms, Kenya eligibility and payout route still need verification.",automation:"Manual-only pending verification of current terms."},
- {id:"sproutgigs",type:"microtask",health:"manual_only",name:"SproutGigs",url:"https://sproutgigs.com/",eligibility:"Verify country availability and withdrawal methods in the official account.",automation:"Do not use bots or AI agents to browse logged-in data or complete tasks."},
- {id:"afterquery",type:"ai_training",health:"manual_only",name:"AfterQuery Experts",url:"https://experts.afterquery.com/home",eligibility:"Eligibility and payout are role-specific; review each live role.",automation:"Public discovery only; applications and assessments remain human-reviewed."},
- {id:"handshake_ai",type:"ai_training",health:"manual_only",name:"Handshake AI",url:"https://joinhandshake.com/ai/opportunities/",eligibility:"Check exact role, work authorization and country restrictions.",automation:"Manual review and applications."},
- {id:"braintrust",type:"professional_marketplace",health:"manual_only",name:"Braintrust",url:"https://app.usebraintrust.com/talent/dashboard/welcome/",eligibility:"Professional talent marketplace; confirm Kenya payout route and role eligibility.",automation:"Manual profile, assessment, application and contract decisions."},
+ {id:"atlas_capture",type:"microtask",health:"manual_only",name:"Atlas Capture",url:"https://www.atlascapture.io/opportunities",eligibility:"Kenya and device availability must be confirmed. Standard consumer capture requires iPhone 11+; your Samsung A05 is NOT compatible with iPhone-only workflows.",automation:"Human-performed recording and submission only."},
+ {id:"clickworker",type:"microtask",health:"manual_only",name:"Clickworker",url:"https://www.clickworker.com/clickworker/",eligibility:"Registration may pause by country; verify payment methods in your account.",automation:"Keep account work manual unless current rules expressly allow automation."},
+ {id:"microworkers",type:"microtask",health:"manual_only",name:"Microworkers",url:"https://www.microworkers.com/",eligibility:"Verify country eligibility, task rules and withdrawal options.",automation:"Automation prohibited; manual-only."},
+ {id:"rapidworkers",type:"microtask",health:"manual_only",name:"RapidWorkers",url:"https://rapidworkers.io/",eligibility:"Domain is rapidworkers.io (not .net); operator, terms and payout route need verification.",automation:"Manual-only pending verification."},
+ {id:"sproutgigs",type:"microtask",health:"manual_only",name:"SproutGigs",url:"https://sproutgigs.com/",eligibility:"Verify country availability and withdrawal methods in the official account.",automation:"No bots or AI agents for logged-in data or tasks."},
+ {id:"gainworkers",type:"microtask",health:"manual_review_required",name:"GainWorkers",url:"https://www.gainworkers.com/",eligibility:"Task geo rules are visible only after login. Terms forbid VPN/proxy use to bypass geo rules.",automation:"No automated discovery: task lists need login, robots.txt disallows them, Terms prohibit scraping/bots; the API is for employers/resellers."},
+ {id:"afterquery",type:"ai_training",health:"manual_only",name:"AfterQuery Experts",url:"https://experts.afterquery.com/home",eligibility:"Eligibility and payout are role-specific; review each live role.",automation:"Public links only; applications and assessments are human-reviewed."},
+ {id:"handshake_ai",type:"ai_training",health:"disabled_pending_identity",name:"Handshake AI",url:"https://joinhandshake.com/ai/opportunities/",eligibility:"Check exact role, work authorization and country restrictions.",automation:"Manual review and applications."},
  {id:"opentrain_ai",type:"ai_training",health:"automated",name:"OpenTrain AI",url:"https://app.opentrain.ai/find-job",eligibility:"Each job lists eligible countries; only jobs naming Kenya are explicitly eligible. An empty country list is not assumed open to Kenya. Kenya is on OpenTrain's payout list (checked 2026-11-08).",automation:"Public discovery via the documented anonymous API only. Applications, AI interview, location checks and contracts are human-performed."},
- {id:"gainworkers",type:"microtask",health:"manual_review_required",name:"GainWorkers",url:"https://www.gainworkers.com/",eligibility:"Task geo rules are visible only after login. Terms forbid VPN/proxy use to bypass geo rules.",automation:"No automated discovery: task lists need login, robots.txt disallows them and the Terms prohibit scraping/bots. The API is for employers/resellers."},
  {id:"mindrift",type:"ai_training",health:"policy_monitor",restricted:true,name:"Mindrift",url:"https://mindrift.ai/legal/eligibility-and-geographic-restrictions",eligibility:"RESTRICTED FOR YOUR LOCATION: Kenya is listed as unsupported in the official eligibility policy (policy updated May 27, 2026; verified 2026-11-08). Do not apply, create accounts or use VPNs/proxies.",automation:"Only the public policy page is monitored for changes; discovery stays disabled until you manually review a change."},
+ {id:"braintrust",type:"professional_marketplace",health:"manual_only",name:"Braintrust",url:"https://app.usebraintrust.com/talent/dashboard/welcome/",eligibility:"Professional talent marketplace; confirm Kenya payout route and role eligibility.",automation:"Manual profile, assessment, application and contract decisions."},
  {id:"reworkio",type:"professional_marketplace",health:"manual_review_required",name:"REWORKIO",url:"https://reworkio.com/projects/",eligibility:"AI/automation expert marketplace claiming 160+ countries; Kenya eligibility and payout route unverified. Check for paid membership, deposits or escrow funding before applying.",automation:"No supported public discovery interface; review briefs manually (dashboard requires sign-in). Nothing is purchased or paid automatically."}
 ];
-const KEY="microtask_autopilot_local_v1";
-const blank=()=>({platforms:{},opportunities:[],applications:[],earnings:[],lastReport:null,seen:{},integrations:{},eligibilityMonitors:{}});
-let state=load();
-function load(){try{return {...blank(),...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){return blank()}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(state));render()}catch(e){alert("Could not save in browser storage. Export a backup and check browser storage settings.")}}
+const GROUPS=[["microtask","Microtask platforms"],["ai_training","AI training and evaluation platforms"],["professional_marketplace","Professional freelance and expert marketplaces"]];
+const HEALTH_TEXT={automated:"Automated public discovery",manual_only:"Manual review only",manual_review_required:"Manual review required (automated discovery unavailable)",policy_monitor:"Eligibility policy monitor only",disabled_pending_identity:"Disabled pending identity check",ok:"Healthy",ok_cached:"Healthy (cached)",partial:"Partial scan",degraded_using_cache:"Degraded — using cached data",error:"Error",error_using_baseline:"Error — using reviewed baseline",DOCUMENTED_API_ALLOWED:"Documented API",MANUAL_ONLY:"Manual only",AUTOMATION_PROHIBITED:"Automation prohibited",UNVERIFIED:"Unverified",HUMAN_APPROVAL_REQUIRED:"Human approval required",PUBLIC_DISCOVERY_ALLOWED:"Public discovery"};
+const UI_KEY="microtask_autopilot_local_v1";   // browser-only conveniences (platform notes) and the legacy records imported once
+const $=id=>document.getElementById(id);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function safeUrl(v){try{const u=new URL(v);return u.protocol==="https:"?u.href:""}catch(e){return ""}}
-function money(n,c){return new Intl.NumberFormat("en-KE",{style:"currency",currency:c}).format(Number(n)||0)}
-function dateNow(){return new Date().toISOString().slice(0,10)}
-function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id))}
+function link(url,text){const u=safeUrl(url);return u?'<a href="'+esc(u)+'" target="_blank" rel="noopener noreferrer">'+esc(text)+' ↗</a>':""}
+function money(n,c){try{return new Intl.NumberFormat("en-KE",{style:"currency",currency:c}).format(Number(n)||0)}catch(e){return c+" "+(Number(n)||0).toFixed(2)}}
+function day(v){return String(v||"").slice(0,10)||"—"}
+function when(v){return v?String(v).replace("T"," ").slice(0,16):"never"}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function loadUi(){try{return JSON.parse(localStorage.getItem(UI_KEY)||"{}")}catch(e){return {}}}
+function saveUi(x){try{localStorage.setItem(UI_KEY,JSON.stringify(x))}catch(e){}}
+let ui=loadUi();
+function toast(msg,bad){const d=document.createElement("div");d.textContent=msg;if(bad)d.className="bad";$("toast").appendChild(d);setTimeout(()=>d.remove(),bad?9000:4500)}
+async function api(method,path,body){
+ const opts={method,cache:"no-store",headers:{}};
+ if(body!==undefined){opts.headers["Content-Type"]="application/json";opts.body=JSON.stringify(body)}
+ const r=await fetch(path,opts);let j=null;try{j=await r.json()}catch(e){}
+ if(!r.ok||(j&&j.ok===false))throw new Error((j&&j.error)||("HTTP "+r.status));
+ return j;
+}
+async function act(fn,okMsg){try{const r=await fn();if(okMsg)toast(okMsg);return r}catch(e){toast(e.message,true);return null}}
+function platformName(id){return PLATFORMS.find(p=>p.id===id)?.name||id||"Feed"}
+function platformOptions(first){return '<option value="">'+(first||"Select platform")+'</option>'+PLATFORMS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join("")}
+function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
+
+// ---------------------------------------------------------------- navigation
+const loaders={overview:loadOverview,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
+function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
-function platformName(id){return PLATFORMS.find(p=>p.id===id)?.name||id||"Not specified"}
-function platformOptions(){return '<option value="">Select platform</option>'+PLATFORMS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join("")}
-document.getElementById("appPlatform").innerHTML=platformOptions();
-document.getElementById("earnPlatform").innerHTML=platformOptions();
-document.getElementById("appDate").value=dateNow();document.getElementById("earnDate").value=dateNow();
-const GROUPS=[["microtask","Microtask platforms"],["ai_training","AI training and evaluation platforms"],["professional_marketplace","Professional freelance and expert marketplaces"]];
-const HEALTH_TEXT={automated:"Automated public discovery",manual_only:"Manual review only",manual_review_required:"Manual review required (automated discovery unavailable)",policy_monitor:"Eligibility policy monitor only",disabled_pending_identity:"Disabled pending identity check",ok:"Healthy",ok_cached:"Healthy (cached)",partial:"Partial scan",degraded_using_cache:"Degraded — using cached data",error:"Error",error_using_baseline:"Error — using reviewed baseline"};
-function healthOf(id){const live=(state.integrations||{})[id];const p=PLATFORMS.find(x=>x.id===id)||{};return (live&&live.status)||p.health||"manual_only"}
-function healthClass(h){return /^(ok|automated)/.test(h)?"ok":/error|degraded|partial/.test(h)?"bad":"warn"}
-function renderHealth(){
- const rows=PLATFORMS.map(p=>{const live=(state.integrations||{})[p.id]||{};const h=healthOf(p.id);
-  const fresh=state.opportunities.filter(o=>o.platform_id===p.id&&isNew(o)).length;
-  const total=state.opportunities.filter(o=>o.platform_id===p.id).length;
-  const elig=p.restricted?'<span class="tag bad">Restricted for Kenya</span>':'<span class="tag">Verify per listing</span>';
-  return '<tr><td>'+esc(p.name)+'</td><td>'+elig+'</td><td><span class="tag '+healthClass(h)+'">'+esc(HEALTH_TEXT[h]||h)+'</span></td><td>'+total+' ('+fresh+' new)</td><td>'+esc(live.last_successful_scan||"—")+'</td><td>'+esc(live.error||"")+'</td></tr>'}).join("");
- document.getElementById("healthTable").innerHTML='<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Integration health</th><th>Opportunities (new)</th><th>Last successful scan</th><th>Errors</th></tr></thead><tbody>'+rows+'</tbody></table>';
- const alerts=Object.values(state.eligibilityMonitors||{}).filter(e=>e&&e.alert).map(e=>e.alert);
- document.getElementById("healthNote").textContent=alerts.length?"ALERT: "+alerts.join(" "):"Eligibility and integration health are independent.";
+function currentTab(){return document.querySelector(".panel.active").id}
+
+// ---------------------------------------------------------------- overview
+async function loadOverview(){
+ const [o,h]=await Promise.all([act(()=>api("GET","/api/overview")),act(()=>api("GET","/api/health"))]);
+ if(!o)return;
+ const e=o.earnings.by_currency||{};const received=Object.keys(e).map(c=>money(e[c].received,c)).join(" · ")||"none yet";
+ const cards=[["Opportunities (open)",o.opportunities.open],["Kenya-confirmed",o.opportunities.kenya_confirmed],["Requiring verification",o.opportunities.requiring_verification],["New (24h)",o.opportunities.new_last_24h],["Applications in progress",o.applications.in_progress],["Accepted tasks",o.tasks.accepted],["Completed tasks",o.tasks.completed],["Verified earnings (received)",received],["Last cloud scan",o.last_cloud_scan||"never"],["Last local sync",when(o.last_local_sync)]];
+ $("overviewCards").innerHTML=cards.map(c=>'<div class="card"><div class="muted">'+esc(c[0])+'</div><div class="metric" style="'+(String(c[1]).length>12?"font-size:15px":"")+'">'+esc(c[1])+'</div></div>').join("");
+ const fails=o.sync.consecutive_failures||0;
+ $("syncBanner").innerHTML=fails?'<div class="banner bad"><strong>Synchronization failing ('+fails+' in a row).</strong> '+esc(o.sync.last_error||"")+(h&&h.explanation?'<br>'+esc(h.explanation):"")+' Your existing data is unchanged.</div>':'<div class="banner ok">Synchronization healthy. Your data is stored locally.</div>';
+ $("agentStatus").textContent="Agent connected · "+o.opportunities.total+" opportunities · last sync "+when(o.last_local_sync);
+ setBadge(o.unread_notifications);
+ const top=await act(()=>api("GET","/api/opportunities?eligibility=KENYA_CONFIRMED,WORLDWIDE_CONFIRMED&limit=8&sort=score"));
+ $("overviewOpps").innerHTML=top&&top.items.length?oppTable(top.items,true):'<div class="empty">No confirmed opportunities yet. Wait for the next sync or press “Sync now”.</div>';
+ bindOppActions($("overviewOpps"));
+ const t=await act(()=>api("GET","/api/tasks"));
+ const open=t?t.tasks.filter(x=>["accepted","in_progress"].includes(x.status)):[];
+ $("overviewTasks").innerHTML=open.length?'<table><thead><tr><th>Task</th><th>Platform</th><th>Status</th><th>Due</th><th>Open items</th></tr></thead><tbody>'+open.map(x=>'<tr><td>'+esc(x.title)+'</td><td>'+esc(platformName(x.platform_id))+'</td><td>'+esc(x.status)+'</td><td>'+esc(day(x.due_at))+'</td><td>'+x.open_items+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No tasks in progress.</div>';
 }
-function renderPlatforms(){
- const statuses=["Not checked","Account created","Needs verification","Active","Paused","Not eligible"];
- renderHealth();
- document.getElementById("platformGrid").innerHTML=GROUPS.map(([type,title])=>{
-  const list=PLATFORMS.filter(p=>p.type===type);
-  return '<h2 class="group-title">'+esc(title)+' ('+list.length+')</h2><div class="platform-grid">'+list.map(p=>{
-   const x=state.platforms[p.id]||{};const url=safeUrl(p.url);const h=healthOf(p.id);
-   const tags='<div class="tags">'+(p.restricted?'<span class="tag bad">Eligibility: restricted for your location</span>':'<span class="tag">Eligibility: verify per listing</span>')+'<span class="tag '+healthClass(h)+'">Integration: '+esc(HEALTH_TEXT[h]||h)+'</span></div>';
-   return '<article class="platform-card'+(p.restricted?' restricted':'')+'"><div class="row"><h3>'+esc(p.name)+'</h3><span class="tag">'+esc(x.status||(p.restricted?"Not eligible":"Not checked"))+'</span></div>'+tags+'<p>'+esc(p.eligibility)+'</p><p><strong>Automation boundary:</strong> '+esc(p.automation)+'</p><label>Status</label><select data-platform-status="'+p.id+'">'+statuses.map(s=>'<option '+((x.status||(p.restricted?"Not eligible":"Not checked"))===s?"selected":"")+'>'+s+'</option>').join("")+'</select><label>Last checked</label><input type="date" data-platform-date="'+p.id+'" value="'+esc(x.date||"")+'"><label>Notes</label><textarea maxlength="500" data-platform-notes="'+p.id+'" placeholder="Your progress notes">'+esc(x.notes||"")+'</textarea><div style="margin-top:10px"><a href="'+url+'" target="_blank" rel="noopener noreferrer">Open official page ↗</a></div></article>'
-  }).join("")+'</div>'
- }).join("");
- document.querySelectorAll("[data-platform-status],[data-platform-date],[data-platform-notes]").forEach(el=>el.addEventListener("change",()=>{
-  const id=el.dataset.platformStatus||el.dataset.platformDate||el.dataset.platformNotes;
-  state.platforms[id]=state.platforms[id]||{};
-  if(el.dataset.platformStatus)state.platforms[id].status=el.value;
-  if(el.dataset.platformDate)state.platforms[id].date=el.value;
-  if(el.dataset.platformNotes)state.platforms[id].notes=el.value;
-  save();
- }));
+function setBadge(n){const b=$("notifBadge");b.textContent=n;b.classList.toggle("hidden",!n)}
+
+// ---------------------------------------------------------------- opportunities
+let oppOffset=0,oppLimit=40;
+function oppQuery(){
+ const p=new URLSearchParams();const g=id=>$(id).value;
+ [["platform","platformFilter"],["eligibility","kenyaFilter"],["category","categoryFilter"],["skill","skillFilter"],["payment","paymentFilter"],["min_rate","minRate"],["sort","sortBy"],["status","statusFilter"],["q","oppSearch"]].forEach(([k,id])=>{if(g(id))p.set(k,g(id))});
+ p.set("limit",oppLimit);p.set("offset",oppOffset);return p.toString();
 }
-function discovered(o){return (state.seen||{})[o.url]||o.discovered_at||o.published||""}
-function isNew(o){const d=Date.parse(discovered(o));return !isNaN(d)&&Date.now()-d<864e5}
-function trackSeen(items){state.seen=state.seen||{};const now=new Date().toISOString();items.forEach(o=>{if(o.url&&!state.seen[o.url])state.seen[o.url]=now})}
-function eligibilityLabel(v){return {kenya_explicitly_eligible:"Explicitly eligible for Kenya",worldwide_eligible:"Worldwide",restricted_other_countries:"Other countries only",kenya_eligibility_unspecified:"Country list absent — unconfirmed",restricted_for_user_location:"Restricted for your location"}[v]||v||""}
-function renderFilterOptions(){
- const pf=document.getElementById("platformFilter"),cf=document.getElementById("categoryFilter");
- if(!pf.options.length)pf.innerHTML='<option value="all">All platforms</option>'+PLATFORMS.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join("")+'<option value="_feeds">Supplementary job feeds</option>';
- const cats=[...new Set(state.opportunities.map(o=>o.category).filter(Boolean))].sort(),cur=cf.value;
- cf.innerHTML='<option value="all">All categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");cf.value=cats.includes(cur)?cur:"all";
+function oppTable(items,compact){
+ return '<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Task / job</th><th>Payment</th><th>Discovered</th><th>Status</th><th>Link</th><th>Score</th></tr></thead><tbody>'+items.map(o=>{
+  const flags=(o.skills||[]).slice(0,4).map(s=>'<span class="tag">'+esc(s.replace(/_/g," "))+'</span>').join("");
+  const a=link(o.apply_url||o.url,"Open original");
+  return '<tr><td>'+esc(o.platform_id?platformName(o.platform_id):(o.source||"Feed"))+'</td><td>'+classTag(o)+'</td><td><strong>'+esc(o.title)+'</strong><div class="muted">'+esc(o.category||"")+(o.equipment?" · needs "+esc(o.equipment):"")+(o.effort?" · "+esc(o.effort):"")+'</div>'+(compact?"":'<div>'+esc((o.summary||"").slice(0,200))+'</div>')+'<div>'+flags+'</div></td><td>'+esc(o.payment_text||"Not disclosed")+((o.payment_usd_per_hour||0)>150?'<div><span class="tag warn">unusually high: verify manually</span></div>':"")+'</td><td>'+esc(day(o.first_seen_utc))+'</td><td>'+esc(o.status||"")+'</td><td>'+a+'<div style="margin-top:4px"><button class="btn small" data-detail="'+esc(o.url)+'">Details</button> <button class="btn small primary" data-prepare="'+esc(o.url)+'">Prepare application</button></div></td><td>'+esc(o.relevance_score)+'</td></tr>'}).join("")+'</tbody></table>';
 }
-function renderOpps(){
- renderFilterOptions();
- const g=id=>document.getElementById(id).value;
- const priority=g("oppFilter"),kenya=g("kenyaFilter"),q=g("oppSearch").toLowerCase(),plat=g("platformFilter"),cat=g("categoryFilter"),pay=g("paymentFilter"),min=parseFloat(g("minRate"));
- const rows=state.opportunities.filter(o=>(priority==="all"||o.priority===priority)&&(kenya==="all"||o.kenya_eligibility===kenya)
-  &&(plat==="all"||(plat==="_feeds"?!o.platform_id:o.platform_id===plat))&&(cat==="all"||o.category===cat)
-  &&(pay==="all"||(pay==="disclosed"?o.payment_display&&o.payment_display!=="Not disclosed":pay==="undisclosed"?!o.payment_display||o.payment_display==="Not disclosed":!!o.payment_flag))
-  &&(isNaN(min)||(typeof o.payment_usd_per_hour==="number"&&o.payment_usd_per_hour>=min))
-  &&(!q||[o.title,o.summary,o.source].join(" ").toLowerCase().includes(q)));
- document.getElementById("oppCount").textContent=rows.length+" opportunities";
- document.getElementById("opportunityTable").innerHTML=rows.length?'<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Task / job</th><th>Payment</th><th>Discovered</th><th>Status</th><th>Link</th><th>Score</th></tr></thead><tbody>'+rows.map(o=>{
-  const u=safeUrl(o.url),a=safeUrl(o.apply_url||o.url);
-  const flags=(o.flags||[]).map(f=>'<span class="tag warn">'+esc(f)+'</span>').join(" ");
-  return '<tr><td>'+esc(o.platform_id?platformName(o.platform_id):(o.source||""))+(isNew(o)?' <span class="tag ok">new</span>':'')+'</td><td>'+esc(eligibilityLabel(o.kenya_eligibility))+'</td><td>'+(u?'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(o.title)+'</a>':esc(o.title))+'<br><span class="muted">'+esc(o.category||"")+(o.external_application?" · external application":"")+'</span><br>'+esc((o.summary||"").slice(0,220))+(flags?'<br>'+flags:'')+'</td><td>'+esc(o.payment_display||"Not disclosed")+'</td><td>'+esc(String(discovered(o)).slice(0,10))+'</td><td>'+esc(o.status||"listed")+'</td><td>'+(a?'<a href="'+a+'" target="_blank" rel="noopener noreferrer">Review &amp; apply manually ↗</a>':'—')+'</td><td>'+esc(o.relevance_score)+'</td></tr>'
- }).join("")+'</tbody></table>':'<div class="empty">No matching opportunities. Import the latest JSON report from GitHub Actions.</div>';
+function bindOppActions(root){
+ root.querySelectorAll("[data-detail]").forEach(b=>b.addEventListener("click",()=>showDetail(b.dataset.detail)));
+ root.querySelectorAll("[data-prepare]").forEach(b=>b.addEventListener("click",async()=>{const r=await act(()=>api("POST","/api/applications",{opportunity_url:b.dataset.prepare}),"Draft prepared — review it in Applications");if(r){ui.selApp=r.application.id;saveUi(ui);setTab("applications")}}));
 }
-["oppFilter","kenyaFilter","oppSearch","platformFilter","categoryFilter","paymentFilter","minRate"].forEach(id=>document.getElementById(id).addEventListener("input",renderOpps));
-document.getElementById("importReport").addEventListener("change",async e=>{
+async function loadOpportunities(){
+ const r=await act(()=>api("GET","/api/opportunities?"+oppQuery()));
+ if(!r)return;
+ if($("platformFilter").options.length===0)$("platformFilter").innerHTML=platformOptions("All platforms")+'<option value="_feeds">Supplementary job feeds</option>';
+ $("oppCount").textContent=r.total+" opportunities";
+ $("oppPage").textContent=(r.total?r.offset+1:0)+"–"+Math.min(r.total,r.offset+r.items.length);
+ $("oppPrev").disabled=r.offset===0;$("oppNext").disabled=r.offset+r.items.length>=r.total;
+ const cats=[...new Set(r.items.map(i=>i.category).filter(Boolean))].sort();const cur=$("categoryFilter").value;
+ if(cats.length&&$("categoryFilter").options.length<3)$("categoryFilter").innerHTML='<option value="">All categories</option>'+cats.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join("");
+ $("categoryFilter").value=cur;
+ $("opportunityTable").innerHTML=r.items.length?oppTable(r.items):'<div class="empty">No matching opportunities.</div>';
+ bindOppActions($("opportunityTable"));
+}
+["platformFilter","kenyaFilter","categoryFilter","skillFilter","paymentFilter","minRate","sortBy","statusFilter","oppSearch"].forEach(id=>$(id).addEventListener("change",()=>{oppOffset=0;loadOpportunities()}));
+$("oppSearch").addEventListener("input",()=>{clearTimeout(window._ot);window._ot=setTimeout(()=>{oppOffset=0;loadOpportunities()},350)});
+$("oppPrev").addEventListener("click",()=>{oppOffset=Math.max(0,oppOffset-oppLimit);loadOpportunities()});
+$("oppNext").addEventListener("click",()=>{oppOffset+=oppLimit;loadOpportunities()});
+async function showDetail(url){
+ const r=await act(()=>api("GET","/api/opportunities/detail?url="+encodeURIComponent(url)));if(!r)return;const o=r.opportunity,b=o.breakdown||{},q=o.requirements||{};
+ const parts=Object.entries(b).filter(([k,v])=>typeof v==="number").map(([k,v])=>'<tr><td>'+esc(k.replace(/_/g," "))+'</td><td>'+(v>0?"+":"")+v+'</td></tr>').join("");
+ $("detailBody").innerHTML='<h2>'+esc(o.title)+'</h2><div>'+classTag(o)+'</div><p class="muted">Reason: '+esc(o.eligibility_reason||"")+'</p><p>'+esc(o.summary||"")+'</p><p><strong>Pay:</strong> '+esc(o.payment_text||"Not disclosed")+' · <strong>Deadline:</strong> '+esc(o.deadline||"none stated")+' · <strong>Last verified:</strong> '+esc(when(o.last_verified_utc))+'</p>'
+  +'<h3>Score '+esc(o.relevance_score)+' (transparent)</h3><div class="table-wrap"><table><tbody>'+parts+'</tbody></table></div>'
+  +((b.qualification_gaps||[]).length?'<h3>Gaps you must confirm</h3><ul>'+b.qualification_gaps.map(g=>'<li>'+esc(g)+'</li>').join("")+'</ul>':"")
+  +'<h3>Requirements found in the text</h3><p class="muted">Experience: '+esc(q.min_years_experience||"not stated")+' · Qualifications: '+esc((q.qualifications||[]).join(", ")||"none stated")+' · Equipment: '+esc((q.equipment||[]).join(", ")||"none stated")+' · Application needs: '+esc((q.application_requirements||[]).join(", ")||"none stated")+'</p>'
+  +((o.changes||[]).length?'<h3>Changes between scans</h3><ul>'+o.changes.map(c=>'<li>'+esc(day(c.changed_at))+' · '+esc(c.field)+': '+esc(c.old_value)+' → '+esc(c.new_value)+'</li>').join("")+'</ul>':"")
+  +'<p>'+link(o.apply_url||o.url,"Open the original opportunity")+'</p>';
+ $("detailDialog").showModal();
+}
+$("closeDetail").addEventListener("click",()=>$("detailDialog").close());
+$("importReport").addEventListener("change",async e=>{
  const file=e.target.files[0];if(!file)return;
- try{const report=JSON.parse(await file.text());if(!Array.isArray(report.items))throw new Error("This does not look like a Microtask Autopilot report.");
-  state.opportunities=report.items;trackSeen(report.items);state.integrations=report.integrations||{};state.eligibilityMonitors=report.eligibility_monitors||{};state.lastReport=report.checked_at_utc||file.name;save();
-  document.getElementById("importStatus").textContent="Imported "+report.items.length+" listings from "+(report.checked_at_utc||file.name)+".";
- }catch(err){alert("Import failed: "+err.message)}finally{e.target.value=""}
-});
-function renderApps(){
- const rows=state.applications;
- document.getElementById("appCount").textContent=rows.length+" records";
- document.getElementById("applicationTable").innerHTML=rows.length?'<table><thead><tr><th>Role</th><th>Platform</th><th>Status</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody>'+rows.map(a=>{
-  const u=safeUrl(a.url);return '<tr><td>'+(u?'<a href="'+u+'" target="_blank" rel="noopener noreferrer">'+esc(a.title)+'</a>':esc(a.title))+'</td><td>'+esc(platformName(a.platform))+'</td><td><select data-app-status="'+a.id+'">'+["Saved","Reviewing","Applied","Assessment","Interview","Accepted","Rejected","Withdrawn"].map(s=>'<option '+(s===a.status?"selected":"")+'>'+s+'</option>').join("")+'</select></td><td>'+esc(a.date)+'</td><td>'+esc(a.notes)+'</td><td><button class="btn danger small" data-delete-app="'+a.id+'">Delete</button></td></tr>'
- }).join("")+'</tbody></table>':'<div class="empty">No applications tracked yet.</div>';
- document.querySelectorAll("[data-app-status]").forEach(el=>el.addEventListener("change",()=>{const a=state.applications.find(x=>x.id===el.dataset.appStatus);if(a){a.status=el.value;save()}}));
- document.querySelectorAll("[data-delete-app]").forEach(el=>el.addEventListener("click",()=>{if(confirm("Delete this application record?")){state.applications=state.applications.filter(x=>x.id!==el.dataset.deleteApp);save()}}));
-}
-document.getElementById("appForm").addEventListener("submit",e=>{
- e.preventDefault();const url=document.getElementById("appUrl").value;
- if(url&&!safeUrl(url)){alert("Use a valid HTTPS opportunity link.");return}
- state.applications.unshift({id:crypto.randomUUID(),title:document.getElementById("appTitle").value.trim(),platform:document.getElementById("appPlatform").value,status:document.getElementById("appStatus").value,date:document.getElementById("appDate").value,url,notes:document.getElementById("appNotes").value.trim()});
- e.target.reset();document.getElementById("appDate").value=dateNow();save();
-});
-function renderEarnings(){
- const kes=state.earnings.filter(x=>x.currency==="KES").reduce((a,x)=>a+Number(x.amount),0),usd=state.earnings.filter(x=>x.currency==="USD").reduce((a,x)=>a+Number(x.amount),0);
- document.getElementById("totalKES").textContent=money(kes,"KES");document.getElementById("totalUSD").textContent=money(usd,"USD");document.getElementById("mKes").textContent=money(kes,"KES");
- document.getElementById("earnCount").textContent=state.earnings.length+" records";
- document.getElementById("earningTable").innerHTML=state.earnings.length?'<table><thead><tr><th>Date</th><th>Platform</th><th>Amount</th><th>Notes</th><th></th></tr></thead><tbody>'+state.earnings.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(platformName(x.platform))+'</td><td>'+money(x.amount,x.currency)+'</td><td>'+esc(x.notes)+'</td><td><button class="btn danger small" data-delete-earn="'+x.id+'">Delete</button></td></tr>').join("")+'</tbody></table>':'<div class="empty">No payments recorded yet.</div>';
- document.querySelectorAll("[data-delete-earn]").forEach(el=>el.addEventListener("click",()=>{if(confirm("Delete this payment record?")){state.earnings=state.earnings.filter(x=>x.id!==el.dataset.deleteEarn);save()}}));
-}
-document.getElementById("earningForm").addEventListener("submit",e=>{
- e.preventDefault();state.earnings.unshift({id:crypto.randomUUID(),platform:document.getElementById("earnPlatform").value,amount:Number(document.getElementById("earnAmount").value),currency:document.getElementById("earnCurrency").value,date:document.getElementById("earnDate").value,notes:document.getElementById("earnNotes").value.trim()});
- e.target.reset();document.getElementById("earnDate").value=dateNow();save();
-});
-function render(){
- renderPlatforms();renderOpps();renderApps();renderEarnings();
- document.getElementById("mOpps").textContent=state.opportunities.length;
- document.getElementById("mPlatforms").textContent=PLATFORMS.length;
- document.getElementById("mActive").textContent=PLATFORMS.filter(p=>!p.restricted).length;
- document.getElementById("mNew").textContent=state.opportunities.filter(isNew).length;
- document.getElementById("mApps").textContent=state.applications.length;
- document.getElementById("overviewOpps").innerHTML=state.opportunities.length?'<table><thead><tr><th>Priority</th><th>Opportunity</th><th>Kenya signal</th></tr></thead><tbody>'+state.opportunities.slice(0,6).map(o=>'<tr><td>'+esc(o.priority)+'</td><td>'+esc(o.title)+'</td><td>'+esc(o.kenya_eligibility)+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">Import a report to see recent leads here.</div>';
- document.getElementById("overviewApps").innerHTML=state.applications.length?'<table><thead><tr><th>Role</th><th>Platform</th><th>Status</th></tr></thead><tbody>'+state.applications.slice(0,6).map(a=>'<tr><td>'+esc(a.title)+'</td><td>'+esc(platformName(a.platform))+'</td><td>'+esc(a.status)+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">Your application pipeline will appear here.</div>';
-}
-document.getElementById("exportBackup").addEventListener("click",()=>{
- const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="microtask-autopilot-backup.json";a.click();URL.revokeObjectURL(url);
-});
-document.getElementById("importBackup").addEventListener("change",async e=>{
- const file=e.target.files[0];if(!file)return;
- try{const x=JSON.parse(await file.text());if(!Array.isArray(x.applications)||!Array.isArray(x.earnings)||!Array.isArray(x.opportunities)||typeof x.platforms!=="object")throw new Error("Backup format not recognised.");
-  if(confirm("Replace the current local dashboard data with this backup?")){state={...blank(),...x};save();alert("Backup restored.")}
- }catch(err){alert("Backup import failed: "+err.message)}finally{e.target.value=""}
+ try{const report=JSON.parse(await file.text());const r=await act(()=>api("POST","/api/import-report",{report}));if(r){$("importStatus").textContent="Imported: "+r.inserted+" new, "+r.updated+" updated.";loadOpportunities()}}catch(err){toast("Import failed: "+err.message,true)}finally{e.target.value=""}
 });
 
-// When served by local_server.py, import the latest cloud report automatically.
-// No manual ZIP download or JSON import is needed.
+// ---------------------------------------------------------------- applications
+let apps=[];
+async function loadApplications(){
+ const r=await act(()=>api("GET","/api/applications"));if(!r)return;apps=r.applications;
+ $("appCount").textContent=apps.length+" application"+(apps.length===1?"":"s");
+ $("applicationList").innerHTML=apps.length?apps.map(a=>'<div class="list-item'+(a.id===ui.selApp?" sel":"")+'" data-app="'+a.id+'"><strong>'+esc(a.title)+'</strong><div class="muted">'+esc(platformName(a.platform_id))+' · <span class="tag">'+esc(a.status)+'</span> · '+esc(day(a.updated_at))+'</div></div>').join(""):'<div class="empty">No applications yet. Use “Prepare application” in the Opportunity Explorer.</div>';
+ $("applicationList").querySelectorAll("[data-app]").forEach(el=>el.addEventListener("click",()=>{ui.selApp=Number(el.dataset.app);saveUi(ui);loadApplications()}));
+ if(ui.selApp&&apps.some(a=>a.id===ui.selApp))showApplication(ui.selApp);
+}
+async function showApplication(id){
+ const r=await act(()=>api("GET","/api/applications/"+id));if(!r)return;const a=r.application,d=a.drafts[0];
+ const steps=["Review and edit every [placeholder].","Approve the draft.","Open the original application link and submit it yourself.","Record the submission date here."];
+ $("applicationDetail").innerHTML='<div class="card"><h2>'+esc(a.title)+'</h2><div class="tags"><span class="tag info">'+esc(a.status)+'</span>'+(a.submitted_at?'<span class="tag">submitted '+esc(a.submitted_at)+'</span>':"")+'</div>'
+  +(d?'<div class="banner '+(/Do not apply/.test(d.eligibility_note||"")?"bad":"ok")+'">'+esc(d.eligibility_note||"")+'</div>':"")
+  +'<p>'+link(a.apply_url||a.opportunity_url,"Open the original application page")+'</p>'
+  +(d?'<h3>Missing information — fill in before sending</h3><ul>'+(d.missing_info||[]).map(m=>'<li>'+esc(m)+'</li>').join("")+'</ul><label for="draftBody">Draft (version '+d.version+', '+esc(d.provider)+(d.approved?", APPROVED":"")+')</label><textarea id="draftBody" style="min-height:240px">'+esc(d.body)+'</textarea>'
+  +'<div class="row" style="margin-top:8px"><button class="btn" id="saveDraft">Save edits</button><button class="btn" id="regenDraft">New draft</button><button class="btn primary" id="approveDraft">Approve draft</button></div>':"")
+  +'<h3 style="margin-top:14px">Next steps</h3><ol>'+steps.map(s=>'<li>'+esc(s)+'</li>').join("")+'</ol>'
+  +'<div class="row"><button class="btn" id="markSubmitted" '+(a.status!=="approved"?"disabled":"")+'>I submitted it myself</button></div>'
+  +'<h3 style="margin-top:14px">Platform response</h3><div class="form-grid"><div><label for="respStatus">Status</label><select id="respStatus"><option value="interview">Interview / assessment</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option></select></div><div><label for="respText">What they said</label><input id="respText" maxlength="500"></div></div><div class="right" style="margin-top:8px"><button class="btn" id="saveResponse" '+(["draft","approved"].includes(a.status)?"disabled":"")+'>Record response</button></div></div>';
+ const reload=()=>loadApplications();
+ if(d){
+  $("saveDraft").onclick=async()=>{if(await act(()=>api("PUT","/api/drafts/"+d.id,{body:$("draftBody").value}),"Draft saved (approval reset)"))reload()};
+  $("regenDraft").onclick=async()=>{if(confirm("Create a new draft version? Your current text stays in the history."))if(await act(()=>api("POST","/api/applications/"+id+"/regenerate"),"New draft created"))reload()};
+  $("approveDraft").onclick=async()=>{if(confirm("Approve this draft? Approving does NOT send anything: you still submit it yourself."))if(await act(()=>api("POST","/api/applications/"+id+"/approve",{draft_id:d.id,approved_by_user:true}),"Draft approved"))reload()};
+ }
+ $("markSubmitted").onclick=async()=>{const date=prompt("Date you submitted it yourself (YYYY-MM-DD):",todayStr());if(date&&await act(()=>api("POST","/api/applications/"+id+"/submit",{confirmed_by_user:true,submitted_at:date}),"Recorded as submitted"))reload()};
+ $("saveResponse").onclick=async()=>{if(await act(()=>api("POST","/api/applications/"+id+"/response",{status:$("respStatus").value,text:$("respText").value}),"Response recorded"))reload()};
+}
+
+// ---------------------------------------------------------------- tasks
+let taskList=[];
+async function loadTasks(){
+ $("taskPlatform").innerHTML=platformOptions("(none)");
+ const r=await act(()=>api("GET","/api/tasks"));if(!r)return;taskList=r.tasks;
+ $("taskCount").textContent=taskList.length+" task"+(taskList.length===1?"":"s");
+ $("taskList").innerHTML=taskList.length?taskList.map(t=>'<div class="list-item'+(t.id===ui.selTask?" sel":"")+'" data-task="'+t.id+'"><strong>'+esc(t.title)+'</strong>'+((r.plan||[]).indexOf(t.id)===0?' <span class="tag ok">work on this next</span>':"")+'<div class="muted">'+esc(platformName(t.platform_id))+' · <span class="tag">'+esc(t.status)+'</span> · due '+esc(day(t.due_at))+' · '+t.open_items+' open items</div></div>').join(""):'<div class="empty">No tasks yet.</div>';
+ $("taskList").querySelectorAll("[data-task]").forEach(el=>el.addEventListener("click",()=>{ui.selTask=Number(el.dataset.task);saveUi(ui);loadTasks()}));
+ if(ui.selTask&&taskList.some(t=>t.id===ui.selTask))showTask(ui.selTask);
+}
+const listHtml=(title,items)=>items&&items.length?'<h3>'+esc(title)+'</h3><ul>'+items.map(i=>'<li>'+esc(i)+'</li>').join("")+'</ul>':"";
+async function showTask(id){
+ const r=await act(()=>api("GET","/api/tasks/"+id));if(!r)return;const t=r.task,g=t.guidance||{};
+ const running=t.sessions.some(s=>!s.ended_at);
+ $("taskDetail").innerHTML='<div class="card"><h2>'+esc(t.title)+'</h2><div class="tags"><span class="tag info">'+esc(t.status)+'</span><span class="tag">'+t.minutes_worked+' min worked</span></div>'
+  +(g.needs_human_reading?'<div class="banner bad">No clear steps could be extracted. Read the original instructions carefully.</div>':"")
+  +'<p><strong>Simplified:</strong> '+esc(t.simplified||"—")+'</p>'
+  +'<details><summary>Original instructions</summary><pre class="draft">'+esc(t.instructions||"")+'</pre></details>'
+  +listHtml("Rules to follow",g.rules)+listHtml("Required materials",g.materials)+listHtml("Evidence requirements",g.evidence_requirements)+listHtml("Deadlines mentioned",g.deadlines)+listHtml("Common mistakes to avoid",g.common_mistakes)
+  +'<h3>Checklist</h3>'+t.checklist.map(i=>'<label class="check'+(i.done?" done":"")+'"><input type="checkbox" data-item="'+i.id+'" '+(i.done?"checked":"")+'><span>'+esc(i.text)+' <em class="muted">('+esc(i.kind)+')</em></span></label>').join("")
+  +'<p class="muted">'+esc(g.generic_note||"")+'</p>'
+  +'<div class="row" style="margin-top:10px"><button class="btn" id="sessBtn">'+(running?"Stop work session":"Start work session")+'</button><select id="statusSel"><option value="">Change status…</option>'+["accepted","in_progress","completed","approved","rejected","paid"].map(s=>'<option>'+s+'</option>').join("")+'</select></div>'
+  +'<h3 style="margin-top:14px">Evidence</h3>'+(t.evidence.length?'<ul>'+t.evidence.map(e=>'<li>'+esc(e.kind)+': '+esc(e.description||"")+(e.file_name?' — '+esc(e.file_name)+' ('+e.size_bytes+' bytes, sha256 '+esc((e.sha256||"").slice(0,10))+'…)':"")+'</li>').join("")+'</ul>':'<p class="muted">None recorded.</p>')
+  +'<div class="form-grid"><div><label for="evKind">Type</label><select id="evKind"><option>note</option><option>screenshot</option><option>file</option><option>link</option></select></div><div><label for="evDesc">Description</label><input id="evDesc" maxlength="500"></div><div><label for="evFile">File (max 10 MB, stays on this PC)</label><input id="evFile" type="file"></div></div><div class="right" style="margin-top:8px"><button class="btn" id="addEvidence">Add evidence</button></div>'
+  +'<h3 style="margin-top:14px">Submission</h3>'+(t.submissions.length?'<ul>'+t.submissions.map(s=>'<li>'+esc(s.submitted_at)+' · '+esc(s.method)+' · '+esc(s.platform_reference||"")+'</li>').join("")+'</ul>':"")
+  +'<div class="row"><input id="subRef" placeholder="Platform reference (optional)" maxlength="200"><button class="btn primary" id="markTaskSubmitted" '+(["submitted","approved","paid","rejected"].includes(t.status)?"disabled":"")+'>I submitted this myself</button></div></div>';
+ const reload=()=>loadTasks();
+ $("taskDetail").querySelectorAll("[data-item]").forEach(cb=>cb.addEventListener("change",async()=>{if(await act(()=>api("POST","/api/tasks/"+id+"/checklist/"+cb.dataset.item,{done:cb.checked})))reload()}));
+ $("sessBtn").onclick=async()=>{if(await act(()=>api("POST","/api/tasks/"+id+"/session/"+(running?"stop":"start"),{}),running?"Session recorded":"Session started"))reload()};
+ $("statusSel").onchange=async e=>{if(e.target.value&&await act(()=>api("POST","/api/tasks/"+id+"/status",{status:e.target.value}),"Status updated"))reload()};
+ $("addEvidence").onclick=async()=>{
+  const f=$("evFile").files[0];let content_base64;
+  if(f){if(f.size>10*1024*1024){toast("Evidence files are limited to 10 MB",true);return}
+   content_base64=await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]);fr.onerror=rej;fr.readAsDataURL(f)})}
+  if(await act(()=>api("POST","/api/tasks/"+id+"/evidence",{kind:$("evKind").value,description:$("evDesc").value,file_name:f?f.name:undefined,content_base64}),"Evidence added"))reload();
+ };
+ $("markTaskSubmitted").onclick=async()=>{if(confirm("Confirm that YOU submitted this work on the platform yourself?")&&await act(()=>api("POST","/api/tasks/"+id+"/submission",{confirmed_by_user:true,platform_reference:$("subRef").value}),"Submission recorded"))reload()};
+}
+$("taskForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const r=await act(()=>api("POST","/api/tasks",{title:$("taskTitle").value,instructions:$("taskInstructions").value,platform_id:$("taskPlatform").value||undefined,due_at:$("taskDue").value||undefined}),"Task workspace created");
+ if(r){ui.selTask=r.task.id;saveUi(ui);e.target.reset();loadTasks()}
+});
+
+// ---------------------------------------------------------------- earnings
+async function loadEarnings(){
+ ["earnPlatform","payPlatform"].forEach(id=>{$(id).innerHTML=platformOptions("(none)")});
+ $("payDate").value=$("payDate").value||todayStr();
+ const r=await act(()=>api("GET","/api/earnings"));if(!r)return;const by=r.summary.by_currency;
+ $("earningCards").innerHTML=Object.keys(by).length?Object.keys(by).map(c=>'<div class="card"><div class="muted">'+esc(c)+'</div><div>Expected: <strong>'+money(by[c].expected,c)+'</strong></div><div>Pending: <strong>'+money(by[c].pending,c)+'</strong></div><div>Received: <strong>'+money(by[c].received,c)+'</strong></div></div>').join(""):'<div class="card"><div class="muted">No earnings recorded yet.</div></div>';
+ $("payEarning").innerHTML='<option value="">None / standalone</option>'+r.earnings.filter(e=>["expected","pending"].includes(e.status)).map(e=>'<option value="'+e.id+'">#'+e.id+' '+esc(e.description||platformName(e.platform_id))+' ('+e.amount+' '+esc(e.currency)+')</option>').join("");
+ $("earningTable").innerHTML=r.earnings.length?'<table><thead><tr><th>Type</th><th>Platform</th><th>Amount</th><th>Description</th></tr></thead><tbody>'+r.earnings.map(e=>'<tr><td><span class="tag '+(e.status==="received"?"ok":"warn")+'">'+esc(e.status)+'</span></td><td>'+esc(platformName(e.platform_id))+'</td><td>'+money(e.amount,e.currency)+'</td><td>'+esc(e.description||"")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">None.</div>';
+ $("paymentTable").innerHTML=r.payments.length?'<table><thead><tr><th>Date</th><th>Platform</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>'+r.payments.map(p=>'<tr><td>'+esc(p.received_date)+'</td><td>'+esc(platformName(p.platform_id))+'</td><td>'+money(p.amount,p.currency)+'</td><td>'+esc(p.method||"")+'</td><td>'+esc(p.reference||"")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No payments recorded.</div>';
+}
+$("earningForm").addEventListener("submit",async e=>{e.preventDefault();if(await act(()=>api("POST","/api/earnings",{amount:Number($("earnAmount").value),currency:$("earnCurrency").value,status:$("earnStatus").value,platform_id:$("earnPlatform").value||undefined,description:$("earnDesc").value}),"Earning added")){e.target.reset();loadEarnings()}});
+$("paymentForm").addEventListener("submit",async e=>{e.preventDefault();if(await act(()=>api("POST","/api/payments",{amount:Number($("payAmount").value),currency:$("payCurrency").value,received_date:$("payDate").value,platform_id:$("payPlatform").value||undefined,earning_id:$("payEarning").value?Number($("payEarning").value):undefined,method:$("payMethod").value,reference:$("payRef").value}),"Payment recorded")){e.target.reset();loadEarnings()}});
+
+// ---------------------------------------------------------------- platforms
+let platformData=[];
+function healthOf(id){const p=platformData.find(x=>x.id===id);const reg=PLATFORMS.find(x=>x.id===id)||{};return (p&&p.integration&&p.integration.status)||reg.health||"manual_only"}
+function healthClass(h){return /^(ok|automated|DOCUMENTED)/.test(h)?"ok":/error|degraded|partial/.test(h)?"bad":"warn"}
+async function loadPlatforms(){
+ const r=await act(()=>api("GET","/api/platforms"));if(r)platformData=r.platforms;
+ const byId=Object.fromEntries(platformData.map(p=>[p.id,p]));
+ $("healthTable").innerHTML='<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Integration health</th><th>Open opportunities (Kenya-confirmed)</th><th>Last successful scan</th><th>Policy verified</th><th>Errors</th></tr></thead><tbody>'+PLATFORMS.map(p=>{const d=byId[p.id]||{};const h=healthOf(p.id);const k=d.kenya_status||"unverified";const cap=d.capabilities||{};
+  const elig=p.restricted||k==="unsupported"?'<span class="tag bad">Restricted for Kenya</span>':'<span class="tag '+(k==="job_specific"||k==="task_specific"?"info":"warn")+'">'+esc(k.replace(/_/g," "))+'</span>';
+  const c=d.opportunity_counts||{};return '<tr><td>'+esc(p.name)+'</td><td>'+elig+'</td><td><span class="tag '+healthClass(h)+'">'+esc(HEALTH_TEXT[h]||h)+'</span></td><td>'+(c.total||0)+' ('+(c.kenya_confirmed||0)+')</td><td>'+esc(when(d.integration&&d.integration.last_successful_scan))+'</td><td>'+esc(cap.last_policy_verified||"not verified")+'</td><td>'+esc((d.integration&&d.integration.error)||"")+'</td></tr>'}).join("")+'</tbody></table>';
+ const alerts=platformData.filter(p=>p.eligibility_monitor&&p.eligibility_monitor.alert).map(p=>p.eligibility_monitor.alert);
+ $("healthNote").textContent=alerts.length?"ALERT: "+alerts.join(" "):"Eligibility and integration health are independent.";
+ const statuses=["Not checked","Account created","Needs verification","Active","Paused","Not eligible"];
+ $("platformGrid").innerHTML=GROUPS.map(([type,title])=>{
+  const list=PLATFORMS.filter(p=>p.type===type);
+  return '<h2 class="group-title">'+esc(title)+' ('+list.length+')</h2><div class="platform-grid">'+list.map(p=>{
+   const x=(ui.platforms||{})[p.id]||{};const d=byId[p.id]||{};const h=healthOf(p.id);const cap=d.capabilities||{};
+   const levels=(d.levels||[]).map(l=>'<span class="tag '+(l==="AUTOMATION_PROHIBITED"?"bad":l==="UNVERIFIED"?"warn":"info")+'">'+esc(HEALTH_TEXT[l]||l)+'</span>').join("");
+   const tags='<div class="tags">'+(p.restricted?'<span class="tag bad">Eligibility: restricted for your location</span>':'<span class="tag">Eligibility: verify per listing</span>')+'<span class="tag '+healthClass(h)+'">Integration: '+esc(HEALTH_TEXT[h]||h)+'</span></div><div class="tags">'+levels+'</div>';
+   const restr=(d.restrictions||[]).length?'<details><summary>Prohibited / restricted</summary><ul>'+d.restrictions.map(r=>'<li>'+esc(r.replace(/_/g," "))+'</li>').join("")+'</ul></details>':"";
+   const equip=d.equipment&&d.equipment.note?'<p><strong>Equipment:</strong> '+esc(d.equipment.note)+'</p>':"";
+   return '<article class="platform-card'+(p.restricted?' restricted':'')+'"><div class="row"><h3>'+esc(p.name)+'</h3><span class="tag">'+esc(x.status||(p.restricted?"Not eligible":"Not checked"))+'</span></div>'+tags+'<p>'+esc(p.eligibility)+'</p><p><strong>Automation boundary:</strong> '+esc(p.automation)+'</p>'+equip+'<p class="muted">Manual action required: '+esc(d.required_manual_action||"all work is manual")+'</p>'+restr+'<label>Status (your own tracking, kept in this browser)</label><select data-pstatus="'+p.id+'">'+statuses.map(s=>'<option '+((x.status||(p.restricted?"Not eligible":"Not checked"))===s?"selected":"")+'>'+s+'</option>').join("")+'</select><label>Notes</label><textarea maxlength="500" data-pnotes="'+p.id+'" placeholder="Your progress notes">'+esc(x.notes||"")+'</textarea><div style="margin-top:8px">'+link(p.url,"Open official page")+'</div></article>'}).join("")+'</div>'}).join("");
+ $("platformGrid").querySelectorAll("[data-pstatus],[data-pnotes]").forEach(el=>el.addEventListener("change",()=>{const id=el.dataset.pstatus||el.dataset.pnotes;ui.platforms=ui.platforms||{};ui.platforms[id]=ui.platforms[id]||{};if(el.dataset.pstatus)ui.platforms[id].status=el.value;else ui.platforms[id].notes=el.value;saveUi(ui)}));
+ $("mPlatforms").textContent=PLATFORMS.length;$("mActive").textContent=PLATFORMS.filter(p=>!p.restricted).length;
+}
+
+// ---------------------------------------------------------------- notifications
+async function loadNotifications(){
+ const r=await act(()=>api("GET","/api/notifications?limit=100"));if(!r)return;
+ setBadge(r.notifications.filter(n=>!n.read_at).length);
+ $("notificationList").innerHTML=r.notifications.length?'<table><thead><tr><th>When</th><th>Type</th><th>Notification</th></tr></thead><tbody>'+r.notifications.map(n=>'<tr style="'+(n.read_at?"":"background:#f4f9ff")+'"><td>'+esc(when(n.created_at))+'</td><td><span class="tag '+(n.severity==="urgent"?"bad":n.severity==="important"?"warn":"info")+'">'+esc(n.type.replace(/_/g," "))+'</span></td><td><strong>'+esc(n.title)+'</strong><div class="muted">'+esc(n.body||"")+'</div>'+(n.url?link(n.url,"Open"):"")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No notifications yet.</div>';
+}
+$("markAllRead").addEventListener("click",async()=>{if(await act(()=>api("POST","/api/notifications/read",{})))loadNotifications()});
+
+// ---------------------------------------------------------------- header actions + legacy import
+$("syncNow").addEventListener("click",async()=>{const r=await act(()=>api("POST","/api/sync",{}));if(r)toast(r.message)});
+$("exportBackup").addEventListener("click",async()=>{const r=await act(()=>api("GET","/api/export"));if(!r)return;const blob=new Blob([JSON.stringify(r,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="microtask-autopilot-data.json";a.click();URL.revokeObjectURL(url)});
+$("importBackup").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;
+ try{const x=JSON.parse(await file.text());if(!Array.isArray(x.applications)&&!Array.isArray(x.earnings))throw new Error("Not an old Microtask Autopilot backup (no applications or earnings).");
+  const r=await act(()=>api("POST","/api/import-local-storage",{applications:x.applications||[],earnings:x.earnings||[]}));if(r)toast("Imported "+r.applications+" applications and "+r.payments+" payments (duplicates skipped)")}catch(err){toast("Backup import failed: "+err.message,true)}finally{e.target.value=""}});
+async function migrateLegacyBrowserRecords(){
+ // One-time: records the earlier dashboard kept only in this browser are copied into the database. Nothing is deleted.
+ let old;try{old=JSON.parse(localStorage.getItem(UI_KEY)||"{}")}catch(e){return}
+ const apps=Array.isArray(old.applications)?old.applications:[],earns=Array.isArray(old.earnings)?old.earnings:[];
+ if(ui.legacyImported)return;
+ if(!apps.length&&!earns.length){ui.legacyImported=true;saveUi(ui);return}
+ try{const r=await api("POST","/api/import-local-storage",{applications:apps,earnings:earns});
+  ui.legacyImported=true;delete ui.opportunities;delete ui.lastReport;saveUi(ui);   // cached listings only; your own records stay in the browser as a backup
+  if(r.applications||r.payments)toast("Moved "+r.applications+" applications and "+r.payments+" payments from this browser into the database.")}catch(e){}
+}
+
 async function refreshFromLocalAgent(){
  try{
-  const response=await fetch("/api/report",{cache:"no-store"});
-  if(!response.ok)throw new Error("Waiting for first successful cloud report sync");
-  const payload=await response.json();
-  if(!payload.ok||!payload.report||!Array.isArray(payload.report.items))throw new Error("Local agent returned an invalid report");
-  const checked=payload.report.checked_at_utc||"";
-  if(state.lastReport!==checked){
-   state.opportunities=payload.report.items;
-   trackSeen(payload.report.items);
-   state.integrations=payload.report.integrations||{};
-   state.eligibilityMonitors=payload.report.eligibility_monitors||{};
-   state.lastReport=checked;
-   localStorage.setItem(KEY,JSON.stringify(state));
-   document.getElementById("importStatus").textContent="Automatically synced "+payload.report.items.length+" listings · report "+checked;
-   render();
-  }
-  const status=await fetch("/api/status",{cache:"no-store"});
-  if(status.ok){
-   const s=await status.json();
-   const el=document.getElementById("agentStatus");
-   if(el)el.textContent="Agent connected · "+(s.opportunity_count||0)+" stored leads · last sync "+(s.synced_at_utc||"starting");
-  }
- }catch(err){
-  const el=document.getElementById("agentStatus");
-  if(el)el.textContent="Local agent not reachable · start open-dashboard.bat";
- }
+  const s=await api("GET","/api/status");
+  $("agentStatus").textContent="Agent connected · "+(s.opportunity_count||0)+" stored opportunities · last sync "+when(s.last_sync_success_utc||s.synced_at_utc);
+  const t=currentTab();if(t==="overview")loadOverview();
+  const n=await api("GET","/api/notifications?unread=1&limit=100");setBadge(n.notifications.length);
+ }catch(err){$("agentStatus").textContent="Local agent not reachable · start open-dashboard.bat"}
 }
 setInterval(refreshFromLocalAgent,60000);
-render();
-refreshFromLocalAgent();
+$("platformFilter").innerHTML=platformOptions("All platforms")+'<option value="_feeds">Supplementary job feeds</option>';
+migrateLegacyBrowserRecords().finally(()=>{setTab(ui.tab&&loaders[ui.tab]?ui.tab:"overview");refreshFromLocalAgent()});
 </script>
 </body>
 </html>

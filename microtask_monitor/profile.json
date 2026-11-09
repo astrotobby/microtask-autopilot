@@ -1,0 +1,33 @@
+{
+  "country": "Kenya",
+  "purpose": "Used only to match opportunities and draft truthful applications. Never exaggerate: anything listed under not_established must be confirmed by the user before it is claimed.",
+  "established_skills": {
+    "programming": ["Python", "JavaScript", "TypeScript", "HTML", "Node.js"],
+    "development": ["Backend development", "Full-stack website development"],
+    "ai_coding_tools": ["Claude Code", "OpenAI Codex", "Cursor", "VS Code"],
+    "ai_workflows": ["AI-assisted development and coding workflows", "Prompt engineering and LLM workflows"],
+    "ai_assistants": ["ChatGPT", "Claude", "Gemini", "Manus AI"],
+    "ai_video_and_design": ["AI video creation and automation", "Runway", "Pika", "HeyGen", "CapCut", "Canva"],
+    "writing": ["Blog writing", "Content writing", "Academic writing"],
+    "operations": ["Data entry"],
+    "automation": ["n8n", "Make.com"]
+  },
+  "not_established": [
+    "University degree or any formal qualification",
+    "PhD or postgraduate study",
+    "Professional certifications",
+    "A specific number of years of professional experience",
+    "Languages other than English",
+    "Published portfolio, GitHub link or writing samples (add links before applying)",
+    "Contact details, availability and hourly rate expectations"
+  ],
+  "devices": {
+    "phone": "Samsung A05 (Android)",
+    "computer": "Windows 10 laptop (modest hardware)",
+    "ios_available": false
+  },
+  "preferences": {
+    "currency_display": ["USD", "KES"],
+    "min_hourly_usd": null
+  }
+}

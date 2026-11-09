@@ -144,13 +144,13 @@ class DashboardDisplayTests(unittest.TestCase):
     def test_dashboard_shows_required_opportunity_columns(self):
         for column in ("Platform", "Kenya eligibility", "Task / job", "Payment", "Discovered", "Status", "Link"):
             self.assertIn(f"<th>{column}</th>", DASH)
-        for text in ("New in last 24h", "Last successful scan", "Integration health", "Errors"):
+        for text in ("New (24h)", "Last successful scan", "Integration health", "Errors", "Verified earnings (received)", "Last local sync"):
             self.assertIn(text, DASH)
 
     def test_dashboard_has_platform_eligibility_category_and_payment_filters(self):
-        for element in ("platformFilter", "kenyaFilter", "categoryFilter", "paymentFilter", "minRate"):
+        for element in ("platformFilter", "kenyaFilter", "categoryFilter", "paymentFilter", "minRate", "skillFilter", "sortBy"):
             self.assertIn(f'id="{element}"', DASH)
-        for value in ("kenya_explicitly_eligible", "worldwide_eligible", "kenya_eligibility_unspecified"):
+        for value in ("KENYA_CONFIRMED", "WORLDWIDE_CONFIRMED", "KENYA_UNVERIFIED", "KENYA_UNSUPPORTED", "EXPIRED", "MANUAL_REVIEW_REQUIRED"):
             self.assertIn(value, DASH)
 
     def test_dashboard_escapes_content_and_has_no_external_scripts_or_secret_inputs(self):
@@ -161,9 +161,46 @@ class DashboardDisplayTests(unittest.TestCase):
         self.assertIn("safeUrl(", DASH)
 
     def test_existing_dashboard_features_survive(self):
-        for needle in ("exportBackup", "importBackup", "importReport", "localStorage", "appForm", "earningForm",
-                       "refreshFromLocalAgent", "/api/report", "/api/status", "setInterval(refreshFromLocalAgent"):
+        for needle in ("exportBackup", "importBackup", "importReport", "localStorage", "taskForm", "earningForm", "paymentForm",
+                       "refreshFromLocalAgent", "/api/overview", "/api/status", "setInterval(refreshFromLocalAgent"):
             self.assertIn(needle, DASH)
+
+
+class DashboardBackendTests(unittest.TestCase):
+    def test_all_management_sections_exist_and_use_the_backend(self):
+        for section in ("overview", "opportunities", "applications", "tasks", "earnings", "platforms", "notifications"):
+            self.assertIn(f'id="{section}"', DASH)
+            self.assertIn(f'data-tab="{section}"', DASH)
+        for endpoint in ("/api/applications", "/api/tasks", "/api/earnings", "/api/payments", "/api/notifications",
+                         "/api/platforms", "/api/opportunities", "/api/import-local-storage", "/api/sync"):
+            self.assertIn(endpoint, DASH)
+
+    def test_business_records_are_not_stored_in_browser_storage(self):
+        # localStorage is used only for UI conveniences and for reading old records to import them once.
+        writes = [l for l in DASH.splitlines() if "localStorage.setItem" in l]
+        self.assertEqual(len(writes), 1)
+        self.assertIn("UI_KEY", writes[0])
+        self.assertNotIn("state.applications", DASH)
+        self.assertNotIn("state.earnings", DASH)
+        self.assertIn("migrateLegacyBrowserRecords", DASH)
+        self.assertIn("Nothing is deleted", DASH)
+
+    def test_human_approval_controls_and_never_auto_submit_copy(self):
+        for needle in ("approved_by_user:true", "confirmed_by_user:true", "I submitted it myself", "I submitted this myself",
+                       "does NOT send anything", "you do those steps yourself"):
+            self.assertIn(needle, DASH)
+        self.assertNotIn("auto-submit", DASH.lower().replace("never auto-submit", ""))
+
+    def test_earnings_ui_separates_expected_pending_and_received(self):
+        for text in ("Expected", "Pending", "Received", "Record a payment I actually received", "never counted as received"):
+            self.assertIn(text, DASH)
+        self.assertNotIn('<option value="received">', DASH)       # advertised pay cannot be filed as received
+
+    def test_mobile_responsive_rules_and_dialog_escaping(self):
+        self.assertIn("@media(max-width:820px)", DASH)
+        self.assertIn('name="viewport"', DASH)
+        self.assertEqual(DASH.count("innerHTML=") > 10, True)
+        self.assertIn("function esc(", DASH)
 
 
 class RepositorySafetyTests(unittest.TestCase):

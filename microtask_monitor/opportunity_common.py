@@ -32,7 +32,13 @@ SKILL_GROUPS: dict[str, list[str]] = {
                            "vibecode", "vibe code"],
     "ai_automation": ["automation", "n8n", "make.com", "zapier", "workflow", "workflows", "agent",
                       "agents", "chatbot", "chatbots", "llm", "llm integration", "generative ai"],
-    "writing_research": ["writing", "writer", "research", "copywriting", "editor", "content creation"],
+    "writing_research": ["writing", "writer", "research", "copywriting", "editor", "content creation",
+                         "blog", "blogging", "content writer", "academic writing", "article", "proofreading"],
+    "ai_video_creation": ["ai video", "video generation", "runway", "pika", "heygen", "capcut", "video editing",
+                          "video editor", "canva", "short-form video", "text-to-video"],
+    "data_entry": ["data entry", "typing", "spreadsheet", "copy paste", "copy-paste", "transcription"],
+    "ai_tools": ["chatgpt", "claude", "gemini", "manus", "openai", "anthropic", "cursor", "vs code", "vscode"],
+    "web_development": ["html", "css", "web development", "website", "web developer", "frontend", "front-end"],
 }
 
 UPFRONT_COST_TERMS = [

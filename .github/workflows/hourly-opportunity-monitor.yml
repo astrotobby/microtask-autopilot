@@ -62,11 +62,24 @@ jobs:
           set -e
           latest=$(ls microtask_monitor/reports/*.json | sort | tail -n 1)
           cp "$latest" "$RUNNER_TEMP/latest.json"
+          # Resumable, integrity-checked copy: gzip + manifest (sizes and SHA-256 of both files).
+          gzip -9 -n -c "$RUNNER_TEMP/latest.json" > "$RUNNER_TEMP/latest.json.gz"
+          python - <<'PYEOF'
+          import hashlib, json, os, pathlib
+          t = pathlib.Path(os.environ["RUNNER_TEMP"])
+          raw, gz = (t / "latest.json").read_bytes(), (t / "latest.json.gz").read_bytes()
+          manifest = {"sha256": hashlib.sha256(raw).hexdigest(), "size": len(raw),
+                      "gz_sha256": hashlib.sha256(gz).hexdigest(), "gz_size": len(gz),
+                      "run_id": os.environ.get("GITHUB_RUN_ID"), "generated_by": "hourly-opportunity-monitor"}
+          (t / "latest.manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+          PYEOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan report-data-tmp
           git rm -rf --quiet .
           cp "$RUNNER_TEMP/latest.json" latest.json
-          git add latest.json
+          cp "$RUNNER_TEMP/latest.json.gz" latest.json.gz
+          cp "$RUNNER_TEMP/latest.manifest.json" latest.manifest.json
+          git add latest.json latest.json.gz latest.manifest.json
           git commit --quiet -m "Publish latest opportunity report"
           git push --force origin HEAD:refs/heads/report-data

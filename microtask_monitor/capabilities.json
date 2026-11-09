@@ -1,0 +1,578 @@
+{
+  "updated_at": "2026-11-08",
+  "levels": [
+    "PUBLIC_DISCOVERY_ALLOWED",
+    "DOCUMENTED_API_ALLOWED",
+    "MANUAL_ONLY",
+    "HUMAN_APPROVAL_REQUIRED",
+    "AUTOMATION_PROHIBITED",
+    "UNVERIFIED"
+  ],
+  "platforms": [
+    {
+      "platform_id": "atlas_capture",
+      "name": "Atlas Capture",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": "Standard consumer capture requires iPhone 11 or newer (per the registry's official-site review).",
+        "user_device_compatible": false,
+        "note": "User phone is a Samsung A05 (Android): iPhone-only workflows are NOT available."
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://www.atlascapture.io/"
+      ],
+      "notes": "Do not assume iPhone-only workflows are available. Recording must be genuine and human-performed."
+    },
+    {
+      "platform_id": "clickworker",
+      "name": "Clickworker",
+      "levels": [
+        "MANUAL_ONLY",
+        "AUTOMATION_PROHIBITED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://www.clickworker.com/"
+      ],
+      "notes": "Keep account work manual unless current official terms expressly allow automation. Registration can pause by country."
+    },
+    {
+      "platform_id": "microworkers",
+      "name": "Microworkers",
+      "levels": [
+        "AUTOMATION_PROHIBITED",
+        "MANUAL_ONLY"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://www.microworkers.com/"
+      ],
+      "notes": "Project policy: respect restrictions on automated access; all account and task activity is manual."
+    },
+    {
+      "platform_id": "rapidworkers",
+      "name": "RapidWorkers",
+      "levels": [
+        "MANUAL_ONLY",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://rapidworkers.io/"
+      ],
+      "notes": "Domain is rapidworkers.io (NOT rapidworkers.net). Operator, terms and payout route still need verification."
+    },
+    {
+      "platform_id": "sproutgigs",
+      "name": "SproutGigs",
+      "levels": [
+        "AUTOMATION_PROHIBITED",
+        "MANUAL_ONLY"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://sproutgigs.com/"
+      ],
+      "notes": "Project policy: no bots or AI agents to collect logged-in task data or complete prohibited activities."
+    },
+    {
+      "platform_id": "afterquery",
+      "name": "AfterQuery Experts",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED"
+      ],
+      "public_discovery": "manual_links_only",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Role-specific; some roles list worldwide. Verify each opening."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://experts.afterquery.com/home"
+      ],
+      "notes": "Applications, assessments, identity checks and contracts are human-reviewed."
+    },
+    {
+      "platform_id": "handshake_ai",
+      "name": "Handshake AI",
+      "levels": [
+        "UNVERIFIED",
+        "MANUAL_ONLY"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Not confirmed; check the official signup flow and each task."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://joinhandshake.com/ai/opportunities/"
+      ],
+      "notes": "Confirm the exact service; do not confuse with the Handshake student recruiting platform. Work authorization may apply."
+    },
+    {
+      "platform_id": "braintrust",
+      "name": "Braintrust",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED"
+      ],
+      "public_discovery": "manual_links_only",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Kenya is not on Braintrust's restricted-territory list, but role-specific restrictions and payout method need confirmation."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": null,
+      "policy_urls": [
+        "https://app.usebraintrust.com/talent/dashboard/welcome/"
+      ],
+      "notes": "Professional talent marketplace: profile, vetting, applications and contracts are manual."
+    },
+    {
+      "platform_id": "opentrain_ai",
+      "name": "OpenTrain AI",
+      "levels": [
+        "DOCUMENTED_API_ALLOWED",
+        "PUBLIC_DISCOVERY_ALLOWED",
+        "HUMAN_APPROVAL_REQUIRED"
+      ],
+      "public_discovery": "documented_public_api",
+      "documented_api": {
+        "available": true,
+        "url": "https://app.opentrain.ai/api/public/v1/openapi.json",
+        "scope": "GET /jobs (anonymous, per-IP rate limit documented at 120 requests/minute)"
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [
+        "api_read"
+      ],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "job_specific",
+        "note": "Each job lists eligible countries; an empty list is NOT assumed open to Kenya."
+      },
+      "payment_verification": {
+        "status": "documented",
+        "note": "Kenya appears on OpenTrain's payout-country list (checked 2026-11-08)."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": "2026-11-08",
+      "policy_urls": [
+        "https://www.opentrain.ai/docs/",
+        "https://app.opentrain.ai/api/public/v1/openapi.json",
+        "https://www.opentrain.ai/docs/payments/payout-country-availability/"
+      ],
+      "notes": "Applications, AI interview, location checks, identity verification and contracts are human-performed."
+    },
+    {
+      "platform_id": "gainworkers",
+      "name": "GainWorkers",
+      "levels": [
+        "AUTOMATION_PROHIBITED",
+        "MANUAL_ONLY"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": true,
+        "url": "https://www.gainworkers.com/api-docs",
+        "scope": "Employer/SMM-reseller API only (services, orders, wallet). NOT a worker-task API; must not be used."
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scraping",
+        "bots",
+        "employer_api_misuse",
+        "authenticated_dashboard_scraping"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "task_specific",
+        "note": "Geo rules appear per task after login; Terms forbid VPN/proxy use to bypass them."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": "2026-11-08",
+      "policy_urls": [
+        "https://www.gainworkers.com/terms",
+        "https://www.gainworkers.com/robots.txt",
+        "https://www.gainworkers.com/api-docs"
+      ],
+      "notes": "Task lists need login and are disallowed in robots.txt; the Terms prohibit scraping and bots."
+    },
+    {
+      "platform_id": "mindrift",
+      "name": "Mindrift",
+      "levels": [
+        "AUTOMATION_PROHIBITED",
+        "MANUAL_ONLY"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [
+        "policy_monitor"
+      ],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "opportunity_discovery",
+        "account_creation",
+        "task_access"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unsupported",
+        "note": "Kenya is explicitly listed as not currently supported (policy 'Last updated: May 27, 2026')."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": "2026-11-08",
+      "policy_urls": [
+        "https://mindrift.ai/legal/eligibility-and-geographic-restrictions",
+        "https://mindrift.toloka.ai/"
+      ],
+      "notes": "Only the public eligibility policy is monitored for changes. Do not apply or create accounts while Kenya is unsupported."
+    },
+    {
+      "platform_id": "reworkio",
+      "name": "REWORKIO",
+      "levels": [
+        "AUTOMATION_PROHIBITED",
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED"
+      ],
+      "public_discovery": "unavailable",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "reverse_engineering_private_endpoints",
+        "automated_logged_in_browsing"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "Claims 160+ countries; Kenya eligibility and payout route are unverified."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null
+      },
+      "last_policy_verified": "2026-11-08",
+      "policy_urls": [
+        "https://reworkio.com/faq/",
+        "https://reworkio.com/robots.txt",
+        "https://reworkio.com/dashboard/"
+      ],
+      "notes": "/projects/ and /opportunities/ are client-rendered over an undocumented backend; dashboard needs sign-in. Watch for paid membership, deposits or escrow funding."
+    }
+  ]
+}

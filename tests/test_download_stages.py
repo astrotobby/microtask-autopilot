@@ -1,3 +1,7 @@
+import os
+os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
+os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
+os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 import io
 import unittest
 import urllib.error

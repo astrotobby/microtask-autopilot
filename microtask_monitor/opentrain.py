@@ -24,8 +24,10 @@ from typing import Any, Callable
 
 try:  # package import (tests) or direct script import (GitHub Actions)
     from microtask_monitor import opportunity_common as oc
+    from microtask_monitor import policy
 except ImportError:  # pragma: no cover
     import opportunity_common as oc
+    import policy
 
 PLATFORM_ID = "opentrain_ai"
 PLATFORM_NAME = "OpenTrain AI"
@@ -282,6 +284,7 @@ def scan(fetch: Callable[[str], dict[str, Any]] = http_get_json, *, cache_path: 
             return {"items": items, "health": {
                 "status": "ok_cached", "last_successful_scan": cache["saved_at"], "error": None,
                 "message": "Used cache younger than the polling interval", **summarize(items)}}
+    policy.require(PLATFORM_ID, "api_read")     # capability record must permit the documented API read
     # Pass 1: server-side country=KE filter (small and complete); pass 2: the unfiltered list for
     # total coverage. Eligibility is ALWAYS re-derived locally from each job's own country list,
     # because the server filter also lets through some jobs that do not list Kenya.

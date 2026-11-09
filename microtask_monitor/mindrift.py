@@ -21,6 +21,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
 
+try:
+    from microtask_monitor import policy
+except ImportError:  # pragma: no cover
+    import policy
+
 PLATFORM_ID = "mindrift"
 PLATFORM_NAME = "Mindrift"
 POLICY_URL = "https://mindrift.ai/legal/eligibility-and-geographic-restrictions"
@@ -142,6 +147,7 @@ def scan(fetch: Callable[[], str] = fetch_policy_html, *, baseline_path: Path = 
                 return {"eligibility": cached, "items": []}
         except (OSError, ValueError, KeyError):
             pass
+    policy.require(PLATFORM_ID, "policy_monitor")   # only the public policy page may be read
     parsed, error = None, None
     try:
         parsed = parse_policy(fetch())
