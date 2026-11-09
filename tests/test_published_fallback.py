@@ -65,7 +65,7 @@ class PublishedFallbackTests(unittest.TestCase):
         denied = sr.SyncStageError("github-artifact-api", "Unauthorized", 401)
         with mock.patch.object(sr, "api_json", side_effect=[runs, arts]), \
              mock.patch.object(sr, "download_archive", side_effect=denied), \
-             mock.patch.object(sr, "fetch_published_report",
+             mock.patch.object(sr, "fetch_best_published_report",
                                return_value=("report", {"run_id": 1})) as fetch:
             self.assertEqual(sr.get_latest_report(), ("report", {"run_id": 1}))
             fetch.assert_called_once()
