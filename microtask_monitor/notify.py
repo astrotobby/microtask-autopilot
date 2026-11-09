@@ -34,7 +34,7 @@ DEFAULT_SETTINGS = {"desktop_notifications": True, "external_min_severity": "imp
                     "max_external_per_cycle": 5, "expiring_days": 3, "max_individual_new": 10}
 SEVERITY_RANK = {"info": 0, "important": 1, "urgent": 2}
 TYPES = ("new_opportunity", "expiring_opportunity", "application_response", "task_attention", "payment_update",
-         "sync_failed", "policy_change", "daily_shortlist", "opportunity_changed")
+         "sync_failed", "policy_change", "daily_shortlist", "opportunity_changed", "reminder")
 
 
 def load_settings(path: Path = SETTINGS_PATH) -> dict[str, Any]:

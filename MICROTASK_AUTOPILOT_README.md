@@ -217,6 +217,20 @@ Top five, a shortlist of up to 20, Kenya-confirmed and worldwide-confirmed lists
 ### Dashboard and notifications
 The **DAILY EARNING OPPORTUNITIES** section shows today's top five, the full shortlist, newly discovered items, application status, the draft application, direct links and the last analysis time (local and cloud). You can mark each opportunity reviewed, shortlisted, applied, rejected or accepted; this is stored in SQLite (`opportunity_review`), not in the browser. Notifications (deduplicated): daily shortlist ready (once per day after 08:00 EAT), a few genuinely new high-quality Kenya-confirmed opportunities, deadlines within three days, and material changes (eligibility, availability, pay, deadline) to opportunities you track.
 
+## First-earning workflow (applications you finish yourself)
+
+Everything here prepares and tracks; **you** open the platform, apply, sit assessments and record what happened. Nothing is submitted, accepted or paid automatically.
+
+- **Application packet** (Applications tab, "Open application packet"): opportunity details, original and apply links, compensation, payment route, assessments, the tailored draft with your own profile answers filled in, reusable answers with copy buttons, platform-specific steps, a follow-up plan and a "ready / not ready" list of blockers. Each save adds a versioned snapshot in SQLite. Blank personal answers are never invented.
+- **Reusable profile answers** (Applications tab): name, contact, availability, experience, portfolio and similar. Passwords, one-time codes, ID/card numbers are rejected.
+- **Reminders**: deadline milestones (7, 3, 1 days), assessment preparation, stale drafts, follow-ups, interviews, accepted work, task due dates, profile gaps. Stored once (never repeat after you tick them off) and delivered through the existing free notification channels.
+- **Follow-up tracking**: record submitted, response, follow-up sent, interview scheduled/done, decision. A follow-up date is set 7 days after submission.
+- **Platform guidance and quality checklists**: verified entries (OpenTrain AI, Microworkers, Handshake AI, Braintrust, RapidWorkers, Atlas Capture) cite the platform's own pages and dates; every other platform shows a generic checklist labelled UNVERIFIED. New task workspaces include the platform checklist.
+- **TODAY'S ACTIONS** (Overview): at most twelve prioritised items (profile gaps, deadlines, approving drafts, applying, follow-ups, tasks, payment checks, two rotating manual platform checks).
+
+### Platform capability review
+Each platform record carries a `review` (what was read, when, and what it does and does not permit). Only Microworkers, Handshake AI, GainWorkers, Mindrift, REWORKIO and SproutGigs are AUTOMATION_PROHIBITED, each for a specific cited reason. Platforms whose terms could not be fully read stay UNVERIFIED.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.

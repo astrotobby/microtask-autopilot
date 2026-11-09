@@ -11,18 +11,19 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 try:
-    from microtask_monitor import assistant, db, intelligence as ig, policy
+    from microtask_monitor import assistant, db, guidance, intelligence as ig, policy
 except ImportError:  # pragma: no cover
-    import assistant, db, intelligence as ig, policy
+    import assistant, db, guidance, intelligence as ig, policy
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = ROOT / "data" / "evidence"
 MAX_EVIDENCE_BYTES = 10 * 1024 * 1024
+FOLLOWUP_DAYS = 7
 TASK_FLOW = {"accepted": {"in_progress", "completed"}, "in_progress": {"completed", "accepted"},
              "completed": {"submitted", "in_progress"}, "submitted": {"approved", "rejected"},
              "approved": {"paid"}, "rejected": set(), "paid": set()}
@@ -133,7 +134,10 @@ def mark_submitted(conn, app_id: int, submitted_at: str | None = None, confirmed
     policy.require(app["platform_id"] or "", "record_manual_submission")
     when = _day(submitted_at or date.today().isoformat(), "submitted_at")
     with db.tx(conn):
-        conn.execute("UPDATE applications SET status='submitted', submitted_at=?, updated_at=? WHERE id=?", (when, db.now_iso(), app_id))
+        follow = (date.fromisoformat(when) + timedelta(days=FOLLOWUP_DAYS)).isoformat()
+        conn.execute("UPDATE applications SET status='submitted', submitted_at=?, next_followup_at=?, updated_at=? WHERE id=?", (when, follow, db.now_iso(), app_id))
+        conn.execute("INSERT INTO application_events(application_id,at,event_date,kind,detail) VALUES(?,?,?,?,?)",
+                     (app_id, db.now_iso(), when, "submitted", "Submitted by you on the platform"))
         db.audit(conn, "application.submitted_manually", "application", app_id, {"date": when})
     return get_application(conn, app_id)
 
@@ -147,12 +151,54 @@ def record_response(conn, app_id: int, status: str, text: str = "", response_at:
     with db.tx(conn):
         conn.execute("UPDATE applications SET status=?, response_text=?, response_at=?, updated_at=? WHERE id=?",
                      (status, text[:4000], _day(response_at or date.today().isoformat(), "response_at"), db.now_iso(), app_id))
+        conn.execute("INSERT INTO application_events(application_id,at,event_date,kind,detail) VALUES(?,?,?,?,?)",
+                     (app_id, db.now_iso(), _day(response_at or date.today().isoformat(), "response_at"), "response", f"{status}: {text[:300]}"))
         db.audit(conn, "application.response", "application", app_id, {"status": status})
+    return get_application(conn, app_id)
+
+
+def _when(value: str | None, field: str) -> str:
+    """A date or datetime (YYYY-MM-DD or YYYY-MM-DDTHH:MM), validated; returns the original text."""
+    try:
+        datetime.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        raise WorkflowError(f"{field} must be a date or date-time such as 2026-11-20 or 2026-11-20T14:00")
+    return str(value)
+
+
+def log_event(conn, app_id: int, kind: str, detail: str = "", event_date: str | None = None,
+              next_followup_at: str | None = None, decision: str | None = None) -> dict[str, Any]:
+    """Follow-up tracking for a submitted application: follow-ups sent, interviews, decisions, notes."""
+    if kind not in ("followup_sent", "interview_scheduled", "interview_done", "decision", "note"):
+        raise WorkflowError("kind must be followup_sent, interview_scheduled, interview_done, decision or note (use submit/response for those)")
+    app = _require(_one(conn, "SELECT * FROM applications WHERE id=?", (app_id,)), "Application")
+    if app["status"] in ("draft", "approved") and kind != "note":
+        raise WorkflowError("This application has not been marked as submitted yet")
+    when = _when(event_date or date.today().isoformat(), "event_date")
+    now = db.now_iso()
+    with db.tx(conn):
+        if kind == "followup_sent":
+            nxt = _when(next_followup_at, "next_followup_at") if next_followup_at else (date.fromisoformat(when[:10]) + timedelta(days=FOLLOWUP_DAYS)).isoformat()
+            conn.execute("UPDATE applications SET next_followup_at=?, updated_at=? WHERE id=?", (nxt, now, app_id))
+        elif kind == "interview_scheduled":
+            conn.execute("UPDATE applications SET interview_at=?, status='interview', next_followup_at=NULL, updated_at=? WHERE id=?", (when, now, app_id))
+        elif kind == "interview_done":
+            nxt = _when(next_followup_at, "next_followup_at") if next_followup_at else (date.fromisoformat(when[:10]) + timedelta(days=FOLLOWUP_DAYS)).isoformat()
+            conn.execute("UPDATE applications SET next_followup_at=?, updated_at=? WHERE id=?", (nxt, now, app_id))
+        elif kind == "decision":
+            if decision not in ("accepted", "rejected", "withdrawn"):
+                raise WorkflowError("decision must be accepted, rejected or withdrawn")
+            conn.execute("UPDATE applications SET status=?, decision=?, decision_at=?, next_followup_at=NULL, updated_at=? WHERE id=?",
+                         (decision, decision, when[:10], now, app_id))
+            detail = f"{decision}. {detail}".strip()
+        conn.execute("INSERT INTO application_events(application_id,at,event_date,kind,detail) VALUES(?,?,?,?,?)", (app_id, now, when, kind, detail[:500]))
+        db.audit(conn, f"application.{kind}", "application", app_id, {"date": when})
     return get_application(conn, app_id)
 
 
 def get_application(conn, app_id: int) -> dict[str, Any]:
     app = _require(_one(conn, "SELECT * FROM applications WHERE id=?", (app_id,)), "Application")
+    app["events"] = db.rows(conn.execute("SELECT id,at,event_date,kind,detail FROM application_events WHERE application_id=? ORDER BY id DESC", (app_id,)))
     app["drafts"] = []
     for d in db.rows(conn.execute("SELECT * FROM application_drafts WHERE application_id=? ORDER BY version DESC", (app_id,))):
         d["missing_info"] = json.loads(d.pop("missing_info_json") or "[]")
@@ -173,15 +219,19 @@ def create_task(conn, title: str, instructions: str = "", application_id: int | 
     if application_id is not None:
         app = _require(_one(conn, "SELECT * FROM applications WHERE id=?", (application_id,)), "Application")
         opportunity_url, platform_id = opportunity_url or app["opportunity_url"], platform_id or app["platform_id"]
-    guidance = assistant.simplify_instructions(instructions)
+    task_guidance = assistant.simplify_instructions(instructions)
+    pg = guidance.for_platform(platform_id)
+    task_guidance["platform"] = {"platform_id": platform_id, "label": pg["label"], "verified": pg["verified"], "verified_on": pg["verified_on"],
+                                 "sources": pg["sources"], "common_mistakes": pg["common_mistakes"], "payout": pg["payout"]}
     now = db.now_iso()
     with db.tx(conn):
         cur = conn.execute("INSERT INTO tasks(application_id,opportunity_url,platform_id,title,instructions,simplified,guidance_json,"
                            "status,created_at,updated_at,due_at) VALUES(?,?,?,?,?,?,?, 'accepted', ?,?,?)",
                            (application_id, opportunity_url, platform_id, title.strip()[:200], instructions[:20000],
-                            guidance["summary"], json.dumps(guidance, ensure_ascii=False), now, now, due_at))
+                            task_guidance["summary"], json.dumps(task_guidance, ensure_ascii=False), now, now, due_at))
         tid = cur.lastrowid
-        for pos, it in enumerate(assistant.generate_checklist(guidance), 1):
+        rows = assistant.generate_checklist(task_guidance) + guidance.task_checklist(platform_id)      # task text + platform QC checklist
+        for pos, it in enumerate(rows, 1):
             conn.execute("INSERT INTO task_checklist_items(task_id,position,text,kind) VALUES(?,?,?,?)", (tid, pos, it["text"][:500], it["kind"]))
         db.audit(conn, "task.create", "task", tid)
     return get_task(conn, tid)

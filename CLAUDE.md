@@ -78,3 +78,4 @@ No third-party Python package is required for the current report sync/server com
 - Database changes require a new migration in `db.py` (never edit an applied one) plus a data-preservation test.
 - The daily pipeline only ranks data from permitted adapters and creates DRAFTS; it must never call approve/submit functions or contact a platform. Role fit is judged on the role TITLE, not listing tags or boilerplate.
 - Tests that touch sync/DB should set `AUTOPILOT_NO_SLEEP=1`, `AUTOPILOT_NO_NOTIFY=1`, `AUTOPILOT_SQLITE_SYNCHRONOUS=OFF` and use temp paths, never `data/`.
+- First-earning workflow modules (`packets`, `reminders`, `actions`, `profile_answers`, `guidance`) only read and prepare. They must not import network code or call `approve_draft`, `mark_submitted` or `record_submission` (a test enforces this). Never invent profile answers; unverified platform guidance must stay labelled UNVERIFIED.

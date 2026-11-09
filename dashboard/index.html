@@ -76,6 +76,9 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <section id="overview" class="panel active">
   <h1>Operations overview</h1><p class="muted">Everything below comes from the persistent local database.</p>
   <div id="syncBanner"></div>
+  <div class="section-head"><h2>TODAY'S ACTIONS</h2><span class="muted" id="actionSummary"></span></div>
+  <p class="muted">The most important things for you to do next, in priority order. Nothing here is done for you: each item tells you what to do and where. Tick an item when you have done it.</p>
+  <div id="actionList" class="card"></div>
   <div class="grid" style="margin-top:12px" id="overviewCards"></div>
   <div class="grid" style="margin-top:12px">
    <div class="card"><div class="muted">Tracked platforms</div><div class="metric" id="mPlatforms">12</div></div>
@@ -134,6 +137,9 @@ footer{padding:22px 0;color:#778398;font-size:12px}
 
  <section id="applications" class="panel">
   <h1>Application Manager</h1><p class="muted">Drafts are prepared from your established profile only. You review, approve and submit yourself on the platform, then record it here.</p>
+  <details class="card" id="profileCard" style="margin:12px 0"><summary><strong>My reusable profile answers</strong> <span class="muted" id="profileStatus"></span></summary>
+   <p class="muted">Used to fill your application packets. Write only true facts. Never enter passwords, one-time codes, ID numbers or payment details; they are rejected. Empty answers are never invented.</p>
+   <div id="profileForm"></div></details>
   <div class="split">
    <div class="card" style="padding:0"><div style="padding:10px;border-bottom:1px solid #edf0f5"><strong id="appCount">0 applications</strong></div><div id="applicationList"><div class="empty">No applications yet. Use “Prepare application” in the Opportunity Explorer.</div></div></div>
    <div id="applicationDetail"><div class="empty">Select an application.</div></div>
@@ -197,6 +203,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <footer>Microtask Autopilot · Local-only · $0 · No external JavaScript libraries · It records what you do; you perform every application, task and submission yourself.</footer>
 </main>
 <dialog id="detailDialog"><div id="detailBody"></div><div class="right" style="margin-top:10px"><button class="btn" id="closeDetail">Close</button></div></dialog>
+<dialog id="packetDialog" style="max-width:900px;width:94vw"><div id="packetBody"></div><div class="right" style="margin-top:10px"><button class="btn" id="closePacket">Close</button></div></dialog>
 <div id="toast"></div>
 <script>
 "use strict";
@@ -259,6 +266,7 @@ async function loadOverview(){
  $("syncBanner").innerHTML=fails?'<div class="banner bad"><strong>Synchronization failing ('+fails+' in a row).</strong> '+esc(o.sync.last_error||"")+(h&&h.explanation?'<br>'+esc(h.explanation):"")+' Your existing data is unchanged.</div>':'<div class="banner ok">Synchronization healthy. Your data is stored locally.</div>';
  $("agentStatus").textContent="Agent connected · "+o.opportunities.total+" opportunities · last sync "+when(o.last_local_sync);
  setBadge(o.unread_notifications);
+ loadActions();
  const top=await act(()=>api("GET","/api/opportunities?eligibility=KENYA_CONFIRMED,WORLDWIDE_CONFIRMED&limit=8&sort=score"));
  $("overviewOpps").innerHTML=top&&top.items.length?oppTable(top.items,true):'<div class="empty">No confirmed opportunities yet. Wait for the next sync or press “Sync now”.</div>';
  bindOppActions($("overviewOpps"));
@@ -381,6 +389,7 @@ $("importReport").addEventListener("change",async e=>{
 // ---------------------------------------------------------------- applications
 let apps=[];
 async function loadApplications(){
+ loadProfile();
  const r=await act(()=>api("GET","/api/applications"));if(!r)return;apps=r.applications;
  $("appCount").textContent=apps.length+" application"+(apps.length===1?"":"s");
  $("applicationList").innerHTML=apps.length?apps.map(a=>'<div class="list-item'+(a.id===ui.selApp?" sel":"")+'" data-app="'+a.id+'"><strong>'+esc(a.title)+'</strong><div class="muted">'+esc(platformName(a.platform_id))+' · <span class="tag">'+esc(a.status)+'</span> · '+esc(day(a.updated_at))+'</div></div>').join(""):'<div class="empty">No applications yet. Use “Prepare application” in the Opportunity Explorer.</div>';
@@ -395,10 +404,14 @@ async function showApplication(id){
   +'<p>'+link(a.apply_url||a.opportunity_url,"Open the original application page")+'</p>'
   +(d?'<h3>Missing information — fill in before sending</h3><ul>'+(d.missing_info||[]).map(m=>'<li>'+esc(m)+'</li>').join("")+'</ul><label for="draftBody">Draft (version '+d.version+', '+esc(d.provider)+(d.approved?", APPROVED":"")+')</label><textarea id="draftBody" style="min-height:240px">'+esc(d.body)+'</textarea>'
   +'<div class="row" style="margin-top:8px"><button class="btn" id="saveDraft">Save edits</button><button class="btn" id="regenDraft">New draft</button><button class="btn primary" id="approveDraft">Approve draft</button></div>':"")
+  +'<div class="row" style="margin-top:8px"><button class="btn primary" id="openPacket">Open application packet</button></div>'
   +'<h3 style="margin-top:14px">Next steps</h3><ol>'+steps.map(s=>'<li>'+esc(s)+'</li>').join("")+'</ol>'
   +'<div class="row"><button class="btn" id="markSubmitted" '+(a.status!=="approved"?"disabled":"")+'>I submitted it myself</button></div>'
+  +followUpHtml(a)
   +'<h3 style="margin-top:14px">Platform response</h3><div class="form-grid"><div><label for="respStatus">Status</label><select id="respStatus"><option value="interview">Interview / assessment</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option></select></div><div><label for="respText">What they said</label><input id="respText" maxlength="500"></div></div><div class="right" style="margin-top:8px"><button class="btn" id="saveResponse" '+(["draft","approved"].includes(a.status)?"disabled":"")+'>Record response</button></div></div>';
  const reload=()=>loadApplications();
+ $("openPacket").onclick=()=>showPacket(id,false);
+ $("saveEvent").onclick=async()=>{const kind=$("evtKind").value;const body={kind,detail:$("evtDetail").value,event_date:$("evtDate").value||undefined,decision:$("evtDecision").value||undefined};if(kind==="interview_scheduled"&&$("evtDate").value)body.event_date=$("evtDate").value;if(await act(()=>api("POST","/api/applications/"+id+"/events",body),"Recorded"))reload()};
  if(d){
   $("saveDraft").onclick=async()=>{if(await act(()=>api("PUT","/api/drafts/"+d.id,{body:$("draftBody").value}),"Draft saved (approval reset)"))reload()};
   $("regenDraft").onclick=async()=>{if(confirm("Create a new draft version? Your current text stays in the history."))if(await act(()=>api("POST","/api/applications/"+id+"/regenerate"),"New draft created"))reload()};
@@ -406,6 +419,59 @@ async function showApplication(id){
  }
  $("markSubmitted").onclick=async()=>{const date=prompt("Date you submitted it yourself (YYYY-MM-DD):",todayStr());if(date&&await act(()=>api("POST","/api/applications/"+id+"/submit",{confirmed_by_user:true,submitted_at:date}),"Recorded as submitted"))reload()};
  $("saveResponse").onclick=async()=>{if(await act(()=>api("POST","/api/applications/"+id+"/response",{status:$("respStatus").value,text:$("respText").value}),"Response recorded"))reload()};
+}
+
+
+// ---------------------------------------------------------------- first-earning workflow: actions, packets, profile, follow-ups
+const TARGET_TAB={applications:"applications",tasks:"tasks",daily:"daily",platforms:"platforms",earnings:"earnings"};
+async function loadActions(){
+ const r=await act(()=>api("GET","/api/actions"));if(!r)return;
+ const items=r.items||[],open=items.filter(i=>i.status==="open");
+ $("actionSummary").textContent=open.length+" to do · about "+((r.summary||{}).estimated_minutes||0)+" min · "+((r.summary||{}).done||0)+" done today";
+ let n=0;
+ $("actionList").innerHTML=items.length?items.map(i=>{if(i.status==="open")n++;return '<div class="row" style="align-items:flex-start;padding:6px 0;border-bottom:1px solid #edf0f5"><label class="check'+(i.status!=="open"?" done":"")+'" style="flex:1"><input type="checkbox" data-action="'+i.id+'" '+(i.status==="done"?"checked":"")+(i.status==="skipped"?" disabled":"")+'><span><strong>'+(i.status==="open"?n+". ":"")+esc(i.title)+'</strong> <span class="tag">'+i.est_minutes+' min</span>'+(i.status==="skipped"?' <span class="tag">skipped</span>':"")+'<div class="muted">'+esc(i.detail||"")+'</div></span></label><div style="flex:0 0 auto">'+(i.url?link(i.url,"Open"):"")+' <button class="btn small" data-actgo="'+esc(i.target||"")+'" data-appid="'+esc((i.ref||{}).app_id||"")+'">Go</button>'+(i.status==="open"?' <button class="btn small" data-actskip="'+i.id+'">Skip</button>':"")+'</div></div>'}).join(""):'<div class="empty">Nothing to do right now.</div>';
+ $("actionList").querySelectorAll("[data-action]").forEach(cb=>cb.addEventListener("change",async()=>{if(await act(()=>api("POST","/api/actions/"+cb.dataset.action+"/status",{status:cb.checked?"done":"open"})))loadActions()}));
+ $("actionList").querySelectorAll("[data-actskip]").forEach(b=>b.addEventListener("click",async()=>{if(await act(()=>api("POST","/api/actions/"+b.dataset.actskip+"/status",{status:"skipped"}),"Skipped for today"))loadActions()}));
+ $("actionList").querySelectorAll("[data-actgo]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.appid){ui.selApp=Number(b.dataset.appid);saveUi(ui)}const t=TARGET_TAB[b.dataset.actgo];if(t)setTab(t)}));
+}
+async function showPacket(id,save){
+ const r=await act(()=>save?api("POST","/api/applications/"+id+"/packet",{}):api("GET","/api/applications/"+id+"/packet"));if(!r)return;
+ const p=r.packet,o=p.opportunity||{},ins=p.instructions||{};
+ const text=p.text||"";
+ $("packetBody").innerHTML='<h2>Application packet: '+esc(o.title||"")+'</h2>'
+  +'<div class="tags"><span class="tag '+(p.ready_to_apply?"ok":"warn")+'">'+(p.ready_to_apply?"READY TO APPLY":"NOT READY")+'</span><span class="tag">'+esc((o.eligibility||{})["class"]||"")+'</span>'+(r.saved_version?'<span class="tag info">latest snapshot v'+esc(r.saved_version)+'</span>':'<span class="tag">no snapshot saved yet</span>')+'</div>'
+  +((p.blockers||[]).length?'<div class="banner bad"><strong>Before you apply:</strong><ul>'+p.blockers.map(b=>'<li>'+esc(b)+'</li>').join("")+'</ul></div>':'<div class="banner ok">All checks passed. You still apply yourself on the platform.</div>')
+  +'<p>'+link(o.apply_url||o.url,"Open the application page")+' · '+link(o.url,"Original listing")+'</p>'
+  +'<table style="min-width:0"><tbody><tr><td>Compensation</td><td>'+esc(o.compensation||"Not disclosed")+'</td></tr><tr><td>Payment method</td><td>'+esc(o.payment_method||"not verified")+'</td></tr><tr><td>Deadline</td><td>'+esc(o.deadline?day(o.deadline):"none stated")+'</td></tr><tr><td>Assessments</td><td>'+esc((o.assessments||[]).join(", ")||"none mentioned")+'</td></tr><tr><td>Skills to mention</td><td>'+esc((p.skills||[]).join(", ")||"—")+'</td></tr></tbody></table>'
+  +((o.qualification_gaps||[]).length?'<p><span class="tag warn">confirm before applying</span> '+esc(o.qualification_gaps.join("; "))+'</p>':"")
+  +'<h3>Application draft (your profile answers filled in)</h3><textarea id="packetDraft" readonly style="min-height:200px">'+esc(p.draft_filled||"")+'</textarea><div class="right"><button class="btn small" data-copy="packetDraft">Copy draft</button></div>'
+  +'<h3>Reusable profile answers</h3>'+(p.profile_answers||[]).map(a=>'<div class="row" style="padding:3px 0"><div style="flex:1"><strong>'+esc(a.question)+'</strong><div class="muted">'+(a.answer?esc(a.answer):'<span class="tag warn">not filled in</span>')+'</div></div>'+(a.answer?'<button class="btn small" data-copytext="'+esc(a.answer)+'">Copy</button>':"")+'</div>').join("")
+  +'<h3>How to apply: '+esc(ins.label||"this platform")+'</h3><ol>'+(ins.steps||[]).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ol>'
+  +listHtml("After applying",ins.after_applying)+listHtml("Common mistakes",ins.common_mistakes)
+  +'<h3>Follow-up plan</h3><ul>'+(p.follow_up_plan||[]).map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>'
+  +'<div class="row" style="margin-top:8px"><button class="btn" id="packetSave">Save packet snapshot</button><button class="btn primary" data-copy="packetFull">Copy full packet</button></div>'
+  +'<textarea id="packetFull" readonly style="position:absolute;left:-9999px">'+esc(text)+'</textarea>'
+  +'<p class="muted">Nothing here was submitted for you. Apply yourself, then record it in the Application Manager.</p>';
+ $("packetBody").querySelectorAll("[data-copy]").forEach(b=>b.addEventListener("click",async()=>{let t=$(b.dataset.copy).value;if(b.dataset.copy==="packetFull"&&!t){const rr=await act(()=>api("POST","/api/applications/"+id+"/packet",{}));t=rr?rr.packet.text:""}copyText(t)}));
+ $("packetBody").querySelectorAll("[data-copytext]").forEach(b=>b.addEventListener("click",()=>copyText(b.dataset.copytext)));
+ $("packetSave").onclick=()=>showPacket(id,true);
+ if(!$("packetDialog").open)$("packetDialog").showModal();
+}
+async function copyText(t){try{await navigator.clipboard.writeText(t||"");toast("Copied")}catch(e){toast("Copy failed: select the text and copy it manually",true)}}
+$("closePacket").addEventListener("click",()=>$("packetDialog").close());
+async function loadProfile(){
+ const r=await act(()=>api("GET","/api/profile-answers"));if(!r)return;
+ $("profileStatus").textContent=r.missing_required.length?"· "+r.missing_required.length+" required answer(s) missing":"· all required answers filled in";
+ if(document.activeElement&&$("profileForm").contains(document.activeElement))return;
+ $("profileForm").innerHTML=r.answers.map(a=>'<label for="pa_'+esc(a.key)+'">'+esc(a.question)+(a.required?" *":"")+'</label><div class="row"><input id="pa_'+esc(a.key)+'" value="'+esc(a.answer||"")+'" maxlength="2000" placeholder="'+esc(a.hint||"")+'"><button class="btn small" data-pasave="'+esc(a.key)+'" style="flex:0 0 auto">Save</button></div>').join("");
+ $("profileForm").querySelectorAll("[data-pasave]").forEach(b=>b.addEventListener("click",async()=>{if(await act(()=>api("PUT","/api/profile-answers/"+b.dataset.pasave,{answer:$("pa_"+b.dataset.pasave).value}),"Saved"))loadProfile()}));
+}
+const EVENT_LABELS={followup_sent:"I followed up",interview_scheduled:"Interview scheduled",interview_done:"Interview done",decision:"Decision received",note:"Add a note"};
+function followUpHtml(a){
+ const ev=a.events||[];
+ return '<h3 style="margin-top:14px">Follow-up tracking</h3>'+(a.next_followup_at?'<p class="muted">Next follow-up: '+esc(day(a.next_followup_at))+'</p>':"")+(a.interview_at?'<p class="muted">Interview: '+esc(when(a.interview_at))+'</p>':"")+(a.decision?'<p><span class="tag info">decision: '+esc(a.decision)+'</span></p>':"")
+  +(ev.length?'<ul>'+ev.map(e=>'<li>'+esc(day(e.event_date||e.created_at))+' · <strong>'+esc(e.kind.replace(/_/g," "))+'</strong>'+(e.detail?': '+esc(e.detail):"")+'</li>').join("")+'</ul>':'<p class="muted">No events recorded yet.</p>')
+  +'<div class="form-grid"><div><label for="evtKind">Record</label><select id="evtKind">'+Object.entries(EVENT_LABELS).map(([k,v])=>'<option value="'+k+'">'+v+'</option>').join("")+'</select></div><div><label for="evtDate">Date / time</label><input id="evtDate" placeholder="YYYY-MM-DD or YYYY-MM-DDTHH:MM"></div><div><label for="evtDecision">Decision (if any)</label><select id="evtDecision"><option value="">—</option><option>accepted</option><option>rejected</option><option>withdrawn</option></select></div><div><label for="evtDetail">Details</label><input id="evtDetail" maxlength="500"></div></div><div class="right" style="margin-top:8px"><button class="btn" id="saveEvent" '+(["draft","approved"].includes(a.status)?"disabled":"")+'>Record event</button></div>';
 }
 
 // ---------------------------------------------------------------- tasks
@@ -426,6 +492,7 @@ async function showTask(id){
   +(g.needs_human_reading?'<div class="banner bad">No clear steps could be extracted. Read the original instructions carefully.</div>':"")
   +'<p><strong>Simplified:</strong> '+esc(t.simplified||"—")+'</p>'
   +'<details><summary>Original instructions</summary><pre class="draft">'+esc(t.instructions||"")+'</pre></details>'
+  +(g.platform?'<div class="banner '+(g.platform.verified?"ok":"bad")+'">'+esc(g.platform.label||"")+'</div>':"")
   +listHtml("Rules to follow",g.rules)+listHtml("Required materials",g.materials)+listHtml("Evidence requirements",g.evidence_requirements)+listHtml("Deadlines mentioned",g.deadlines)+listHtml("Common mistakes to avoid",g.common_mistakes)
   +'<h3>Checklist</h3>'+t.checklist.map(i=>'<label class="check'+(i.done?" done":"")+'"><input type="checkbox" data-item="'+i.id+'" '+(i.done?"checked":"")+'><span>'+esc(i.text)+' <em class="muted">('+esc(i.kind)+')</em></span></label>').join("")
   +'<p class="muted">'+esc(g.generic_note||"")+'</p>'

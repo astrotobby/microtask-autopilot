@@ -13,9 +13,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import assistant, daily, db, intelligence as ig, notify, policy, workflow as wf
+    from microtask_monitor import (actions, assistant, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
+                                   reminders, workflow as wf)
 except ImportError:  # pragma: no cover
-    import assistant, daily, db, intelligence as ig, notify, policy, workflow as wf
+    import actions, assistant, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -102,6 +103,14 @@ class Api:
                                                              str(body.get("reference", "")))}
         if parts[:1] == ["daily"]:
             return self.daily_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["actions"]:
+            return self.action_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["reminders"]:
+            return self.reminder_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["profile-answers"]:
+            return self.profile_endpoints(conn, method, parts[1:], body)
+        if key == ("GET", "guidance") and n == 2:
+            return {"ok": True, "guidance": guidance.for_platform(parts[1])}
         if parts[:1] == ["notifications"]:
             return self.notifications(conn, method, parts[1:], q, body)
         if key == ("POST", "sync"):
@@ -257,8 +266,25 @@ class Api:
                 return {"ok": True, "application": wf.create_application(conn, str(body.get("opportunity_url", "")))}
         elif method == "GET" and len(rest) == 1:
             return {"ok": True, "application": wf.get_application(conn, _int(rest[0], 0))}
+        elif method == "GET" and len(rest) == 2 and rest[1] == "packet":
+            app_id = _int(rest[0], 0)
+            try:
+                latest = packets.latest_packet(conn, app_id)       # always show the LIVE packet (profile/draft may have changed since the snapshot)
+                fresh = packets.build_packet(conn, app_id)
+                return {"ok": True, "packet": {**fresh, "text": packets.text_export(fresh)}, "saved": bool(latest),
+                        "saved_version": latest["version"] if latest else None}
+            except packets.PacketError as exc:
+                raise ApiError(404, str(exc))
         elif method == "POST" and len(rest) == 2:
             app_id, action = _int(rest[0], 0), rest[1]
+            if action == "packet":
+                try:
+                    return {"ok": True, "packet": packets.save_packet(conn, app_id), "saved": True}
+                except packets.PacketError as exc:
+                    raise ApiError(404, str(exc))
+            if action == "events":
+                return {"ok": True, "application": wf.log_event(conn, app_id, str(body.get("kind", "")), str(body.get("detail", "")), body.get("event_date"),
+                                                                body.get("next_followup_at"), body.get("decision"))}
             if action == "regenerate":
                 return {"ok": True, "application": wf.regenerate_draft(conn, app_id)}
             if action == "approve":
@@ -332,6 +358,49 @@ class Api:
             except LookupError as exc:
                 raise ApiError(404, str(exc))
         raise ApiError(404, "No such daily endpoint")
+
+    def action_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        """The daily action list (what to do next), persisted per Nairobi day."""
+        if method == "GET" and not rest:
+            items = actions.persist_today(conn)
+            return {"ok": True, "date": daily.analysis_date(datetime.now(timezone.utc)), "items": items, "summary": actions.summary(items)}
+        if method == "POST" and len(rest) == 2 and rest[1] == "status":
+            try:
+                return {"ok": True, "action": actions.set_status(conn, _int(rest[0], 0), str(body.get("status", "")))}
+            except ValueError as exc:
+                raise ApiError(400, str(exc))
+            except LookupError as exc:
+                raise ApiError(404, str(exc))
+        raise ApiError(404, "No such actions endpoint")
+
+    def reminder_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        if method == "GET" and not rest:
+            return {"ok": True, "reminders": reminders.list_reminders(conn)}
+        if method == "POST" and rest == ["generate"]:
+            with db.tx(conn):
+                made = reminders.generate(conn)
+            return {"ok": True, "created": made}
+        if method == "POST" and len(rest) == 2 and rest[1] == "status":
+            try:
+                return {"ok": True, "reminder": reminders.mark(conn, _int(rest[0], 0), str(body.get("status", "")))}
+            except ValueError as exc:
+                raise ApiError(400, str(exc))
+            except LookupError as exc:
+                raise ApiError(404, str(exc))
+        raise ApiError(404, "No such reminders endpoint")
+
+    def profile_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        if method == "GET" and not rest:
+            with db.tx(conn):
+                pa.ensure_defaults(conn)
+            return {"ok": True, "answers": pa.list_answers(conn), "missing_required": [a["key"] for a in pa.missing_required(conn)],
+                    "warning": "Write only true facts. Never enter passwords, one-time codes, ID numbers or payment details."}
+        if method == "PUT" and len(rest) == 1:
+            try:
+                return {"ok": True, "answer": pa.set_answer(conn, rest[0], str(body.get("answer", "")))}
+            except pa.AnswerError as exc:
+                raise ApiError(400, str(exc))
+        raise ApiError(404, "No such profile endpoint")
 
     def assist(self, kind: str, body: dict) -> dict[str, Any]:
         """Stateless local helpers (no platform contact): simplify instructions, explain an error."""

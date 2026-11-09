@@ -346,7 +346,32 @@ def run_analysis(conn, now: datetime | None = None, trigger: str = "sync", sourc
     # follow-ups never undo a completed analysis
     drafts = prepare_drafts(conn, sections["top5"]) if create_drafts else {"created": 0, "skipped": 0, "blocked": 0}
     made = notify_followups(conn, run_id, sections, prev, now, settings, channels)
-    return {"analysis_id": run_id, "stats": stats, "drafts": drafts, "notifications": len(made)}
+    prepared = prepare_workflow(conn, now, settings, channels)
+    return {"analysis_id": run_id, "stats": stats, "drafts": drafts, "notifications": len(made), "workflow": prepared}
+
+
+def prepare_workflow(conn, now: datetime, settings=None, channels=None) -> dict[str, Any]:
+    """After an analysis: application packets for the top five, reminders, and today's action list.
+
+    Never undoes a completed analysis; each step is independent and a failure is reported, not raised."""
+    from microtask_monitor import actions, packets, reminders
+    out: dict[str, Any] = {"packets": 0, "reminders": {}, "actions": 0, "errors": []}
+    try:
+        for e in load_shortlist(conn)["top5"]:
+            app = e.get("application")
+            if app and app["status"] in ("draft", "approved"):
+                packets.save_packet(conn, app["id"], now)
+                out["packets"] += 1
+    except Exception as exc:                                            # noqa: BLE001
+        out["errors"].append(f"packets: {exc}")
+    try:
+        with db.tx(conn):
+            out["reminders"] = reminders.generate(conn, now)
+        reminders.notify_due(conn, now, settings, channels)
+        out["actions"] = len(actions.persist_today(conn, now))
+    except Exception as exc:                                            # noqa: BLE001
+        out["errors"].append(f"reminders/actions: {exc}")
+    return out
 
 
 def prepare_drafts(conn, top: list[dict[str, Any]]) -> dict[str, int]:

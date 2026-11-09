@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08",
+  "updated_at": "2026-11-09",
   "levels": [
     "PUBLIC_DISCOVERY_ALLOWED",
     "DOCUMENTED_API_ALLOWED",
@@ -39,29 +39,44 @@
       "evidence_submission": "human_only",
       "country_eligibility": {
         "kenya": "unverified",
-        "note": "Not confirmed; check the official signup flow and each task."
+        "note": "Country availability is not stated on the public pages. Moot while the iPhone requirement is unmet."
       },
       "payment_verification": {
         "status": "unverified",
         "note": "Verify a Kenya-compatible payout route in your own account before relying on income."
       },
       "equipment": {
-        "requirements": "Standard consumer capture requires iPhone 11 or newer (per the registry's official-site review).",
+        "requirements": "iPhone 11 or newer (stated on the official Opportunities page, checked 2026-11-09).",
         "user_device_compatible": false,
         "note": "User phone is a Samsung A05 (Android): iPhone-only workflows are NOT available."
       },
-      "last_policy_verified": null,
+      "last_policy_verified": "2026-11-09",
       "policy_urls": [
-        "https://www.atlascapture.io/"
+        "https://www.atlascapture.io/",
+        "https://www.atlascapture.io/opportunities"
       ],
-      "notes": "Do not assume iPhone-only workflows are available. Recording must be genuine and human-performed."
+      "notes": "Do not assume iPhone-only workflows are available. Recording must be genuine and human-performed.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none (public Opportunities page describes the work; tasks are in the iPhone app)",
+        "automation_clause": "not_read",
+        "terms_read": [
+          "https://www.atlascapture.io/opportunities"
+        ],
+        "not_read_or_unavailable": [
+          "Terms of service (no terms page found; /terms returned 404)"
+        ],
+        "findings": [
+          "The official Opportunities page states the work is filming everyday tasks with an iPhone and requires an iPhone 11 or newer; no experience needed; pay per approved hour.",
+          "Your Samsung A05 (Android) does not meet the stated equipment requirement, so this platform is not workable for you. robots.txt reserves rights against AI-training crawlers."
+        ]
+      }
     },
     {
       "platform_id": "clickworker",
       "name": "Clickworker",
       "levels": [
         "MANUAL_ONLY",
-        "AUTOMATION_PROHIBITED",
         "UNVERIFIED"
       ],
       "public_discovery": "none",
@@ -100,7 +115,20 @@
       "policy_urls": [
         "https://www.clickworker.com/"
       ],
-      "notes": "Keep account work manual unless current official terms expressly allow automation. Registration can pause by country."
+      "notes": "Keep account work manual unless current official terms expressly allow automation. Registration can pause by country.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none found (tasks sit inside the logged-in marketplace; robots.txt only blocks admin paths and a few named bots)",
+        "automation_clause": "not_read",
+        "terms_read": [],
+        "not_read_or_unavailable": [
+          "Worker terms and conditions (the URL tried returned the homepage; no terms link was found)"
+        ],
+        "findings": [
+          "The worker terms could not be located, so automation rules are UNVERIFIED. robots.txt does not block public pages, but no public task list exists.",
+          "Not classified as automation-prohibited without evidence; it simply has no permitted automated interface."
+        ]
+      }
     },
     {
       "platform_id": "microworkers",
@@ -125,13 +153,16 @@
         "automated_evidence_submission",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity"
+        "fabricated_evidence_or_identity",
+        "robots_spiders_scrapers",
+        "proxy_servers",
+        "multiple_accounts"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
       "country_eligibility": {
-        "kenya": "unverified",
-        "note": "Not confirmed; check the official signup flow and each task."
+        "kenya": "task_specific",
+        "note": "FAQ says anyone from any country can be a member; individual tasks and withdrawal methods can be country-limited."
       },
       "payment_verification": {
         "status": "unverified",
@@ -141,11 +172,30 @@
         "requirements": null,
         "user_device_compatible": null
       },
-      "last_policy_verified": null,
+      "last_policy_verified": "2026-11-09",
       "policy_urls": [
-        "https://www.microworkers.com/"
+        "https://www.microworkers.com/",
+        "https://www.microworkers.com/terms.php",
+        "https://www.microworkers.com/faq.php"
       ],
-      "notes": "Project policy: respect restrictions on automated access; all account and task activity is manual."
+      "notes": "Project policy: respect restrictions on automated access; all account and task activity is manual.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none for workers (an employer API exists; tasks are inside the logged-in site)",
+        "automation_clause": "explicit_prohibition_robots_scrapers_proxies",
+        "terms_read": [
+          "https://www.microworkers.com/terms.php",
+          "https://www.microworkers.com/faq.php"
+        ],
+        "not_read_or_unavailable": [
+          "robots.txt (HTTP 404)",
+          "Guidelines page"
+        ],
+        "findings": [
+          "Terms of use forbid any robot, spider, scraper or other automated means, use of proxy servers, and more than one account.",
+          "FAQ: free to join, open to members from any country (tasks can still target countries); KYC with ID and selfie is required to withdraw once you earn $1.00; withdrawal methods vary by country."
+        ]
+      }
     },
     {
       "platform_id": "rapidworkers",
@@ -170,13 +220,14 @@
         "automated_evidence_submission",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity"
+        "fabricated_evidence_or_identity",
+        "social_engagement_manipulation_tasks"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
       "country_eligibility": {
-        "kenya": "unverified",
-        "note": "Not confirmed; check the official signup flow and each task."
+        "kenya": "task_specific",
+        "note": "Employers target countries per campaign; Kenya availability is task-specific and payout route unverified."
       },
       "payment_verification": {
         "status": "unverified",
@@ -188,16 +239,36 @@
       },
       "last_policy_verified": null,
       "policy_urls": [
-        "https://rapidworkers.io/"
+        "https://rapidworkers.io/",
+        "https://www.rapidworkers.io/terms-and-conditions/",
+        "https://www.rapidworkers.io/faqs/"
       ],
-      "notes": "Domain is rapidworkers.io (NOT rapidworkers.net). Operator, terms and payout route still need verification."
+      "notes": "Domain is rapidworkers.io (NOT rapidworkers.net). Operator, terms and payout route still need verification.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none for workers (public pages are employer-facing; an employer JSON API and MCP server exist)",
+        "automation_clause": "none_found_in_terms_read",
+        "terms_read": [
+          "https://www.rapidworkers.io/terms-and-conditions/",
+          "https://www.rapidworkers.io/faqs/"
+        ],
+        "not_read_or_unavailable": [
+          "Acceptable Use Policy",
+          "Anti-Spam Policy"
+        ],
+        "findings": [
+          "Terms and Conditions (Aug 2024) are short: legal age, accurate registration, account security, payments via PayPal/Stripe/Unlimint for employers; no explicit bot or scraping clause, but the Acceptable Use and Anti-Spam policies they incorporate were not read.",
+          "FAQ: free for workers to join, no upfront fees. Many task types are social engagement (likes, views, reviews): do NOT do those; they conflict with your no-engagement-manipulation rule."
+        ]
+      }
     },
     {
       "platform_id": "sproutgigs",
       "name": "SproutGigs",
       "levels": [
         "AUTOMATION_PROHIBITED",
-        "MANUAL_ONLY"
+        "MANUAL_ONLY",
+        "UNVERIFIED"
       ],
       "public_discovery": "none",
       "documented_api": {
@@ -215,7 +286,11 @@
         "automated_evidence_submission",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity"
+        "fabricated_evidence_or_identity",
+        "automation_after_login",
+        "scraping",
+        "bots",
+        "ai_agents"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
@@ -231,18 +306,36 @@
         "requirements": null,
         "user_device_compatible": null
       },
-      "last_policy_verified": null,
+      "last_policy_verified": "2026-11-09",
       "policy_urls": [
-        "https://sproutgigs.com/"
+        "https://sproutgigs.com/",
+        "https://sproutgigs.com/robots.txt"
       ],
-      "notes": "Project policy: no bots or AI agents to collect logged-in task data or complete prohibited activities."
+      "notes": "Project policy: no bots or AI agents to collect logged-in task data or complete prohibited activities.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "public pages are open per their robots.txt; my fetch of the homepage was refused (HTTP 403) so none was read",
+        "automation_clause": "restricted_per_robots_txt_statement_terms_not_read",
+        "terms_read": [
+          "https://sproutgigs.com/robots.txt"
+        ],
+        "not_read_or_unavailable": [
+          "Terms of Use (HTTP 403 to an unauthenticated request)",
+          "Homepage (HTTP 403)"
+        ],
+        "findings": [
+          "Their robots.txt states that pages viewable without login are open to everyone, and that automation, scraping, bots and AI agents are restricted once an account is used, as set out in their Terms of Use.",
+          "The Terms of Use themselves could not be fetched (HTTP 403), so details are UNVERIFIED; logged-in automation is treated as prohibited on their own published statement."
+        ]
+      }
     },
     {
       "platform_id": "afterquery",
       "name": "AfterQuery Experts",
       "levels": [
         "MANUAL_ONLY",
-        "HUMAN_APPROVAL_REQUIRED"
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
       ],
       "public_discovery": "manual_links_only",
       "documented_api": {
@@ -278,15 +371,31 @@
       },
       "last_policy_verified": null,
       "policy_urls": [
-        "https://experts.afterquery.com/home"
+        "https://experts.afterquery.com/home",
+        "https://www.afterquery.com/terms"
       ],
-      "notes": "Applications, assessments, identity checks and contracts are human-reviewed."
+      "notes": "Applications, assessments, identity checks and contracts are human-reviewed.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none found (experts portal answered HTTP 429 to a first request; main site is marketing only)",
+        "automation_clause": "none_found_in_company_terms",
+        "terms_read": [
+          "https://www.afterquery.com/terms"
+        ],
+        "not_read_or_unavailable": [
+          "Experts portal terms and robots.txt (HTTP 429 rate limit / bot protection on first request)"
+        ],
+        "findings": [
+          "Company Terms of Service (Aug 2026) are generic: lawful use, account responsibility, termination at their discretion; they contain no worker-specific automation clause.",
+          "The worker-facing Experts portal could not be read (HTTP 429), so its rules are UNVERIFIED. No public role feed was found."
+        ]
+      }
     },
     {
       "platform_id": "handshake_ai",
       "name": "Handshake AI",
       "levels": [
-        "UNVERIFIED",
+        "AUTOMATION_PROHIBITED",
         "MANUAL_ONLY"
       ],
       "public_discovery": "none",
@@ -305,7 +414,11 @@
         "automated_evidence_submission",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity"
+        "fabricated_evidence_or_identity",
+        "scraping",
+        "bulk_collection_of_listings",
+        "bot_or_script_account_creation",
+        "multiple_accounts"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
@@ -321,11 +434,29 @@
         "requirements": null,
         "user_device_compatible": null
       },
-      "last_policy_verified": null,
+      "last_policy_verified": "2026-11-09",
       "policy_urls": [
-        "https://joinhandshake.com/ai/opportunities/"
+        "https://joinhandshake.com/ai/opportunities/",
+        "https://ai.joinhandshake.com/terms-of-service",
+        "https://joinhandshake.com/legal/tos/"
       ],
-      "notes": "Confirm the exact service; do not confuse with the Handshake student recruiting platform. Work authorization may apply."
+      "notes": "Confirm the exact service; do not confuse with the Handshake student recruiting platform. Work authorization may apply.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "public AI opportunity pages exist (joinhandshake.com/ai/opportunities) but bulk collection by scripts is prohibited",
+        "automation_clause": "explicit_prohibition_scraping_and_bot_accounts",
+        "terms_read": [
+          "https://ai.joinhandshake.com/terms-of-service",
+          "https://joinhandshake.com/legal/tos/"
+        ],
+        "not_read_or_unavailable": [
+          "Task-level rules shown only after login"
+        ],
+        "findings": [
+          "Terms prohibit bulk collection of data or listings with automated scripts (scraping) and creating accounts with scripts, bots or crawlers; one account per person.",
+          "Public listing pages may be read by you manually; no automated discovery is permitted."
+        ]
+      }
     },
     {
       "platform_id": "braintrust",
@@ -350,13 +481,15 @@
         "automated_evidence_submission",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity"
+        "fabricated_evidence_or_identity",
+        "misrepresenting_experience_or_identity",
+        "falsifying_time_or_activity"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
       "country_eligibility": {
-        "kenya": "unverified",
-        "note": "Kenya is not on Braintrust's restricted-territory list, but role-specific restrictions and payout method need confirmation."
+        "kenya": "job_specific",
+        "note": "Kenya is not on Braintrust's restricted-territory list (terms updated Feb 2025); role-specific limits and your payout method still need confirming."
       },
       "payment_verification": {
         "status": "unverified",
@@ -366,11 +499,31 @@
         "requirements": null,
         "user_device_compatible": null
       },
-      "last_policy_verified": null,
+      "last_policy_verified": "2026-11-09",
       "policy_urls": [
-        "https://app.usebraintrust.com/talent/dashboard/welcome/"
+        "https://app.usebraintrust.com/talent/dashboard/welcome/",
+        "https://www.usebraintrust.com/terms",
+        "https://www.usebraintrust.com/talent-terms"
       ],
-      "notes": "Professional talent marketplace: profile, vetting, applications and contracts are manual."
+      "notes": "Professional talent marketplace: profile, vetting, applications and contracts are manual.",
+      "review": {
+        "reviewed_on": "2026-11-09",
+        "public_listing_interface": "none: /jobs is a marketing page with no listings in its public HTML",
+        "automation_clause": "none_found_in_terms_read",
+        "terms_read": [
+          "https://www.usebraintrust.com/terms",
+          "https://www.usebraintrust.com/talent-terms"
+        ],
+        "not_read_or_unavailable": [
+          "Network Standards and Code of Conduct",
+          "Site Service Fees terms"
+        ],
+        "findings": [
+          "Terms of Service (updated Feb 6, 2025) restrict only Cuba, Iran, North Korea, Syria and the Crimea/Donetsk/Luhansk regions: Kenya is not named. Using a VPN to evade the restriction is prohibited.",
+          "Talent terms (Jul 19, 2023) forbid falsifying time or keystrokes and misrepresenting your experience or skills or another person's profile.",
+          "The public /jobs page shows no job listings, so there is nothing to discover automatically. Role-specific eligibility and the payout method for Kenya remain unverified."
+        ]
+      }
     },
     {
       "platform_id": "opentrain_ai",
@@ -420,7 +573,22 @@
         "https://app.opentrain.ai/api/public/v1/openapi.json",
         "https://www.opentrain.ai/docs/payments/payout-country-availability/"
       ],
-      "notes": "Applications, AI interview, location checks, identity verification and contracts are human-performed."
+      "notes": "Applications, AI interview, location checks, identity verification and contracts are human-performed.",
+      "review": {
+        "reviewed_on": "2026-11-08",
+        "public_listing_interface": "documented anonymous API: GET /api/public/v1/jobs (120 requests/minute/IP)",
+        "automation_clause": "documented_api_read_only_permitted",
+        "terms_read": [
+          "https://www.opentrain.ai/docs/",
+          "https://app.opentrain.ai/api/public/v1/openapi.json",
+          "https://www.opentrain.ai/docs/trainers/faq/"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "The public jobs endpoint needs no key and is documented for search; applying, messaging and interviews stay human-performed.",
+          "A job with no country list does not mean open worldwide (their FAQ)."
+        ]
+      }
     },
     {
       "platform_id": "gainworkers",
@@ -471,7 +639,21 @@
         "https://www.gainworkers.com/robots.txt",
         "https://www.gainworkers.com/api-docs"
       ],
-      "notes": "Task lists need login and are disallowed in robots.txt; the Terms prohibit scraping and bots."
+      "notes": "Task lists need login and are disallowed in robots.txt; the Terms prohibit scraping and bots.",
+      "review": {
+        "reviewed_on": "2026-11-08",
+        "public_listing_interface": "none: task lists require login and /jobs/ is disallowed in robots.txt",
+        "automation_clause": "explicit_prohibition_scraping_and_bots",
+        "terms_read": [
+          "https://www.gainworkers.com/terms",
+          "https://www.gainworkers.com/robots.txt",
+          "https://www.gainworkers.com/api-docs"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "Terms prohibit scraping and bots and VPN/proxy use to bypass geo rules; the documented API is an employer/reseller API, not a worker-task API."
+        ]
+      }
     },
     {
       "platform_id": "mindrift",
@@ -522,7 +704,19 @@
         "https://mindrift.ai/legal/eligibility-and-geographic-restrictions",
         "https://mindrift.toloka.ai/"
       ],
-      "notes": "Only the public eligibility policy is monitored for changes. Do not apply or create accounts while Kenya is unsupported."
+      "notes": "Only the public eligibility policy is monitored for changes. Do not apply or create accounts while Kenya is unsupported.",
+      "review": {
+        "reviewed_on": "2026-11-08",
+        "public_listing_interface": "none: Kenya is unsupported, so discovery is disabled; only the public eligibility policy is monitored",
+        "automation_clause": "policy_monitor_only",
+        "terms_read": [
+          "https://mindrift.ai/legal/eligibility-and-geographic-restrictions"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "Kenya is listed as not currently supported (policy updated May 27, 2026). Do not apply, create accounts or use VPNs."
+        ]
+      }
     },
     {
       "platform_id": "reworkio",
@@ -572,7 +766,23 @@
         "https://reworkio.com/robots.txt",
         "https://reworkio.com/dashboard/"
       ],
-      "notes": "/projects/ and /opportunities/ are client-rendered over an undocumented backend; dashboard needs sign-in. Watch for paid membership, deposits or escrow funding."
+      "notes": "/projects/ and /opportunities/ are client-rendered over an undocumented backend; dashboard needs sign-in. Watch for paid membership, deposits or escrow funding.",
+      "review": {
+        "reviewed_on": "2026-11-08",
+        "public_listing_interface": "none: /projects/ and /opportunities/ are client-rendered shells over an undocumented backend",
+        "automation_clause": "undocumented_private_endpoints_not_to_be_used",
+        "terms_read": [
+          "https://reworkio.com/robots.txt",
+          "https://reworkio.com/faq/"
+        ],
+        "not_read_or_unavailable": [
+          "FAQ answers are rendered client-side",
+          "Terms of service"
+        ],
+        "findings": [
+          "No supported public discovery interface; the dashboard needs sign-in. Watch for paid membership, deposits or escrow funding."
+        ]
+      }
     }
   ]
 }

@@ -34,11 +34,15 @@ class CapabilityRecordTests(unittest.TestCase):
             self.assertIn("automated_application_submission", rec["prohibited_automation"], pid)
 
     def test_unverified_policies_are_not_claimed_as_verified(self):
-        for pid in ("atlas_capture", "clickworker", "microworkers", "rapidworkers", "sproutgigs", "handshake_ai"):
+        # Worker-facing terms could not be read for these: they must stay unverified.
+        for pid in ("clickworker", "rapidworkers", "afterquery"):
             self.assertIsNone(CAPS[pid]["last_policy_verified"], pid)
+            self.assertIn("UNVERIFIED", CAPS[pid]["levels"], pid)
         for pid in ("opentrain_ai", "gainworkers", "mindrift", "reworkio"):
             self.assertEqual(CAPS[pid]["last_policy_verified"], "2026-11-08")
             self.assertTrue(CAPS[pid]["policy_urls"])
+        for pid in ("atlas_capture", "microworkers", "sproutgigs", "handshake_ai", "braintrust"):
+            self.assertEqual(CAPS[pid]["last_policy_verified"], "2026-11-09", pid)
 
     def test_atlas_capture_records_the_samsung_device_incompatibility(self):
         eq = CAPS["atlas_capture"]["equipment"]
@@ -54,6 +58,39 @@ class CapabilityRecordTests(unittest.TestCase):
     def test_mindrift_is_recorded_as_kenya_unsupported(self):
         self.assertEqual(policy.kenya_status("mindrift"), "unsupported")
         self.assertIn("AUTOMATION_PROHIBITED", CAPS["mindrift"]["levels"])
+
+
+class IndividualReviewTests(unittest.TestCase):
+    """Each platform has its own evidence-based review: nothing is blanket-classified as prohibited."""
+    def test_every_platform_has_a_review_with_findings_and_a_date(self):
+        for pid, rec in CAPS.items():
+            r = rec.get("review") or {}
+            for key in ("reviewed_on", "public_listing_interface", "automation_clause", "terms_read", "not_read_or_unavailable", "findings"):
+                self.assertIn(key, r, f"{pid} review missing {key}")
+            self.assertTrue(r["findings"], pid)
+
+    def test_automation_is_prohibited_only_where_the_evidence_says_so(self):
+        explicit = {pid for pid, rec in CAPS.items() if "AUTOMATION_PROHIBITED" in rec["levels"]}
+        self.assertEqual(explicit, {"microworkers", "handshake_ai", "gainworkers", "mindrift", "reworkio", "sproutgigs"})
+        for pid in explicit:
+            clause = CAPS[pid]["review"]["automation_clause"]
+            self.assertTrue(clause.startswith(("explicit_prohibition", "restricted_per_robots", "policy_monitor_only", "undocumented_private")), f"{pid}: {clause}")
+        for pid in ("braintrust", "clickworker", "afterquery", "rapidworkers", "atlas_capture"):
+            self.assertNotIn("AUTOMATION_PROHIBITED", CAPS[pid]["levels"], pid)         # no evidence of a prohibition: not claimed
+            self.assertFalse(policy.check_action(pid, "public_discovery").allowed, pid)   # ...but no permitted interface either
+
+    def test_unread_terms_are_listed_not_hidden(self):
+        for pid in ("clickworker", "afterquery", "sproutgigs", "rapidworkers", "atlas_capture"):
+            self.assertTrue(CAPS[pid]["review"]["not_read_or_unavailable"], pid)
+
+    def test_atlas_capture_equipment_requirement_is_sourced_from_the_official_page(self):
+        eq = CAPS["atlas_capture"]["equipment"]
+        self.assertIn("iPhone 11", eq["requirements"])
+        self.assertFalse(eq["user_device_compatible"])
+        self.assertIn("https://www.atlascapture.io/opportunities", CAPS["atlas_capture"]["policy_urls"])
+
+    def test_rapidworkers_social_engagement_tasks_are_flagged_as_not_to_do(self):
+        self.assertIn("social_engagement_manipulation_tasks", CAPS["rapidworkers"]["prohibited_automation"])
 
 
 class EnforcementTests(unittest.TestCase):

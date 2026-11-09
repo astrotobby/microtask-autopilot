@@ -140,7 +140,41 @@ def _m3_daily_pipeline(conn: sqlite3.Connection) -> None:
         notes TEXT, updated_at TEXT NOT NULL)""")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline)]
+EVENT_KINDS = ("submitted", "response", "interview_scheduled", "interview_done", "decision", "followup_sent", "note")
+REMINDER_KINDS = ("deadline", "assessment", "followup", "interview", "draft_review", "task", "profile", "decision")
+REMINDER_STATUSES = ("pending", "done", "dismissed")
+ACTION_STATUSES = ("open", "done", "skipped")
+
+
+def _m4_first_earning_workflow(conn: sqlite3.Connection) -> None:
+    """Follow-up tracking, application packets, reminders, daily action items and reusable profile answers."""
+    for column, decl in (("next_followup_at", "TEXT"), ("interview_at", "TEXT"), ("decision", "TEXT"), ("decision_at", "TEXT")):
+        _add_column(conn, "applications", column, decl)
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS application_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+        at TEXT NOT NULL, event_date TEXT, kind TEXT NOT NULL CHECK (kind IN ({_q(EVENT_KINDS)})), detail TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_events_app ON application_events(application_id, id)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS application_packets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
+        version INTEGER NOT NULL, generated_at TEXT NOT NULL, ready INTEGER NOT NULL DEFAULT 0,
+        content_json TEXT NOT NULL, text_export TEXT NOT NULL, UNIQUE(application_id, version))""")
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, fingerprint TEXT NOT NULL UNIQUE,
+        kind TEXT NOT NULL CHECK (kind IN ({_q(REMINDER_KINDS)})), title TEXT NOT NULL, detail TEXT, due_at TEXT NOT NULL,
+        ref_type TEXT, ref_id TEXT, url TEXT, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ({_q(REMINDER_STATUSES)})),
+        created_at TEXT NOT NULL, done_at TEXT, notified_at TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, due_at)")
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS action_items (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, action_date TEXT NOT NULL, key TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,
+        kind TEXT NOT NULL, priority INTEGER NOT NULL, est_minutes INTEGER, target TEXT, url TEXT, ref_json TEXT,
+        status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ({_q(ACTION_STATUSES)})), created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+        UNIQUE(action_date, key))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS profile_answers (
+        key TEXT PRIMARY KEY, question TEXT NOT NULL, answer TEXT, category TEXT, required INTEGER NOT NULL DEFAULT 0,
+        source TEXT NOT NULL DEFAULT 'template', position INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL)""")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

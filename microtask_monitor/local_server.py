@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 from contextlib import closing
+from datetime import datetime, timezone
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
@@ -86,6 +87,17 @@ def background_sync(stop: threading.Event | None = None) -> None:
 SCHEDULER_INTERVAL_SECONDS = 600
 
 
+def maintain(db_path: Path) -> None:
+    """Cheap local upkeep: due reminders (and their notifications) and today's action list."""
+    from microtask_monitor import actions, reminders
+    with closing(db.connect(db_path)) as conn:
+        now = datetime.now(timezone.utc)
+        with db.tx(conn):
+            reminders.generate(conn, now)
+        reminders.notify_due(conn, now)
+        actions.persist_today(conn, now)
+
+
 def daily_scheduler(stop: threading.Event | None = None, interval: int = SCHEDULER_INTERVAL_SECONDS,
                     db_path: Path | None = None) -> None:
     """Checks every 10 minutes whether the 08:00 East Africa Time analysis is due (at most one per Nairobi day).
@@ -94,6 +106,10 @@ def daily_scheduler(stop: threading.Event | None = None, interval: int = SCHEDUL
     missed analysis as soon as it is back on. The cloud scan keeps producing its own shortlist meanwhile.
     """
     while not (stop and stop.is_set()):
+        try:
+            maintain(db_path or DB_PATH)
+        except Exception:                           # noqa: BLE001
+            LOG.exception("Reminder/action maintenance failed")
         try:
             outcome = daily.run_if_due(db_path or DB_PATH)
             if outcome:
@@ -152,6 +168,13 @@ class Handler(SimpleHTTPRequestHandler):
     def _guard(self, method: str) -> bool:
         ok, why = request_allowed(method, self.headers, self.port)
         if not ok:
+            if method in ("POST", "PUT"):           # drain a small rejected body so the client sees the 403, not a connection reset
+                try:
+                    n = int(self.headers.get("Content-Length") or 0)
+                    if 0 < n <= MAX_BODY_BYTES:
+                        self.rfile.read(n)
+                except (ValueError, OSError):
+                    pass
             self.send_json({"ok": False, "error": why}, 403)
         return ok
 

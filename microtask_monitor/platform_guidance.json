@@ -1,0 +1,233 @@
+{
+  "updated_at": "2026-11-09",
+  "note": "Guidance only. Every step is performed by you in your own account. Entries marked verified cite the platform's own documentation; everything else is generic and says so.",
+  "generic": {
+    "verified": false,
+    "verified_on": null,
+    "sources": [],
+    "apply_steps": [
+      "Open the original link yourself and read the full listing, including country rules, requirements and pay.",
+      "Confirm Kenya is accepted in the listing or in the platform's own country rules before spending time.",
+      "Complete the platform's profile or application using only true information.",
+      "Submit the application yourself, then record the date here.",
+      "Complete any assessment, interview or identity check yourself; never use another person or tool to impersonate you."
+    ],
+    "assessments": [
+      "Read the assessment instructions fully before starting.",
+      "Do the assessment yourself, without outside help unless the instructions allow it."
+    ],
+    "after_applying": [
+      "Check the platform's own status page or your email for responses.",
+      "Record any response, interview or decision here."
+    ],
+    "task_qc": [
+      "Read the task instructions twice before starting.",
+      "Follow the instructions exactly; do not guess where they are unclear: look for an example or contact support.",
+      "Check spelling, formatting and length against what the task asks for.",
+      "Only submit genuine work and genuine evidence."
+    ],
+    "payout": [
+      "Confirm a payout method that works from Kenya inside your own account before relying on income."
+    ],
+    "common_mistakes": [
+      "Assuming a listing accepts Kenya because the site loads from Kenya.",
+      "Skipping the instructions or the examples.",
+      "Submitting work you did not check."
+    ]
+  },
+  "platforms": {
+    "opentrain_ai": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://www.opentrain.ai/docs/trainers/finding-jobs/",
+        "https://www.opentrain.ai/docs/trainers/profile-setup/",
+        "https://www.opentrain.ai/docs/trainers/ai-interview/",
+        "https://www.opentrain.ai/docs/trainers/identity-verification/",
+        "https://www.opentrain.ai/docs/trainers/location-checks/",
+        "https://www.opentrain.ai/docs/trainers/proposal-status/",
+        "https://www.opentrain.ai/docs/trainers/time-tracking/",
+        "https://www.opentrain.ai/docs/trainers/payments-payouts/",
+        "https://www.opentrain.ai/docs/trainers/faq/"
+      ],
+      "apply_steps": [
+        "Sign in to YOUR OpenTrain account at app.opentrain.ai. You can apply only after your profile is complete (upload your real resume; add your tools, languages and experience).",
+        "Open the job from the link in this packet and read the full listing. Pay, countries and requirements come from the listing; a listing with no countries does NOT mean it is open worldwide.",
+        "Check the requirements card (All Job Requirements Met / Some Missing). Missing items are warnings: add an item to your profile only if it is true; otherwise you may still apply but be less competitive.",
+        "Location Match: your profile country must be one of the job's eligible locations. Set your real country of residence (Kenya). A location message can block the proposal and the check may ask your browser for your location; do not use a VPN.",
+        "Submit the proposal yourself, using your approved draft. If this is a PARTNER job, applying opens the source application page outside OpenTrain: finish the application on the partner's site.",
+        "If the job asks for an AI interview (text or voice), complete it yourself. For voice: quiet room, working microphone (headset best), stable connection, no VPN or strict firewall. Typical fields: LinkedIn URL, years of AI-training experience, weekly availability, previous platforms and task types: answer truthfully.",
+        "If OpenTrain asks for identity verification after you submit (Settings -> Verification; Didit or Stripe Identity, two attempts), do it yourself with a clear photo of your real ID.",
+        "Come back here and record the submission date, then watch My Proposals and Messages."
+      ],
+      "assessments": [
+        "AI interview (if the job requires it): your answers go to the employer; stay consistent with your profile and draft.",
+        "Some jobs require a screening course or identity verification after you submit: both are completed by you personally.",
+        "A skills test mentioned in the listing: read the instructions in full and allow uninterrupted time."
+      ],
+      "after_applying": [
+        "Proposals you send on OpenTrain show on My Proposals as Pending Review, Under Review, Shortlisted, Resume Sent, Hired, Declined or Job closed. OpenTrain cannot guarantee a response date.",
+        "The employer may Message you with questions: check Messages and reply yourself.",
+        "Partner jobs: the partner tracks your application, not OpenTrain. Check the partner's site or email and record the outcome here.",
+        "If hired, the job appears in Ongoing Jobs: open Project Instructions and Project To-dos first."
+      ],
+      "task_qc": [
+        "Open the job's Project Instructions: they are the source of truth for permitted work, the tracking project and monitoring settings.",
+        "Complete every required Project To-do (they complete only when the tool confirms; you cannot tick them yourself).",
+        "If time tracking is used, set up ONLY the tool assigned to you; do not create separate accounts unless the to-do says so.",
+        "Time tracking test (Hubstaff example): run the desktop timer on the named project for at least two minutes with input tracking on; web-only or manual time does not count.",
+        "Use your OpenTrain Work Email (@opentrain.work) for project invitations; check the sender before opening any link or attachment.",
+        "Deliver the milestone work described in the contract and the published job instructions before requesting payout.",
+        "Request payout with Complete & Request Payout on a funded milestone (Active & Funded -> Pending Approval -> Paid)."
+      ],
+      "payout": [
+        "Set up payouts from Settings -> Payouts -> Add Payout Method. Do not create a separate account on stripe.com.",
+        "Kenya is on OpenTrain's payout-country list (checked 2026-11-08), but confirm inside your account before relying on income.",
+        "Only record money as received here after it actually reaches you."
+      ],
+      "common_mistakes": [
+        "Reading an empty country list as open worldwide.",
+        "Using a VPN during location checks or voice interviews.",
+        "Creating extra accounts for time-tracking tools instead of using the assigned one.",
+        "Setting up payouts on stripe.com instead of via OpenTrain settings.",
+        "Ticking skills or experience on your profile that you do not have."
+      ]
+    },
+    "microworkers": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://www.microworkers.com/faq.php",
+        "https://www.microworkers.com/terms.php"
+      ],
+      "notes": "Verified only from the public FAQ and terms. Task-specific rules are shown inside each task after you log in.",
+      "apply_steps": [
+        "Register yourself (free). You may keep only ONE account; duplicate accounts get terminated.",
+        "Do not use proxy servers, robots, scrapers or any automated means to access the site (terms).",
+        "Browse tasks yourself while signed in, read each task's instructions and country targeting, and accept only tasks you can complete truthfully.",
+        "After you have earned about $1.00 you will be asked for KYC verification (a valid government ID, a selfie, and a selfie with the ID): do this yourself before you can withdraw."
+      ],
+      "after_applying": [
+        "Submitted tasks appear under Tasks I finished, where you can check your submitted proof and its rating."
+      ],
+      "task_qc": [
+        "Read the employer's instructions fully and follow them exactly before submitting proof.",
+        "If a task needs revision you get 48 hours; a task not revised after 48 hours is automatically set to NOK (unpaid).",
+        "Submit genuine proof of work you actually did; never fabricate or duplicate proof, and never submit the same job twice from another account.",
+        "Check the task's country targeting and any special requirements before starting."
+      ],
+      "payout": [
+        "You can only request a withdrawal once you reach the minimum amount and have completed KYC; withdrawal methods vary by country (for example Transpay is not available everywhere): check the options inside your own account.",
+        "Only record money as received here after it actually reaches you."
+      ],
+      "common_mistakes": [
+        "Creating a second account.",
+        "Using a proxy or VPN to reach the site.",
+        "Ignoring the 48-hour revision window.",
+        "Skipping KYC and then being unable to withdraw."
+      ]
+    },
+    "handshake_ai": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://ai.joinhandshake.com/terms-of-service",
+        "https://joinhandshake.com/legal/tos/"
+      ],
+      "notes": "Verified only from the public terms. Role-specific requirements and work authorization are shown on each opportunity page.",
+      "apply_steps": [
+        "Create your account yourself. You may hold only ONE account; do not create accounts with scripts, bots or crawlers.",
+        "Open the opportunity page yourself and read the requirements, location and work-authorization notes before applying.",
+        "Apply with truthful profile information and keep your details accurate and up to date (terms).",
+        "Complete any assessment or interview yourself."
+      ],
+      "after_applying": [
+        "Check your Handshake AI account and email for responses, then record them here."
+      ],
+      "task_qc": [
+        "Follow the project's published instructions exactly.",
+        "Never copy or bulk-collect listing data with scripts (prohibited)."
+      ],
+      "common_mistakes": [
+        "Creating a second account if the first is suspended.",
+        "Using scripts to gather opportunity data."
+      ]
+    },
+    "braintrust": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://www.usebraintrust.com/terms",
+        "https://www.usebraintrust.com/talent-terms"
+      ],
+      "notes": "Verified only from the public terms. Kenya is not named as restricted; role-specific limits and payout method are unverified.",
+      "apply_steps": [
+        "Create your talent profile yourself with truthful information only.",
+        "Open each role from its own page and check its requirements and location before applying.",
+        "Complete any vetting, certification or interview yourself.",
+        "Do not use a VPN to get around a territory restriction."
+      ],
+      "after_applying": [
+        "Check your Braintrust dashboard and email for responses, then record them here."
+      ],
+      "task_qc": [
+        "Never falsify hours, keystrokes or mouse activity recorded for billing; never bill time you did not work (talent terms).",
+        "Never misrepresent your experience, skills or another person's profile as your own.",
+        "Deliver what the client's contract states and keep communication on the platform."
+      ],
+      "payout": [
+        "Confirm in your own account which payout methods are available in Kenya before relying on income."
+      ],
+      "common_mistakes": [
+        "Overstating experience on the profile.",
+        "Logging time that was not worked."
+      ]
+    },
+    "rapidworkers": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://www.rapidworkers.io/faqs/",
+        "https://www.rapidworkers.io/terms-and-conditions/"
+      ],
+      "notes": "Verified only from the public FAQ and terms; the Acceptable Use and Anti-Spam policies were not read.",
+      "apply_steps": [
+        "Sign up yourself (free for workers, no upfront fees to join).",
+        "Read each task's checklist and country targeting before starting.",
+        "SKIP social-engagement tasks (buying or posting likes, views, follows, votes or fake reviews): they are engagement manipulation and are not part of this project."
+      ],
+      "after_applying": [
+        "After you submit proof, the employer reviews it; the FAQ says most approvals happen within 24-48 hours depending on the campaign."
+      ],
+      "task_qc": [
+        "If your proof does not match the employer's instructions it can be rejected and unpaid: read the checklist before submitting.",
+        "Submit only genuine proof."
+      ],
+      "payout": [
+        "Confirm payout options inside your own account before relying on income."
+      ],
+      "common_mistakes": [
+        "Doing engagement-manipulation tasks.",
+        "Submitting proof that does not match the checklist."
+      ]
+    },
+    "atlas_capture": {
+      "verified": true,
+      "verified_on": "2026-11-09",
+      "sources": [
+        "https://www.atlascapture.io/opportunities"
+      ],
+      "notes": "The official Opportunities page states an iPhone 11 or newer is required. This work is NOT available on an Android phone such as the Samsung A05.",
+      "apply_steps": [
+        "Do not pursue this platform unless you obtain a supported iPhone 11 or newer: the work is filming everyday tasks with an iPhone, so an Android phone does not qualify."
+      ],
+      "task_qc": [
+        "Recordings must be genuine and made by you; never fabricate or fake recordings."
+      ],
+      "common_mistakes": [
+        "Trying to use an unsupported device.",
+        "Buying equipment before confirming country availability and pay."
+      ]
+    }
+  }
+}
