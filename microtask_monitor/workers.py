@@ -40,7 +40,10 @@ class RunResult:
 # ------------------------------------------------------------------------------------------- runners
 def _clean_env() -> dict[str, str]:
     drop = re.compile(r"(GITHUB|GH)_TOKEN|PASSWORD|SECRET|COOKIE|SESSION_TOKEN", re.I)
-    return {k: v for k, v in os.environ.items() if not drop.search(k)}
+    # Variables of a Claude Code session that launched this process must not leak into the child tool,
+    # or it behaves as a nested session of the parent instead of using your own sign-in.
+    session = re.compile(r"^(CLAUDECODE|CLAUDE_CODE_[A-Z_]+|CLAUDE_PID|CLAUDE_AGENT_SDK_[A-Z_]+|CLAUDE_EFFORT|CLAUDE_PREVIEW_[A-Z_]+)$")
+    return {k: v for k, v in os.environ.items() if not drop.search(k) and not session.match(k)}
 
 
 CLAUDE_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(py:*)", "Bash(node:*)", "Bash(npm test:*)"]

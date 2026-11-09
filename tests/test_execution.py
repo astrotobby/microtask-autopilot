@@ -473,6 +473,13 @@ class ComplianceTests(unittest.TestCase):
         with mock.patch("shutil.which", return_value=None):
             self.assertIsNone(workers.available_runner())
 
+    def test_child_tool_does_not_inherit_a_parent_claude_session_or_secrets(self):
+        from unittest import mock
+        env = {"CLAUDECODE": "1", "CLAUDE_CODE_SESSION_ID": "x", "CLAUDE_CODE_MESSAGING_TOKEN": "t", "GITHUB_TOKEN": "g", "PATH": "p", "HOME": "h"}
+        with mock.patch.dict(os.environ, env, clear=True):
+            clean = workers._clean_env()
+        self.assertEqual(sorted(clean), ["HOME", "PATH"])
+
     def test_runner_commands_pass_the_prompt_on_stdin_and_sandbox_the_tool(self):
         c = workers.CliRunner("claude", "claude").command(Path("w"))
         self.assertIn("-p", c)
