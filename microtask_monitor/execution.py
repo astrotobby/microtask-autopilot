@@ -23,8 +23,10 @@ from typing import Any, Callable
 
 try:
     from microtask_monitor import db, policy, workflow as wf
+    from microtask_monitor.secret_store import redact
 except ImportError:  # pragma: no cover
     import db, policy, workflow as wf
+    from secret_store import redact
 
 ROOT = Path(__file__).resolve().parents[1]
 EXEC_DIR = ROOT / "data" / "executions"
@@ -98,7 +100,7 @@ def _job(conn, job_id: int) -> dict[str, Any]:
 
 
 def event(conn, job_id: int, kind: str, message: str) -> None:
-    conn.execute("INSERT INTO execution_events(job_id,at,kind,message) VALUES(?,?,?,?)", (job_id, _now(), kind, message[:2000]))
+    conn.execute("INSERT INTO execution_events(job_id,at,kind,message) VALUES(?,?,?,?)", (job_id, _now(), kind, redact(message)[:2000]))
 
 
 def _set(conn, job_id: int, status: str | None = None, reason: str | None = None, **fields: Any) -> None:

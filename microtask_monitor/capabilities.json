@@ -70,7 +70,9 @@
           "The official Opportunities page states the work is filming everyday tasks with an iPhone and requires an iPhone 11 or newer; no experience needed; pay per approved hour.",
           "Your Samsung A05 (Android) does not meet the stated equipment requirement, so this platform is not workable for you. robots.txt reserves rights against AI-training crawlers."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Worker terms not verified; work needs an iPhone 11 or newer (not your Samsung A05)."
     },
     {
       "platform_id": "clickworker",
@@ -146,7 +148,9 @@
           "Check Payment details for a Kenya-compatible payout before relying on income."
         ],
         "sources": []
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Worker terms could not be located; no automation permission established."
     },
     {
       "platform_id": "microworkers",
@@ -213,7 +217,9 @@
           "Terms of use forbid any robot, spider, scraper or other automated means, use of proxy servers, and more than one account.",
           "FAQ: free to join, open to members from any country (tasks can still target countries); KYC with ID and selfie is required to withdraw once you earn $1.00; withdrawal methods vary by country."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Terms prohibit robots, scrapers, proxies and any automated means of access."
     },
     {
       "platform_id": "rapidworkers",
@@ -278,7 +284,9 @@
           "Terms and Conditions (Aug 2024) are short: legal age, accurate registration, account security, payments via PayPal/Stripe/Unlimint for employers; no explicit bot or scraping clause, but the Acceptable Use and Anti-Spam policies they incorporate were not read.",
           "FAQ: free for workers to join, no upfront fees. Many task types are social engagement (likes, views, reviews): do NOT do those; they conflict with your no-engagement-manipulation rule."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "FAQ/terms read; Acceptable Use and Anti-Spam policies not read; no automation permission established."
     },
     {
       "platform_id": "sproutgigs",
@@ -345,7 +353,9 @@
           "Their robots.txt states that pages viewable without login are open to everyone, and that automation, scraping, bots and AI agents are restricted once an account is used, as set out in their Terms of Use.",
           "The Terms of Use themselves could not be fetched (HTTP 403), so details are UNVERIFIED; logged-in automation is treated as prohibited on their own published statement."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Automation prohibited per review; task and account actions stay manual."
     },
     {
       "platform_id": "afterquery",
@@ -427,7 +437,9 @@
         "sources": [
           "https://www.afterquery.com/terms"
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Experts portal terms unreadable (HTTP 429 to a first request); no automation permission established."
     },
     {
       "platform_id": "handshake_ai",
@@ -494,7 +506,9 @@
           "Terms prohibit bulk collection of data or listings with automated scripts (scraping) and creating accounts with scripts, bots or crawlers; one account per person.",
           "Public listing pages may be read by you manually; no automated discovery is permitted."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Terms prohibit scripts, bots and crawlers and creating accounts by automated means."
     },
     {
       "platform_id": "braintrust",
@@ -582,7 +596,9 @@
           "https://www.usebraintrust.com/talent-terms",
           "https://www.usebraintrust.com/terms"
         ]
-      }
+      },
+      "access_class": "human_assisted_only",
+      "access_note": "Terms read: no automation permission found; misrepresentation and falsified time are prohibited. You act in your account; this program prepares and tracks."
     },
     {
       "platform_id": "opentrain_ai",
@@ -670,7 +686,9 @@
           "https://www.opentrain.ai/docs/trainers/time-tracking/",
           "https://www.opentrain.ai/docs/trainers/payments-payouts/"
         ]
-      }
+      },
+      "access_class": "official_api_permitted",
+      "access_note": "Documented public API for job LISTINGS only (anonymous, read-only). Applying, project work, time tracking and payouts happen in your own account by you."
     },
     {
       "platform_id": "gainworkers",
@@ -735,7 +753,9 @@
         "findings": [
           "Terms prohibit scraping and bots and VPN/proxy use to bypass geo rules; the documented API is an employer/reseller API, not a worker-task API."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Terms prohibit scraping and bots."
     },
     {
       "platform_id": "mindrift",
@@ -798,7 +818,9 @@
         "findings": [
           "Kenya is listed as not currently supported (policy updated May 27, 2026). Do not apply, create accounts or use VPNs."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Kenya is listed as unsupported; do not connect or apply."
     },
     {
       "platform_id": "reworkio",
@@ -864,7 +886,9 @@
         "findings": [
           "No supported public discovery interface; the dashboard needs sign-in. Watch for paid membership, deposits or escrow funding."
         ]
-      }
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "No automation permission; watch for fees or deposits."
     }
   ]
 }

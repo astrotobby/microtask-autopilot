@@ -208,7 +208,17 @@ def _m5_execution_engine(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_exec_qa ON execution_qa(job_id, attempt)")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine)]
+CONNECTION_STATUSES = ("not_connected", "login_in_progress", "connected_user_confirmed", "needs_user_action", "blocked")
+
+
+def _m6_platform_connections(conn: sqlite3.Connection) -> None:
+    """Connection status per platform. Holds NO secrets: passwords live in your browser profile, keys in Credential Manager."""
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS platform_connections (
+        platform_id TEXT PRIMARY KEY, status TEXT NOT NULL DEFAULT 'not_connected' CHECK (status IN ({_q(CONNECTION_STATUSES)})),
+        required_action TEXT, human_step TEXT, last_checked_at TEXT, last_success_at TEXT, profile_dir TEXT, note TEXT, updated_at TEXT NOT NULL)""")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 
@@ -275,10 +285,18 @@ def tx(conn: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
         raise
 
 
+def _redact(text: str) -> str:
+    try:
+        from microtask_monitor.secret_store import redact
+    except ImportError:  # pragma: no cover
+        from secret_store import redact
+    return redact(text)
+
+
 def audit(conn: sqlite3.Connection, action: str, entity: str = "", entity_id: Any = "",
           detail: dict | None = None, actor: str = "user") -> None:
     conn.execute("INSERT INTO audit_log(at,actor,action,entity,entity_id,detail_json) VALUES(?,?,?,?,?,?)",
-                 (now_iso(), actor, action, entity, str(entity_id), json.dumps(detail or {}, ensure_ascii=False)))
+                 (now_iso(), actor, action, entity, str(entity_id), _redact(json.dumps(detail or {}, ensure_ascii=False))))
 
 
 def rows(cursor: sqlite3.Cursor) -> list[dict[str, Any]]:

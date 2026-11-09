@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import (actions, assistant, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
+    from microtask_monitor import (actions, assistant, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
                                    reminders, workflow as wf)
 except ImportError:  # pragma: no cover
-    import actions, assistant, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
+    import actions, assistant, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -27,6 +27,9 @@ SORTS = {"score": "relevance_score DESC, last_seen_utc DESC", "date": "first_see
          "title": "title COLLATE NOCASE ASC"}
 LOCAL_STATUS_MAP = {"saved": "draft", "reviewing": "draft", "applied": "submitted", "assessment": "submitted",
                     "interview": "interview", "accepted": "accepted", "rejected": "rejected", "withdrawn": "withdrawn"}
+
+
+SECRET_FIELD = re.compile(r"pass(word|wd)?$|^pwd$|cookie|otp|one_time|mfa_code|token|api_?key|secret|session_id|credential", re.I)
 
 
 class ApiError(Exception):
@@ -50,17 +53,22 @@ def _first(query: dict, key: str, default: str = "") -> str:
 class Api:
     def __init__(self, db_path: Path | str, latest_report_path: Path | None = None,
                  trigger_sync: Callable[[], bool] | None = None, evidence_dir: Path | None = None,
-                 sync_running: Callable[[], bool] | None = None):
+                 sync_running: Callable[[], bool] | None = None, launcher: Callable | None = None, profiles_dir: Path | None = None):
         self.db_path = Path(db_path)
         self.latest_report_path = latest_report_path
         self.trigger_sync = trigger_sync
         self.sync_running = sync_running or (lambda: False)
         self.evidence_dir = evidence_dir or wf.EVIDENCE_DIR
         self.exec_dir = (Path(evidence_dir).parent / "executions") if evidence_dir else ex.EXEC_DIR
+        self.launcher = launcher
+        self.profiles_dir = profiles_dir or ((Path(evidence_dir).parent / "browser-profiles") if evidence_dir else cx.PROFILES_DIR)
 
     # ----------------------------------------------------------------------------- dispatch
     def handle(self, method: str, path: str, query: dict | None = None, body: dict | None = None) -> tuple[int, Any]:
         query, body = query or {}, body or {}
+        bad = [k for k in body if SECRET_FIELD.search(str(k))]
+        if bad:                                   # credentials never travel through this API, not even to localhost
+            return 400, {"ok": False, "error": "Never send passwords, codes, cookies or tokens to this program. Sign in yourself in the browser window; store API keys with connect.py."}
         try:
             with closing(db.connect(self.db_path)) as conn:
                 return 200 if method == "GET" else 200, self._route(conn, method, path.rstrip("/") or "/", query, body)
@@ -70,7 +78,9 @@ class Api:
             return 409, {"ok": False, "error": str(exc), "blocked": True}
         except policy.PermissionDenied as exc:
             return 403, {"ok": False, "error": str(exc), "blocked": True}
-        except (wf.WorkflowError, ex.ExecutionError) as exc:
+        except cx.SessionRequired as exc:
+            return 409, {"ok": False, "error": str(exc), "needs_user_action": True}
+        except (wf.WorkflowError, ex.ExecutionError, cx.ConnectionError_) as exc:
             return 400, {"ok": False, "error": str(exc)}
 
     def _route(self, conn, method: str, path: str, q: dict, body: dict) -> Any:
@@ -109,6 +119,8 @@ class Api:
             return self.action_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["reminders"]:
             return self.reminder_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["connections"]:
+            return self.connection_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["executions"]:
             return self.execution_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["profile-answers"]:
@@ -362,6 +374,26 @@ class Api:
             except LookupError as exc:
                 raise ApiError(404, str(exc))
         raise ApiError(404, "No such daily endpoint")
+
+    def connection_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        """Connection status (no secrets ever). Signing in happens in a browser window you control."""
+        if method == "GET" and not rest:
+            return {"ok": True, "connections": cx.list_status(conn), "session_check_days": cx.SESSION_CHECK_DAYS,
+                    "browser_found": bool(cx.find_browser()), "access_classes": list(policy.ACCESS_CLASSES)}
+        if method == "POST" and len(rest) == 2:
+            pid, action = rest
+            if action == "open":
+                kw = {"launcher": self.launcher, "browser": "test-browser"} if self.launcher else {}
+                return {"ok": True, "connection": cx.open_login(conn, pid, profiles_dir=self.profiles_dir, **kw)}
+            if action == "confirm":
+                return {"ok": True, "connection": cx.confirm_signed_in(conn, pid, body.get("confirmed_by_user") is True)}
+            if action == "human-step":
+                return {"ok": True, "connection": cx.report_human_step(conn, pid, str(body.get("kind", "")))}
+            if action == "expired":
+                return {"ok": True, "connection": cx.report_expired(conn, pid)}
+            if action == "disconnect":
+                return {"ok": True, "connection": cx.disconnect(conn, pid)}
+        raise ApiError(404, "No such connections endpoint")
 
     def execution_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
         """Execution Centre: jobs built from instructions YOU supply. Nothing here contacts a platform."""

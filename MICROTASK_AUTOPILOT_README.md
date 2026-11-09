@@ -252,6 +252,20 @@ Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel 
 - None allows automated execution on the platform or automated submission.
 - AI-assistance status is **unverified** on all four. The task or client rules decide, and you record them per job.
 
+## Platform connections and secrets (local only)
+
+- **Connections tab.** For each of the 12 platforms it shows the connection status, the last successful check (confirmed by you), the permitted automation level and your next action.
+- **"Open login window".** Starts Edge or Chrome with a dedicated profile under `data/browser-profiles/<platform>` at the official sign-in page. No remote-debugging or automation flags are used.
+  - You sign in yourself and complete any CAPTCHA, MFA, identity check or KYC personally. Then press "I'm signed in".
+  - The browser keeps the session in its own OS-encrypted store. This program never reads cookies or passwords.
+  - "Connected" means confirmed by you. It is re-checked every 7 days, and an expired session or a human step pauses any authenticated work.
+- **API keys.** These are only for platforms that issue one for a documented API. `py -3 microtask_monitor/connect.py set-key <platform> <name>` asks with a hidden prompt and stores the key in **Windows Credential Manager**. There is no plaintext fallback.
+- **No credentials through the API.** Every API request with a password, code, cookie or token field is refused. Text written to logs, the audit log and execution events is redacted.
+- **Access classes** (`capabilities.json` → `access_class`): `official_api_permitted` (OpenTrain AI, public job listings only), `human_assisted_only` (Braintrust), `prohibited_or_unverified` (the other 10).
+  - No platform is `browser_automation_permitted` today, so inspecting, starting or submitting work inside an account (`policy.AUTHENTICATED`) is refused everywhere.
+  - Enabling it requires verified terms, the action listed in `permitted_automation`, your authorization and a live session.
+- **Claude Code sign-in.** `tools/claude-login.ps1` signs in with your own Claude account in one PowerShell window. It ignores the machine-wide `ANTHROPIC_*` variables that point to a Gemini endpoint. The execution engine also drops a non-Anthropic `ANTHROPIC_BASE_URL` for Claude runs.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.

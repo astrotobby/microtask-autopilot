@@ -71,6 +71,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <button data-tab="execution">Execution Centre</button>
   <button data-tab="earnings">Earnings</button>
   <button data-tab="platforms">Platforms (12)</button>
+  <button data-tab="connections">Connections</button>
   <button data-tab="notifications">Notifications <span class="badge hidden" id="notifBadge">0</span></button>
  </nav>
 
@@ -189,6 +190,14 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   </div>
  </section>
 
+ <section id="connections" class="panel">
+  <h1>Platform connections</h1>
+  <p class="muted">Sign in yourself in a dedicated browser window per platform. Your passwords and sessions stay in that browser's own encrypted store; this program never sees, stores or sends them, and never bypasses CAPTCHA, MFA, identity checks or KYC. "Connected" means you confirmed it; it is not verified automatically. What the program may do in an account depends on the platform's verified terms (the "permitted automation level" column).</p>
+  <div class="banner ok" id="connNote"></div>
+  <div id="connTable" class="table-wrap"></div>
+  <p class="muted">API keys (only for platforms that issue one for a documented API) are stored with <code>py -3 microtask_monitor/connect.py set-key &lt;platform&gt; &lt;name&gt;</code> in Windows Credential Manager, never in this page.</p>
+ </section>
+
  <section id="earnings" class="panel">
   <h1>Earnings</h1><p class="muted">Advertised or estimated pay is never counted as received. Only payments you record with a received date count as Received.</p>
   <div class="grid" id="earningCards" style="margin:12px 0"></div>
@@ -275,7 +284,7 @@ function platformOptions(first){return '<option value="">'+(first||"Select platf
 function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
 
 // ---------------------------------------------------------------- navigation
-const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
+const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,connections:loadConnections,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
 function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
@@ -601,6 +610,30 @@ $("execForm").addEventListener("submit",async e=>{
  const r=await act(()=>api("POST","/api/executions",{title:$("execTitle").value,instructions:$("execInstructions").value,platform_id:$("execPlatform").value||undefined,application_id:$("execApp").value?Number($("execApp").value):undefined,deadline:$("execDeadline").value||undefined,work_type:$("execType").value||undefined,ai_policy:$("execAi").value||undefined,ai_source:$("execAiSource").value,inputs}),"Execution job created");
  if(r){ui.selExec=r.job.id;saveUi(ui);e.target.reset();$("execApp").value="";loadExecutions()}
 });
+
+
+// ---------------------------------------------------------------- connections
+const CONN_CLASS={official_api_permitted:"ok",browser_automation_permitted:"ok",human_assisted_only:"info",prohibited_or_unverified:"warn"};
+const CONN_STATUS={connected_user_confirmed:"ok",check_due:"warn",needs_user_action:"bad",login_in_progress:"info",not_connected:"",blocked:"bad"};
+async function loadConnections(){
+ const r=await act(()=>api("GET","/api/connections"));if(!r)return;
+ $("connNote").textContent=(r.browser_found?"":"Microsoft Edge or Google Chrome was not found. ")+"Connections are confirmed by you and need re-confirming every "+r.session_check_days+" days.";
+ $("connTable").innerHTML='<table><thead><tr><th>Platform</th><th>Connection</th><th>Last successful check</th><th>Permitted automation level</th><th>Your next action</th><th></th></tr></thead><tbody>'+r.connections.map(c=>{
+  const st=c.status.replace(/_/g," ").replace("user confirmed","(confirmed by you)");
+  const blocked=c.status==="blocked";
+  return '<tr><td><strong>'+esc(c.name)+'</strong><div class="muted">'+link(c.login_url,"official site")+'</div></td>'
+   +'<td><span class="tag '+(CONN_STATUS[c.status]||"")+'">'+esc(st)+'</span>'+(c.human_step?'<div class="muted">human step: '+esc(c.human_step)+'</div>':"")+'</td>'
+   +'<td>'+esc(c.last_success_at?when(c.last_success_at):"never")+'</td>'
+   +'<td><span class="tag '+(CONN_CLASS[c.access_class]||"warn")+'">'+esc((c.access_class||"").replace(/_/g," "))+'</span><div class="muted">'+esc(c.automation_level)+'</div><div class="muted">'+esc(c.access_note||"")+'</div></td>'
+   +'<td>'+esc(c.required_action||"—")+'</td>'
+   +'<td style="white-space:nowrap">'+(blocked?"":'<button class="btn small primary" data-copen="'+c.platform_id+'">Open login window</button><br><button class="btn small" data-cconfirm="'+c.platform_id+'">I\'m signed in</button><br><select data-chuman="'+c.platform_id+'" aria-label="Human step"><option value="">Human step needed…</option><option value="captcha">CAPTCHA</option><option value="mfa">MFA / code</option><option value="identity_verification">Identity check</option><option value="kyc">KYC</option><option value="terms">Terms</option></select><br><button class="btn small" data-cexpired="'+c.platform_id+'">Session expired</button> <button class="btn small" data-cdisc="'+c.platform_id+'">Disconnect</button>')+'</td></tr>'}).join("")+'</tbody></table>';
+ const root=$("connTable"),post=(pid,a,b,msg)=>act(()=>api("POST","/api/connections/"+pid+"/"+a,b||{}),msg).then(x=>{if(x)loadConnections()});
+ root.querySelectorAll("[data-copen]").forEach(b=>b.onclick=()=>post(b.dataset.copen,"open",{},"Login window opened: sign in there yourself"));
+ root.querySelectorAll("[data-cconfirm]").forEach(b=>b.onclick=()=>{if(confirm("Confirm that YOU are signed in to this platform in the dedicated window?"))post(b.dataset.cconfirm,"confirm",{confirmed_by_user:true},"Recorded as connected (confirmed by you)")});
+ root.querySelectorAll("[data-chuman]").forEach(s=>s.onchange=()=>{if(s.value)post(s.dataset.chuman,"human-step",{kind:s.value},"Paused for your human step")});
+ root.querySelectorAll("[data-cexpired]").forEach(b=>b.onclick=()=>post(b.dataset.cexpired,"expired",{},"Marked: sign in again"));
+ root.querySelectorAll("[data-cdisc]").forEach(b=>b.onclick=()=>{if(confirm("Mark this platform disconnected?"))post(b.dataset.cdisc,"disconnect",{},"Disconnected")});
+}
 
 // ---------------------------------------------------------------- earnings
 async function loadEarnings(){

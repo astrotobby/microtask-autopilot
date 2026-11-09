@@ -22,6 +22,10 @@ ALWAYS_BLOCKED = frozenset({
     "bypass_captcha", "bypass_mfa", "bypass_kyc", "bypass_geo_restriction", "use_vpn_or_proxy",
     "scrape_logged_in", "probe_private_endpoints", "fabricate_evidence", "impersonate_user", "create_account",
 })
+ACCESS_CLASSES = ("official_api_permitted", "browser_automation_permitted", "human_assisted_only", "prohibited_or_unverified")
+# Actions inside YOUR signed-in account. Each needs: access_class browser_automation_permitted, the action listed in the
+# platform's permitted_automation (from its verified terms), your explicit authorization, and a live session (connections.py).
+AUTHENTICATED = frozenset({"authenticated_inspect", "initiate_task", "browser_task_execution", "submit_via_workflow"})
 # Local-only helpers that never contact a platform: always allowed.
 LOCAL_ACTIONS = frozenset({"assist_application", "assist_task", "record_manual_submission", "track_status"})
 # Allowed only when the capability record lists the matching level or permitted_automation entry.
@@ -62,6 +66,19 @@ def check_action(platform_id: str, action: str, *, caps: dict[str, dict[str, Any
     record = caps.get(platform_id)
     if record is None:
         return Decision(False, f"no capability record for '{platform_id}' (fail closed)")
+    if action in AUTHENTICATED:
+        access = record.get("access_class")
+        if access not in ACCESS_CLASSES:
+            return Decision(False, f"{platform_id} has no valid access classification (fail closed)")
+        if access != "browser_automation_permitted":
+            return Decision(False, f"{platform_id} is '{access}': account automation is not permitted")
+        if "AUTOMATION_PROHIBITED" in set(record.get("levels", [])):
+            return Decision(False, f"{platform_id} prohibits automation")
+        if action not in record.get("permitted_automation", []):
+            return Decision(False, f"'{action}' is not listed as permitted for {platform_id}")
+        if not user_authorized:
+            return Decision(False, "this account action needs your explicit authorization")
+        return Decision(True, f"'{action}' permitted for {platform_id} and authorized by you")
     if action not in GATED:
         return Decision(False, f"unknown action '{action}' (fail closed)")
     levels = set(record.get("levels", []))

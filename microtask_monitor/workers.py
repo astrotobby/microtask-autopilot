@@ -46,6 +46,17 @@ def _clean_env() -> dict[str, str]:
     return {k: v for k, v in os.environ.items() if not drop.search(k) and not session.match(k)}
 
 
+def claude_env(env: dict[str, str]) -> dict[str, str]:
+    """Claude Code only works against Anthropic. A machine-wide ANTHROPIC_BASE_URL that points elsewhere (e.g. a Gemini
+    endpoint) would make every run fail, so for the Claude runner such overrides are dropped and your own Claude sign-in is used."""
+    base = env.get("ANTHROPIC_BASE_URL", "")
+    m = re.match(r"^[a-z]+://([^/:?#]+)", base.strip().lower())
+    host = m.group(1) if m else ""
+    if base and not (host == "anthropic.com" or host.endswith(".anthropic.com")):
+        env = {k: v for k, v in env.items() if k not in ("ANTHROPIC_BASE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_MODEL")}
+    return env
+
+
 CLAUDE_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(py:*)", "Bash(node:*)", "Bash(npm test:*)"]
 
 
@@ -63,7 +74,7 @@ class CliRunner:
 
     def run(self, prompt: str, cwd: Path, timeout: int, should_stop: Callable[[], str | None], log: Callable[[str], None]) -> RunResult:
         proc = subprocess.Popen(self.command(cwd), cwd=str(cwd), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                env=_clean_env(), text=True, encoding="utf-8", errors="replace")
+                                env=claude_env(_clean_env()) if self.kind == "claude" else _clean_env(), text=True, encoding="utf-8", errors="replace")
         try:
             proc.stdin.write(prompt)
             proc.stdin.close()
