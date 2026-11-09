@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from microtask_monitor import api as api_module, db, policy, reliability
+from microtask_monitor import api as api_module, daily, db, policy, reliability
 from microtask_monitor.sync_reports import DB_PATH, LATEST_REPORT, sync_once
 
 DASHBOARD = ROOT / "dashboard"
@@ -81,6 +81,30 @@ def background_sync(stop: threading.Event | None = None) -> None:
                 return
         else:
             time.sleep(delay)
+
+
+SCHEDULER_INTERVAL_SECONDS = 600
+
+
+def daily_scheduler(stop: threading.Event | None = None, interval: int = SCHEDULER_INTERVAL_SECONDS,
+                    db_path: Path | None = None) -> None:
+    """Checks every 10 minutes whether the 08:00 East Africa Time analysis is due (at most one per Nairobi day).
+
+    It only reads the local database, never contacts a platform, and a laptop that was off at 08:00 runs the
+    missed analysis as soon as it is back on. The cloud scan keeps producing its own shortlist meanwhile.
+    """
+    while not (stop and stop.is_set()):
+        try:
+            outcome = daily.run_if_due(db_path or DB_PATH)
+            if outcome:
+                LOG.info("Scheduled daily analysis: %s", outcome.get("skipped") or f"analysis {outcome.get('analysis_id')} completed")
+        except Exception:                           # noqa: BLE001 - logged; the next check retries
+            LOG.exception("Scheduled daily analysis failed")
+        if stop:
+            if stop.wait(interval):
+                return
+        else:
+            time.sleep(interval)
 
 
 def allowed_hosts(port: int) -> set[str]:
@@ -242,6 +266,7 @@ def main() -> None:
     except Exception:                               # noqa: BLE001 - the server must still start; the error is logged
         LOG.exception("Backend preparation failed; continuing with the existing database")
     threading.Thread(target=background_sync, daemon=True, name="github-report-sync").start()
+    threading.Thread(target=daily_scheduler, daemon=True, name="daily-analysis-scheduler").start()
     server = serve()
     LOG.info("Dashboard: http://%s:%s", HOST, PORT)
     LOG.info("Local-only binding; not exposed to your network")

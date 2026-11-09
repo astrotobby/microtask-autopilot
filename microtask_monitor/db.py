@@ -117,7 +117,30 @@ def _m2_intelligence_and_work(conn: sqlite3.Connection) -> None:
         entity TEXT, entity_id TEXT, detail_json TEXT)""")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work)]
+REVIEW_STATUSES = ("new", "reviewed", "shortlisted", "applied", "rejected", "accepted")
+
+
+def _m3_daily_pipeline(conn: sqlite3.Connection) -> None:
+    """Daily earning-opportunity analyses, their persisted shortlists, and your review status per opportunity."""
+    conn.execute("""CREATE TABLE IF NOT EXISTS analysis_runs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, source_key TEXT NOT NULL UNIQUE, analysis_date TEXT NOT NULL,
+        trigger TEXT NOT NULL, started_at TEXT NOT NULL, completed_at TEXT,
+        status TEXT NOT NULL DEFAULT 'running' CHECK (status IN ('running','completed','failed')),
+        stats_json TEXT, coverage_json TEXT, error TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_analysis_done ON analysis_runs(status, completed_at DESC)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS shortlist_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, analysis_id INTEGER NOT NULL REFERENCES analysis_runs(id) ON DELETE CASCADE,
+        url TEXT NOT NULL, rank INTEGER, daily_score INTEGER NOT NULL, platform_id TEXT, eligibility_class TEXT,
+        in_top5 INTEGER NOT NULL DEFAULT 0, in_shortlist INTEGER NOT NULL DEFAULT 0, in_kenya INTEGER NOT NULL DEFAULT 0,
+        in_worldwide INTEGER NOT NULL DEFAULT 0, is_new INTEGER NOT NULL DEFAULT 0, snapshot_json TEXT NOT NULL,
+        UNIQUE(analysis_id, url))""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_shortlist_analysis ON shortlist_entries(analysis_id, rank)")
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS opportunity_review (
+        url TEXT PRIMARY KEY, status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_q(REVIEW_STATUSES)})),
+        notes TEXT, updated_at TEXT NOT NULL)""")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

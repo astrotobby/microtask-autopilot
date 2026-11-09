@@ -401,7 +401,9 @@ class SyncHealthTests(unittest.TestCase):
 
     def test_notification_generation_failure_does_not_fail_the_sync(self):
         os.environ["AUTOPILOT_NO_NOTIFY"] = "0"
+        os.environ["AUTOPILOT_NO_DAILY"] = "1"        # this test is about notification failure only; no pop-ups from the analysis
         self.addCleanup(os.environ.__setitem__, "AUTOPILOT_NO_NOTIFY", "1")
+        self.addCleanup(os.environ.pop, "AUTOPILOT_NO_DAILY", None)
         with mock.patch.object(sr, "get_latest_report", return_value=(make_report(1), {"run_id": "5", "artifact_id": "6"})), \
              mock.patch("microtask_monitor.notify.generate", side_effect=RuntimeError("toast failed")):
             self.assertEqual(sr.sync_once()["inserted"], 1)

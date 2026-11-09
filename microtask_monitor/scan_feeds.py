@@ -2,6 +2,7 @@
 import csv
 import html
 import json
+import os
 import re
 import sys
 import urllib.request
@@ -18,6 +19,7 @@ PLATFORMS = ROOT / "microtask_monitor" / "platforms.json"
 DISCOVERY_SOURCES = ROOT / "microtask_monitor" / "discovery_sources.json"
 REPORTS = ROOT / "microtask_monitor" / "reports"
 INTEGRATIONS = ROOT / "microtask_monitor" / "integrations.json"
+DAILY_STATE = ROOT / "microtask_monitor" / "cache" / "daily_state.json"
 
 MICROTASK_TERMS = [
     "microtask", "data annotation", "data annotator", "data labeling",
@@ -302,6 +304,15 @@ def main():
             unique[key] = item
     items = sorted(unique.values(), key=lambda x: (x["relevance_score"], x["title"]), reverse=True)
 
+    # Daily earning-opportunity analysis runs here too, so it works with the laptop switched off.
+    daily_shortlist, daily_error = None, None
+    try:
+        from microtask_monitor import daily
+        daily_shortlist = daily.cloud_analysis(items, state_path=DAILY_STATE,
+                                               trigger=os.environ.get("ANALYSIS_TRIGGER", "hourly"))
+    except Exception as exc:                      # a failed analysis must never break the scan or the report
+        daily_error = f"{type(exc).__name__}: {exc}"
+
     REPORTS.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     report = {
@@ -319,6 +330,8 @@ def main():
         "active_kenya_eligible_sources": active_kenya_eligible_sources(platforms, eligibility),
         "integrations": integration_health,
         "eligibility_monitors": eligibility,
+        "daily_shortlist": daily_shortlist,
+        "daily_shortlist_error": daily_error,
         "important_note": "Scores are keyword triage, not proof of legitimacy, pay, availability, or Kenya eligibility. Verify every listing at its source.",
         "items": items
     }

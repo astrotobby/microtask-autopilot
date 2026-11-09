@@ -34,7 +34,7 @@ DEFAULT_SETTINGS = {"desktop_notifications": True, "external_min_severity": "imp
                     "max_external_per_cycle": 5, "expiring_days": 3, "max_individual_new": 10}
 SEVERITY_RANK = {"info": 0, "important": 1, "urgent": 2}
 TYPES = ("new_opportunity", "expiring_opportunity", "application_response", "task_attention", "payment_update",
-         "sync_failed", "policy_change")
+         "sync_failed", "policy_change", "daily_shortlist", "opportunity_changed")
 
 
 def load_settings(path: Path = SETTINGS_PATH) -> dict[str, Any]:
@@ -120,6 +120,11 @@ def telegram_notify(title: str, body: str) -> bool:
 CHANNELS: dict[str, Callable[[str, str], bool]] = {"desktop": desktop_notify, "email": email_notify, "telegram": telegram_notify}
 
 
+def default_channels() -> dict[str, Callable[[str, str], bool]]:
+    """The real channels, or none when AUTOPILOT_NO_NOTIFY=1 (tests and quiet runs: dashboard only)."""
+    return {} if os.environ.get("AUTOPILOT_NO_NOTIFY") == "1" else CHANNELS
+
+
 # ---------------------------------------------------------------- core --------------------------------
 def fingerprint(ntype: str, key: str, state: str = "") -> str:
     return hashlib.sha1(f"{ntype}|{key}|{state}".encode()).hexdigest()
@@ -131,7 +136,7 @@ def create(conn, ntype: str, title: str, body: str = "", url: str | None = None,
     if ntype not in TYPES or severity not in SEVERITY_RANK:
         raise ValueError("unknown notification type or severity")
     settings = settings or load_settings()
-    channels = CHANNELS if channels is None else channels
+    channels = default_channels() if channels is None else channels      # explicit channels (tests) are used as given
     fp = fingerprint(ntype, key or title, state)
     title, body = scrub(title)[:200], scrub(body)[:1000]
     cur = conn.execute("INSERT OR IGNORE INTO notifications(fingerprint,type,severity,title,body,url,created_at) VALUES(?,?,?,?,?,?,?)",
@@ -151,13 +156,13 @@ def create(conn, ntype: str, title: str, body: str = "", url: str | None = None,
 
 
 def generate(conn, now: datetime | None = None, settings: dict | None = None, channels: dict | None = None,
-             report_health: dict | None = None) -> list[dict[str, Any]]:
+             report_health: dict | None = None, include_new: bool = True) -> list[dict[str, Any]]:
     """Scan the database for things worth telling you. Safe to call after every sync (deduplicated)."""
     now = now or datetime.now(timezone.utc)
     settings = settings or load_settings()
     made: list[dict[str, Any]] = []
     budget = {"left": int(settings["max_external_per_cycle"]), "suppressed": 0}
-    base_channels = CHANNELS if channels is None else channels
+    base_channels = default_channels() if channels is None else channels
 
     def add(ntype, title, body="", url=None, severity="info", key="", state=""):
         qualifies = SEVERITY_RANK[severity] >= SEVERITY_RANK.get(settings["external_min_severity"], 1)
@@ -179,7 +184,7 @@ def generate(conn, now: datetime | None = None, settings: dict | None = None, ch
         "WHERE status='open' AND duplicate_of IS NULL AND relevance_score>=? AND eligibility_class IN (?,?) "
         "ORDER BY relevance_score DESC, last_seen_utc DESC LIMIT 2000",
         (settings["min_score"], ig.KENYA_CONFIRMED, ig.WORLDWIDE_CONFIRMED)).fetchall()
-    fresh = [r for r in candidates if r["url"] not in notified]
+    fresh = [r for r in candidates if r["url"] not in notified] if include_new else []
     limit = int(settings["max_individual_new"])
     for r in fresh[:limit]:
         label = "Kenya confirmed" if r["eligibility_class"] == ig.KENYA_CONFIRMED else "Worldwide"

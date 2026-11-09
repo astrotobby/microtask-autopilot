@@ -192,6 +192,31 @@ The server binds to 127.0.0.1 only, requires a loopback `Host` header, rejects c
 ### Profile
 `microtask_monitor/profile.json` lists the skills established for matching and drafting, and `not_established` items (degrees, years of experience, certifications, portfolio links) that are never claimed without your confirmation.
 
+## Daily earning-opportunity pipeline
+
+Every day the project prepares a ranked, evidence-backed shortlist without you asking. It never applies for anything: it ranks what the permitted discovery adapters already collected and prepares drafts for you to review.
+
+### When it runs
+| Trigger | Where | Notes |
+|---|---|---|
+| Every hourly scan | GitHub Actions | The scan embeds a `daily_shortlist` in the report, so a shortlist exists even while your PC is off. A second schedule at 05:00 UTC (08:00 East Africa Time) labels the daily run. GitHub may delay scheduled runs: exact times are not guaranteed. |
+| After each sync that brought changes | Your PC | Only when the new report added, changed or expired something. Identical data never triggers a repeat analysis, and dashboard refreshes never trigger one. |
+| From 08:00 East Africa Time | Your PC | A scheduler thread checks every 10 minutes and runs at most once per Nairobi day. A laptop that was off at 08:00 runs the missed analysis when it is back on. |
+
+Each analysis is recorded in SQLite (`analysis_runs`) with its date and time, is idempotent per source report, recovers after an interrupted run, and never deletes earlier valid shortlists or reports.
+
+### What counts as suitable
+Open, **Kenya-confirmed or worldwide-confirmed** (from the listing's own data), no fees/deposits/memberships, and a role whose **title** matches your established skills (Python, JavaScript/TypeScript, Node, backend/full-stack, AI coding tools, prompt/LLM work, n8n/Make automation, writing, data entry, AI video). Roles are excluded when they need domain expertise you have not established (e.g. engineering trades, scientific experts), specific tools or languages you have not established (Premiere Pro, C++, Rust, game engines, CAD), Apple hardware, or more than one unestablished qualification.
+
+### Ranking (no reward for pay alone)
+Kenya-confirmed > worldwide; role-level skill match; clearly stated and plausible compensation (a small capped bonus; unusually high pay gets nothing and is flagged); a verified payment route usable in Kenya; realistic entry requirements; freshness; and a small platform-priority bonus following your research order: OpenTrain AI, AfterQuery, Braintrust, Clickworker, Atlas Capture, Handshake AI, Microworkers, RapidWorkers, SproutGigs, GainWorkers, REWORKIO, Mindrift. The priority order guides where to look first and is **not** permission to automate: only OpenTrain AI has permitted automated discovery; the others appear in the coverage table as "check this yourself today", and Mindrift is marked restricted for Kenya.
+
+### Outputs
+Top five, a shortlist of up to 20, Kenya-confirmed and worldwide-confirmed lists, and newly discovered listings (separate from earlier ones). Each entry shows the original link, compensation, payment method (only if verified), eligibility evidence, matched skills, requirements, assessments/interviews mentioned, deadline and last-verified time. If nothing qualifies, the dashboard and notification say so plainly. Application drafts are prepared (once each, status `draft`) for the top five and saved in the Application Manager.
+
+### Dashboard and notifications
+The **DAILY EARNING OPPORTUNITIES** section shows today's top five, the full shortlist, newly discovered items, application status, the draft application, direct links and the last analysis time (local and cloud). You can mark each opportunity reviewed, shortlisted, applied, rejected or accepted; this is stored in SQLite (`opportunity_review`), not in the browser. Notifications (deduplicated): daily shortlist ready (once per day after 08:00 EAT), a few genuinely new high-quality Kenya-confirmed opportunities, deadlines within three days, and material changes (eligibility, availability, pay, deadline) to opportunities you track.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.

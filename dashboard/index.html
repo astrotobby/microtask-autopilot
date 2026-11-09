@@ -64,6 +64,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program never logs in to work platforms, applies, accepts or submits tasks, or handles payments for you: you do those steps yourself and record them here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
  <nav class="nav" aria-label="Dashboard sections">
   <button class="active" data-tab="overview">Overview</button>
+  <button data-tab="daily">Daily Earning Opportunities</button>
   <button data-tab="opportunities">Opportunities</button>
   <button data-tab="applications">Applications</button>
   <button data-tab="tasks">Tasks</button>
@@ -84,6 +85,27 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <div id="overviewOpps" class="table-wrap"></div>
   <div class="section-head"><h2>Work in progress</h2><button class="btn small" data-goto="tasks">Open task workspace</button></div>
   <div id="overviewTasks" class="table-wrap"></div>
+ </section>
+
+ <section id="daily" class="panel">
+  <h1>DAILY EARNING OPPORTUNITIES</h1>
+  <p class="muted">A fresh shortlist prepared for you: only open, fee-free, skill-matching opportunities whose own listing confirms Kenya or says worldwide. Drafts are prepared for the top five; you review, approve and apply yourself. High advertised pay is not rewarded on its own.</p>
+  <div class="card" style="margin:12px 0">
+   <div class="row"><div><strong id="dailyStamp">Loading…</strong><div class="muted" id="dailySchedule"></div></div><button class="btn primary" id="runDaily" style="flex:0 0 auto">Run analysis now</button></div>
+   <div id="dailyBanner"></div>
+  </div>
+  <div class="section-head"><h2>Today's top five</h2><span class="muted" id="dailyCounts"></span></div>
+  <div id="dailyTop" class="platform-grid"></div>
+  <div class="section-head"><h2>Newly discovered since the last analysis</h2></div>
+  <div id="dailyNew" class="table-wrap"></div>
+  <div class="section-head"><h2>Full shortlist (up to 20)</h2></div>
+  <div id="dailyShortlist" class="table-wrap"></div>
+  <div class="section-head"><h2>Kenya-confirmed</h2></div>
+  <div id="dailyKenya" class="table-wrap"></div>
+  <div class="section-head"><h2>Worldwide-confirmed</h2></div>
+  <div id="dailyWorldwide" class="table-wrap"></div>
+  <div class="section-head"><h2>Research priority and coverage</h2><span class="muted">Priority guides where to look first; it is not permission to automate anything.</span></div>
+  <div id="dailyCoverage" class="table-wrap"></div>
  </section>
 
  <section id="opportunities" class="panel">
@@ -220,7 +242,7 @@ function platformOptions(first){return '<option value="">'+(first||"Select platf
 function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
 
 // ---------------------------------------------------------------- navigation
-const loaders={overview:loadOverview,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
+const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
 function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
@@ -245,6 +267,65 @@ async function loadOverview(){
  $("overviewTasks").innerHTML=open.length?'<table><thead><tr><th>Task</th><th>Platform</th><th>Status</th><th>Due</th><th>Open items</th></tr></thead><tbody>'+open.map(x=>'<tr><td>'+esc(x.title)+'</td><td>'+esc(platformName(x.platform_id))+'</td><td>'+esc(x.status)+'</td><td>'+esc(day(x.due_at))+'</td><td>'+x.open_items+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No tasks in progress.</div>';
 }
 function setBadge(n){const b=$("notifBadge");b.textContent=n;b.classList.toggle("hidden",!n)}
+
+// ---------------------------------------------------------------- daily earning opportunities
+const REVIEW_STATUSES=["new","reviewed","shortlisted","applied","rejected","accepted"];
+function reqText(r){r=r||{};const bits=[];if(r.min_years_experience)bits.push(r.min_years_experience+"+ years experience");if((r.qualifications||[]).length)bits.push(r.qualifications.join(", "));if((r.equipment||[]).length)bits.push("equipment: "+r.equipment.join(", "));if(r.effort)bits.push(r.effort);return bits.join(" · ")||"none stated in the listing"}
+function reviewSelect(e){return '<select data-review="'+esc(e.url)+'" aria-label="Review status">'+REVIEW_STATUSES.map(s=>'<option '+(e.review_status===s?"selected":"")+'>'+s+'</option>').join("")+'</select>'}
+function appTag(e){const a=e.application;return a?'<span class="tag info">application: '+esc(a.status)+(a.has_draft?" · draft ready":"")+'</span>':'<span class="tag">no application yet</span>'}
+function dailyCard(e,i){
+ const p=e.eligibility||{};
+ return '<article class="platform-card"><div class="row"><h3>#'+(i+1)+' '+esc(e.title)+'</h3><span class="tag ok">score '+esc(e.daily_score)+'</span></div>'
+  +'<div class="tags"><span class="tag">'+esc(e.platform||"")+'</span><span class="tag '+(p["class"]==="KENYA_CONFIRMED"?"ok":"info")+'">'+esc(p["class"]||"")+'</span>'+(e.is_new?'<span class="tag warn">new</span>':"")+appTag(e)+'</div>'
+  +'<p>'+esc(e.summary||"")+'</p>'
+  +'<table style="min-width:0"><tbody>'
+  +'<tr><td>Compensation</td><td>'+esc(e.compensation||"Not disclosed")+(e.payment_flagged?' <span class="tag warn">unusually high: verify manually</span>':"")+'</td></tr>'
+  +'<tr><td>Payment method</td><td>'+esc(e.payment_method||"not verified")+'</td></tr>'
+  +'<tr><td>Eligibility evidence</td><td>'+esc(p.evidence||"")+'</td></tr>'
+  +'<tr><td>Skills matched</td><td>'+esc((e.skills||[]).map(s=>s.replace(/_/g," ")).join(", ")||"—")+'</td></tr>'
+  +'<tr><td>Requirements</td><td>'+esc(reqText(e.requirements))+((e.gaps||[]).length?'<br><span class="tag warn">confirm: '+esc(e.gaps.join("; "))+'</span>':"")+'</td></tr>'
+  +'<tr><td>Assessments / interviews</td><td>'+esc((e.assessments||[]).join(", ")||"none mentioned")+'</td></tr>'
+  +'<tr><td>Deadline</td><td>'+esc(e.deadline?day(e.deadline):"none stated")+'</td></tr>'
+  +'<tr><td>Last verified</td><td>'+esc(when(e.last_verified))+'</td></tr></tbody></table>'
+  +'<div class="row" style="margin-top:8px"><div>'+link(e.apply_url||e.url,"Open the original opportunity")+'</div><div>'+reviewSelect(e)+'</div></div>'
+  +'<div class="row" style="margin-top:6px">'+(e.application?'<button class="btn small primary" data-opendraft="'+e.application.id+'">Open draft application</button>':'<button class="btn small" data-makedraft="'+esc(e.url)+'">Prepare draft</button>')+'</div></article>';
+}
+function dailyTable(items){
+ if(!items||!items.length)return '<div class="empty">None in this analysis.</div>';
+ return '<table><thead><tr><th>#</th><th>Opportunity</th><th>Kenya eligibility</th><th>Compensation</th><th>Application</th><th>Status</th><th>Link</th><th>Score</th></tr></thead><tbody>'+items.map((e,i)=>'<tr><td>'+(e.rank||i+1)+'</td><td><strong>'+esc(e.title)+'</strong><div class="muted">'+esc(e.platform||"")+(e.is_new?" · new":"")+'</div></td><td><span class="tag '+((e.eligibility||{})["class"]==="KENYA_CONFIRMED"?"ok":"info")+'">'+esc((e.eligibility||{})["class"]||"")+'</span></td><td>'+esc(e.compensation||"Not disclosed")+'</td><td>'+appTag(e)+(e.application?' <button class="btn small" data-opendraft="'+e.application.id+'">Draft</button>':"")+'</td><td>'+reviewSelect(e)+'</td><td>'+link(e.apply_url||e.url,"Open")+'</td><td>'+esc(e.daily_score)+'</td></tr>').join("")+'</tbody></table>';
+}
+function bindDaily(root){
+ root.querySelectorAll("[data-review]").forEach(sel=>sel.addEventListener("change",async()=>{if(await act(()=>api("POST","/api/daily/review",{url:sel.dataset.review,status:sel.value}),"Marked "+sel.value))loadDaily()}));
+ root.querySelectorAll("[data-opendraft]").forEach(b=>b.addEventListener("click",()=>{ui.selApp=Number(b.dataset.opendraft);saveUi(ui);setTab("applications")}));
+ root.querySelectorAll("[data-makedraft]").forEach(b=>b.addEventListener("click",async()=>{const r=await act(()=>api("POST","/api/applications",{opportunity_url:b.dataset.makedraft}),"Draft prepared");if(r){ui.selApp=r.application.id;saveUi(ui);setTab("applications")}}));
+}
+async function loadDaily(){
+ const r=await act(()=>api("GET","/api/daily"));if(!r)return;
+ const a=r.analysis;
+ $("dailySchedule").textContent=r.schedule||"";
+ if(!a){
+  $("dailyStamp").textContent="No analysis has run yet";
+  $("dailyBanner").innerHTML='<div class="banner bad">'+esc(r.message||"")+'</div>';
+  ["dailyTop","dailyNew","dailyShortlist","dailyKenya","dailyWorldwide","dailyCoverage"].forEach(id=>{$(id).innerHTML=""});
+  return;
+ }
+ const cloud=r.cloud?" · last cloud analysis "+when(r.cloud.generated_at)+" ("+esc(r.cloud.trigger||"")+")":"";
+ $("dailyStamp").innerHTML="Last analysis: "+esc(when(a.completed_at))+" · "+esc(a.trigger)+cloud;
+ const s=r.stats||{};
+ $("dailyCounts").textContent=(s.suitable||0)+" suitable of "+(s.candidates||0)+" open · "+(s.kenya_confirmed||0)+" Kenya-confirmed · "+(s.worldwide_confirmed||0)+" worldwide · "+(s.new||0)+" new";
+ $("dailyBanner").innerHTML=r.message?'<div class="banner bad">'+esc(r.message)+'</div>':'<div class="banner ok">Shortlist saved in the local database. Nothing has been applied for: drafts wait for your review.</div>';
+ $("dailyTop").innerHTML=r.top5.length?r.top5.map(dailyCard).join(""):'<div class="empty">No suitable opportunities today.</div>';
+ $("dailyNew").innerHTML=dailyTable(r.new);$("dailyShortlist").innerHTML=dailyTable(r.shortlist);
+ $("dailyKenya").innerHTML=dailyTable(r.kenya_confirmed);$("dailyWorldwide").innerHTML=dailyTable(r.worldwide_confirmed);
+ $("dailyCoverage").innerHTML='<table><thead><tr><th>Priority</th><th>Platform</th><th>Discovery</th><th>Open listings</th><th>In shortlist</th><th>What to do</th></tr></thead><tbody>'+(r.coverage||[]).map(c=>'<tr><td>'+c.rank+'</td><td>'+esc(c.name)+'</td><td>'+esc(c.discovery)+'</td><td>'+c.open_listings+'</td><td>'+c.in_shortlist+'</td><td>'+esc(c.action)+' '+link(c.manual_check_url,"Open")+'</td></tr>').join("")+'</tbody></table>';
+ ["dailyTop","dailyNew","dailyShortlist","dailyKenya","dailyWorldwide"].forEach(id=>bindDaily($(id)));
+}
+$("runDaily").addEventListener("click",async()=>{
+ $("runDaily").disabled=true;
+ const r=await act(()=>api("POST","/api/daily/run",{}));
+ $("runDaily").disabled=false;
+ if(r){toast(r.skipped?("Not re-run: "+r.skipped):("Analysis complete: "+((r.stats||{}).suitable||0)+" suitable, "+((r.drafts||{}).created||0)+" new drafts"));loadDaily()}
+});
 
 // ---------------------------------------------------------------- opportunities
 let oppOffset=0,oppLimit=40;
@@ -439,7 +520,7 @@ async function refreshFromLocalAgent(){
  try{
   const s=await api("GET","/api/status");
   $("agentStatus").textContent="Agent connected · "+(s.opportunity_count||0)+" stored opportunities · last sync "+when(s.last_sync_success_utc||s.synced_at_utc);
-  const t=currentTab();if(t==="overview")loadOverview();
+  const t=currentTab();if(t==="overview")loadOverview();if(t==="daily")loadDaily();
   const n=await api("GET","/api/notifications?unread=1&limit=100");setBadge(n.notifications.length);
  }catch(err){$("agentStatus").textContent="Local agent not reachable · start open-dashboard.bat"}
 }

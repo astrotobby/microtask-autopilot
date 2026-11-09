@@ -11,6 +11,8 @@ on:
       - ".github/workflows/hourly-opportunity-monitor.yml"
   schedule:
     - cron: "17 * * * *"
+    # 05:00 UTC = 08:00 East Africa Time (Africa/Nairobi, UTC+3). GitHub may delay scheduled runs.
+    - cron: "0 5 * * *"
   workflow_dispatch:
 
 permissions:
@@ -45,6 +47,8 @@ jobs:
       - name: Scan feeds and run the 12-platform adapters
         # OpenTrain: documented public API. Mindrift: public eligibility-policy monitor only.
         # GainWorkers / REWORKIO: manual-review integrations, no network access.
+        env:
+          ANALYSIS_TRIGGER: ${{ github.event.schedule == '0 5 * * *' && 'daily' || 'hourly' }}
         run: python microtask_monitor/scan_feeds.py
       - name: Save HTML, JSON and CSV reports
         uses: actions/upload-artifact@v4

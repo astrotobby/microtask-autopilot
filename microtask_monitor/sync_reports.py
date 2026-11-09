@@ -380,6 +380,10 @@ def import_report(report: dict[str, Any], metadata: dict[str, Any],
                             VALUES(?,?,?,?,?,?,?)""", (report_key, checked, run_id, metadata.get("run_url", ""), artifact_id, now, len(items)))
             _db.set_state(conn, "integrations", report.get("integrations", {}))
             _db.set_state(conn, "eligibility_monitors", report.get("eligibility_monitors", {}))
+            cloud = report.get("daily_shortlist")
+            if isinstance(cloud, dict):                      # computed in GitHub Actions, even while the laptop was off
+                _db.set_state(conn, "cloud_daily", {k: cloud.get(k) for k in ("generated_at", "analysis_date", "trigger", "suitable_count", "candidate_count", "message")}
+                              | {"top5": [{"title": e.get("title"), "url": e.get("url"), "daily_score": e.get("daily_score")} for e in (cloud.get("top5") or [])[:5]]})
             _db.set_state(conn, "last_report", {"checked_at_utc": checked, "run_id": run_id, "run_url": metadata.get("run_url", ""),
                                                 "synced_at_utc": now, "listing_count": len(items), "report_file": metadata.get("report_file")})
             _db.audit(conn, "report.import", "report", report_key, {"items": len(items), **stats}, actor="system")
@@ -424,11 +428,19 @@ def sync_once(notify_after: bool = True) -> dict[str, Any]:
         result["inserted"], result["updated"], result["already_imported"],
         result["total_items"], metadata["run_id"],
     )
+    if notify_after and os.environ.get("AUTOPILOT_NO_DAILY") != "1":
+        try:                                             # daily earning analysis: only when the report changed something
+            from microtask_monitor import daily
+            with closing(_db.connect(DB_PATH)) as conn:
+                outcome = daily.run_after_sync(conn, f"{metadata['run_id']}:{metadata['artifact_id']}", result)
+            LOG.info("Daily analysis after sync: %s", outcome.get("skipped") or f"analysis {outcome.get('analysis_id')} done")
+        except Exception:                                # noqa: BLE001
+            LOG.exception("Daily analysis failed (the synced data is unaffected)")
     if notify_after and os.environ.get("AUTOPILOT_NO_NOTIFY") != "1":
         try:
             from microtask_monitor import notify
             with closing(_db.connect(DB_PATH)) as conn, _db.tx(conn):
-                notify.generate(conn)
+                notify.generate(conn, include_new=False)  # new-opportunity alerts now come from the daily analysis
         except Exception:                                # noqa: BLE001
             LOG.exception("Notification generation failed")
     return {**result, **metadata, "checked_at_utc": report["checked_at_utc"]}

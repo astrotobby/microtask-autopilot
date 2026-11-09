@@ -13,9 +13,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import assistant, db, intelligence as ig, notify, policy, workflow as wf
+    from microtask_monitor import assistant, daily, db, intelligence as ig, notify, policy, workflow as wf
 except ImportError:  # pragma: no cover
-    import assistant, db, intelligence as ig, notify, policy, workflow as wf
+    import assistant, daily, db, intelligence as ig, notify, policy, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -100,6 +100,8 @@ class Api:
             return {"ok": True, "payment": wf.record_payment(conn, body.get("amount"), body.get("currency"), body.get("received_date"),
                                                              body.get("earning_id"), body.get("platform_id"), str(body.get("method", "")),
                                                              str(body.get("reference", "")))}
+        if parts[:1] == ["daily"]:
+            return self.daily_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["notifications"]:
             return self.notifications(conn, method, parts[1:], q, body)
         if key == ("POST", "sync"):
@@ -308,6 +310,28 @@ class Api:
             with db.tx(conn):
                 return {"ok": True, "marked": notify.mark_read(conn, ids or None)}
         raise ApiError(404, "No such notifications endpoint")
+
+    def daily_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        """DAILY EARNING OPPORTUNITIES: read the saved shortlist, run an analysis now, set a review status."""
+        if method == "GET" and not rest:
+            data = daily.load_shortlist(conn)
+            return {"ok": True, **data, "cloud": db.get_state(conn, "cloud_daily", None),
+                    "priority_order": daily.PLATFORM_PRIORITY, "review_statuses": list(db.REVIEW_STATUSES),
+                    "schedule": "Runs after each sync that brings changes, and once a day from 08:00 East Africa Time; "
+                                "the cloud scan also prepares a shortlist while this PC is off. GitHub may delay scheduled runs.",
+                    "running": bool(conn.execute("SELECT 1 FROM analysis_runs WHERE status='running'").fetchone())}
+        if method == "POST" and rest == ["run"]:
+            now = datetime.now(timezone.utc)
+            out = daily.run_analysis(conn, now, "manual", f"manual:{now.isoformat()}", force=True)
+            return {"ok": True, "started": "stats" in out, **{k: out[k] for k in out if k != "stats"}, "stats": out.get("stats")}
+        if method == "POST" and rest == ["review"]:
+            try:
+                return {"ok": True, **daily.set_review(conn, str(body.get("url", "")), str(body.get("status", "")), str(body.get("notes", "")))}
+            except ValueError as exc:
+                raise ApiError(400, str(exc))
+            except LookupError as exc:
+                raise ApiError(404, str(exc))
+        raise ApiError(404, "No such daily endpoint")
 
     def assist(self, kind: str, body: dict) -> dict[str, Any]:
         """Stateless local helpers (no platform contact): simplify instructions, explain an error."""
