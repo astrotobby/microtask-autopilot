@@ -174,7 +174,41 @@ def _m4_first_earning_workflow(conn: sqlite3.Connection) -> None:
         source TEXT NOT NULL DEFAULT 'template', position INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL)""")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow)]
+EXEC_STATUSES = ("created", "blocked", "ready", "running", "paused", "interrupted", "qa_failed", "awaiting_review", "approved",
+                 "ready_for_submission", "submitted", "accepted", "rejected", "failed", "cancelled")
+AI_POLICIES = ("unknown", "allowed", "prohibited")
+
+
+def _m5_execution_engine(conn: sqlite3.Connection) -> None:
+    """Execution jobs, their progress events, files and independent QA results."""
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS execution_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, task_id INTEGER REFERENCES tasks(id) ON DELETE SET NULL,
+        application_id INTEGER REFERENCES applications(id) ON DELETE SET NULL, platform_id TEXT, opportunity_url TEXT,
+        title TEXT NOT NULL, instructions TEXT NOT NULL, instructions_source TEXT NOT NULL DEFAULT 'user_provided',
+        work_type TEXT NOT NULL, worker TEXT NOT NULL, classification_json TEXT,
+        status TEXT NOT NULL DEFAULT 'created' CHECK (status IN ({_q(EXEC_STATUSES)})), status_reason TEXT,
+        ai_policy TEXT NOT NULL DEFAULT 'unknown' CHECK (ai_policy IN ({_q(AI_POLICIES)})), ai_source TEXT, ai_detected TEXT,
+        ai_run_approved_at TEXT, runner TEXT, attempts INTEGER NOT NULL DEFAULT 0, workspace TEXT NOT NULL, deadline TEXT,
+        pause_requested INTEGER NOT NULL DEFAULT 0, cancel_requested INTEGER NOT NULL DEFAULT 0,
+        manual_ack_at TEXT, approved_at TEXT, submitted_at TEXT, submission_reference TEXT, outcome_at TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, started_at TEXT, finished_at TEXT, error TEXT)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_exec_status ON execution_jobs(status, updated_at DESC)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS execution_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL REFERENCES execution_jobs(id) ON DELETE CASCADE,
+        at TEXT NOT NULL, kind TEXT NOT NULL, message TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_exec_events ON execution_events(job_id, id)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS execution_files (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL REFERENCES execution_jobs(id) ON DELETE CASCADE,
+        role TEXT NOT NULL, rel_path TEXT NOT NULL, sha256 TEXT, size_bytes INTEGER, created_at TEXT NOT NULL,
+        UNIQUE(job_id, role, rel_path))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS execution_qa (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, job_id INTEGER NOT NULL REFERENCES execution_jobs(id) ON DELETE CASCADE,
+        attempt INTEGER NOT NULL, check_name TEXT NOT NULL, status TEXT NOT NULL CHECK (status IN ('pass','fail','manual')),
+        executed INTEGER NOT NULL DEFAULT 0, detail TEXT, created_at TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_exec_qa ON execution_qa(job_id, attempt)")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

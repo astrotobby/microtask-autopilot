@@ -567,7 +567,7 @@ class MigrationFourTests(unittest.TestCase):
                 raw.execute("INSERT INTO tasks(title,instructions,status,created_at,updated_at) VALUES('T','I','accepted','2026-11-01','2026-11-01')")
                 raw.commit()
             with db.session(path) as conn:
-                self.assertEqual(db.user_version(conn), 4)
+                self.assertEqual(db.user_version(conn), db.LATEST_VERSION)
                 a = conn.execute("SELECT * FROM applications").fetchone()
                 self.assertEqual((a["title"], a["status"]), ("Job", "submitted"))
                 self.assertIsNone(a["next_followup_at"])

@@ -68,6 +68,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <button data-tab="opportunities">Opportunities</button>
   <button data-tab="applications">Applications</button>
   <button data-tab="tasks">Tasks</button>
+  <button data-tab="execution">Execution Centre</button>
   <button data-tab="earnings">Earnings</button>
   <button data-tab="platforms">Platforms (12)</button>
   <button data-tab="notifications">Notifications <span class="badge hidden" id="notifBadge">0</span></button>
@@ -163,6 +164,31 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   </div>
  </section>
 
+
+ <section id="execution" class="panel">
+  <h1>Execution Centre</h1>
+  <p class="muted">Turn REAL task instructions from your own account into checked deliverables. Paste the instructions (and upload any input files); the right specialist does the work in an isolated folder, independent quality checks run, and you review, approve and submit yourself. AI tools only run when the platform/client rules allow it and you approve each run. Nothing here logs in, accepts work, submits or handles money.</p>
+  <div class="grid" id="execCards" style="margin:12px 0"></div>
+  <div class="section-head"><h2>Qualified assignments (accepted applications)</h2></div>
+  <div id="execQualified" class="table-wrap"></div>
+  <div class="split" style="margin-top:12px">
+   <div>
+    <form id="execForm" class="card">
+     <h3>New execution job</h3>
+     <input id="execApp" type="hidden">
+     <label for="execTitle">Title *</label><input id="execTitle" required maxlength="200">
+     <div class="form-grid"><div><label for="execPlatform">Platform</label><select id="execPlatform"></select></div><div><label for="execType">Work type</label><select id="execType"></select></div><div><label for="execDeadline">Deadline</label><input id="execDeadline" type="date"></div></div>
+     <label for="execInstructions">Task instructions * (copy them exactly from your account)</label><textarea id="execInstructions" required placeholder="Paste the real instructions. Nothing is invented for you."></textarea>
+     <div class="form-grid"><div><label for="execAi">AI help allowed?</label><select id="execAi"><option value="">Not checked yet</option><option value="allowed">Allowed (rules say so)</option><option value="prohibited">Not allowed</option></select></div><div><label for="execAiSource">Where the rules say so</label><input id="execAiSource" maxlength="500" placeholder="Page or quote"></div></div>
+     <label for="execFiles">Input files (optional; for data work add a spec.json)</label><input id="execFiles" type="file" multiple>
+     <div class="right" style="margin-top:8px"><button class="btn primary" type="submit">Create job</button></div>
+    </form>
+    <div class="card" style="padding:0;margin-top:12px"><div id="execList"></div></div>
+   </div>
+   <div id="execDetail"><div class="empty">Select a job.</div></div>
+  </div>
+ </section>
+
  <section id="earnings" class="panel">
   <h1>Earnings</h1><p class="muted">Advertised or estimated pay is never counted as received. Only payments you record with a received date count as Received.</p>
   <div class="grid" id="earningCards" style="margin:12px 0"></div>
@@ -249,7 +275,7 @@ function platformOptions(first){return '<option value="">'+(first||"Select platf
 function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
 
 // ---------------------------------------------------------------- navigation
-const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
+const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
 function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
@@ -517,6 +543,63 @@ $("taskForm").addEventListener("submit",async e=>{
  e.preventDefault();
  const r=await act(()=>api("POST","/api/tasks",{title:$("taskTitle").value,instructions:$("taskInstructions").value,platform_id:$("taskPlatform").value||undefined,due_at:$("taskDue").value||undefined}),"Task workspace created");
  if(r){ui.selTask=r.task.id;saveUi(ui);e.target.reset();loadTasks()}
+});
+
+
+// ---------------------------------------------------------------- execution centre
+const EXEC_GROUPS=[["Waiting for you",["blocked","ready","awaiting_review","ready_for_submission","qa_failed","paused","interrupted"]],["Running",["running"]],["Submitted",["submitted"]],["Accepted / rejected",["accepted","rejected"]],["Failed / cancelled",["failed","cancelled"]],["Other",["created","approved"]]];
+let execData=null;
+function execTag(s){const c=["awaiting_review","ready_for_submission","accepted"].includes(s)?"ok":["qa_failed","failed","rejected","blocked"].includes(s)?"bad":["running","submitted"].includes(s)?"info":"warn";return '<span class="tag '+c+'">'+esc(s.replace(/_/g," "))+'</span>'}
+async function loadExecutions(){
+ const r=await act(()=>api("GET","/api/executions"));if(!r)return;execData=r;
+ if($("execPlatform").options.length<2)$("execPlatform").innerHTML=platformOptions("(choose platform)");
+ if($("execType").options.length<2)$("execType").innerHTML='<option value="">Detect from instructions</option>'+r.work_types.filter(w=>w!=="unknown").map(w=>'<option>'+w+'</option>').join("");
+ const s=r.summary.by_status||{},p=(r.summary.payments||{}).by_currency||{};
+ const pay=Object.keys(p).map(c=>c+": expected "+money(p[c].expected,c)+" · pending "+money(p[c].pending,c)+" · received "+money(p[c].received,c)).join("<br>")||"No payments recorded yet (advertised pay is never counted).";
+ const tools=Object.entries(r.ai_tools).map(([k,v])=>'<span class="tag '+(v?"ok":"bad")+'">'+esc(k)+(v?" found":" not found")+'</span>').join(" ");
+ $("execCards").innerHTML=[["Waiting for you",r.summary.awaiting_you],["Running",s.running||0],["QA failures",s.qa_failed||0],["Ready for submission",s.ready_for_submission||0],["Submitted",s.submitted||0],["Accepted",s.accepted||0],["Rejected",s.rejected||0]].map(c=>'<div class="card"><div class="muted">'+esc(c[0])+'</div><div class="metric">'+esc(c[1])+'</div></div>').join("")
+  +'<div class="card" style="grid-column:1/-1"><div class="muted">Payments (only what you recorded)</div><div>'+pay+'</div><div class="muted" style="margin-top:6px">Local AI tools: '+tools+'</div></div>';
+ $("execQualified").innerHTML=r.qualified.length?'<table><thead><tr><th>Accepted application</th><th>Platform</th><th></th></tr></thead><tbody>'+r.qualified.map(a=>'<tr><td>'+esc(a.title)+'</td><td>'+esc(platformName(a.platform_id))+'</td><td><button class="btn small" data-execfrom="'+a.id+'" data-title="'+esc(a.title)+'" data-plat="'+esc(a.platform_id||"")+'">Create job from its instructions</button></td></tr>').join("")+'</tbody></table>':'<div class="empty">No accepted work yet. When a platform accepts you, record it in Applications; it appears here so you can paste the real task instructions.</div>';
+ $("execQualified").querySelectorAll("[data-execfrom]").forEach(b=>b.onclick=()=>{$("execApp").value=b.dataset.execfrom;$("execTitle").value=b.dataset.title;$("execPlatform").value=b.dataset.plat;$("execInstructions").focus()});
+ const jobs=r.jobs;
+ $("execList").innerHTML=jobs.length?EXEC_GROUPS.map(([label,sts])=>{const js=jobs.filter(j=>sts.includes(j.status));return js.length?'<div style="padding:8px 10px;background:#f6f8fb"><strong>'+esc(label)+'</strong> ('+js.length+')</div>'+js.map(j=>'<div class="list-item'+(j.id===ui.selExec?" sel":"")+'" data-exec="'+j.id+'"><strong>'+esc(j.title)+'</strong><div class="muted">'+esc(j.work_type)+' · '+execTag(j.status)+(j.qa_failures?' <span class="tag bad">'+j.qa_failures+' QA failed</span>':"")+' · '+esc(platformName(j.platform_id))+'</div><div class="muted">'+esc(j.next_action)+'</div></div>').join(""):""}).join(""):'<div class="empty">No execution jobs yet.</div>';
+ $("execList").querySelectorAll("[data-exec]").forEach(el=>el.onclick=()=>{ui.selExec=Number(el.dataset.exec);saveUi(ui);loadExecutions()});
+ if(ui.selExec&&jobs.some(j=>j.id===ui.selExec))showExecution(ui.selExec);
+ clearTimeout(window._execPoll);if(jobs.some(j=>j.status==="running")&&currentTab()==="execution")window._execPoll=setTimeout(loadExecutions,4000);
+}
+async function showExecution(id){
+ const r=await act(()=>api("GET","/api/executions/"+id));if(!r)return;const j=r.job;
+ const rules=(execData&&execData.platform_rules||{})[j.platform_id];
+ const qa=j.qa.length?'<table><thead><tr><th>Check</th><th>Result</th><th>Run here?</th><th>Detail</th></tr></thead><tbody>'+j.qa.map(q=>'<tr><td>'+esc(q.check_name)+'</td><td><span class="tag '+(q.status==="pass"?"ok":q.status==="fail"?"bad":"warn")+'">'+esc(q.status)+'</span></td><td>'+(q.executed?"yes":"no")+'</td><td><pre class="draft" style="max-height:120px">'+esc(q.detail)+'</pre></td></tr>').join("")+'</tbody></table>':'<p class="muted">No QA has run yet.</p>';
+ const files=j.files.length?'<ul>'+j.files.map(f=>'<li>'+esc(f.role)+': <a href="#" data-file="'+f.id+'">'+esc(f.rel_path)+'</a> <span class="muted">('+f.size_bytes+' bytes)</span></li>').join("")+'</ul>':'<p class="muted">No files yet.</p>';
+ const can=s=>s.includes(j.status);
+ $("execDetail").innerHTML='<div class="card"><h2>'+esc(j.title)+'</h2><div class="tags">'+execTag(j.status)+'<span class="tag">'+esc(j.work_type)+' · '+esc(j.worker)+'</span><span class="tag '+(j.ai_policy==="allowed"?"ok":j.ai_policy==="prohibited"?"bad":"warn")+'">AI help: '+esc(j.ai_policy)+'</span><span class="tag">attempt '+j.attempts+'</span></div>'
+  +'<div class="banner '+(["blocked","qa_failed","failed"].includes(j.status)?"bad":"ok")+'"><strong>Next:</strong> '+esc(j.next_action)+(j.status_reason?'<br>'+esc(j.status_reason):"")+'</div>'
+  +(j.ai_detected&&j.ai_detected.status==="prohibited"?'<div class="banner bad">The instructions appear to forbid AI help: “'+esc(j.ai_detected.evidence)+'”.</div>':"")
+  +(rules?'<details><summary>Platform rules for '+esc(platformName(j.platform_id))+'</summary><p class="muted">'+esc(rules.instructions_retrieval||"")+'</p><p><strong>AI assistance ('+esc((rules.ai_assistance||{}).status||"")+'):</strong> '+esc((rules.ai_assistance||{}).note||"")+'</p><p class="muted">Automated execution on the platform: no · Automated submission: no</p></details>':"")
+  +'<details><summary>Instructions (from you)</summary><pre class="draft">'+esc(j.instructions)+'</pre></details>'
+  +'<h3>AI permission</h3><div class="form-grid"><div><label for="execAiSel">AI help for this task</label><select id="execAiSel"><option value="unknown">unknown</option><option value="allowed">allowed</option><option value="prohibited">prohibited</option></select></div><div><label for="execAiSrc">Where the rules say so</label><input id="execAiSrc" maxlength="500" value="'+esc(j.ai_source||"")+'" placeholder="e.g. Project Instructions page, section Tools"></div></div><div class="right" style="margin-top:6px"><button class="btn small" id="execAiSave" '+(can(["running","submitted","accepted","rejected","cancelled"])?"disabled":"")+'>Save AI permission</button></div>'
+  +'<div class="row" style="margin-top:10px;flex-wrap:wrap;gap:6px"><button class="btn primary" id="execStart" '+(can(["ready","paused","interrupted","qa_failed","failed"])?"":"disabled")+'>'+(j.attempts?"Resume / retry":"Start")+'</button><button class="btn" id="execPause" '+(can(["running"])?"":"disabled")+'>Pause</button><button class="btn" id="execCancel" '+(can(["submitted","accepted","rejected","cancelled"])?"disabled":"")+'>Cancel</button><button class="btn primary" id="execApprove" '+(can(["awaiting_review"])?"":"disabled")+'>Approve deliverables</button><button class="btn" id="execSubmitted" '+(can(["ready_for_submission"])?"":"disabled")+'>I submitted it myself</button><select id="execOutcome" '+(can(["submitted"])?"":"disabled")+'><option value="">Record outcome…</option><option>accepted</option><option>rejected</option></select></div>'
+  +'<h3 style="margin-top:14px">Quality checks</h3>'+qa
+  +'<h3>Files</h3>'+files+'<p class="muted">Workspace folder: '+esc(j.workspace)+'</p><pre class="draft hidden" id="execFileView" style="max-height:340px"></pre>'
+  +'<h3>Execution log</h3><ul>'+j.events.map(e=>'<li class="muted">'+esc(when(e.at))+' · <strong>'+esc(e.kind)+'</strong>: '+esc(e.message)+'</li>').join("")+'</ul></div>';
+ $("execAiSel").value=j.ai_policy;
+ const reload=()=>loadExecutions();
+ $("execAiSave").onclick=async()=>{if(await act(()=>api("POST","/api/executions/"+id+"/ai-permission",{status:$("execAiSel").value,source:$("execAiSrc").value}),"AI permission saved"))reload()};
+ $("execStart").onclick=async()=>{let approve=false;if(j.ai_policy==="allowed"&&!(j.work_type==="data"&&j.files.some(f=>f.rel_path==="input/spec.json"))){if(!confirm("Start a local AI tool (Claude Code or Codex, your own sign-in) on this task inside its workspace? Only do this if the platform/client rules allow AI help."))return;approve=true}if(await act(()=>api("POST","/api/executions/"+id+"/start",{approve_ai_run:approve}),"Started"))setTimeout(reload,800)};
+ $("execPause").onclick=async()=>{if(await act(()=>api("POST","/api/executions/"+id+"/pause",{}),"Pause requested"))reload()};
+ $("execCancel").onclick=async()=>{if(confirm("Cancel this job? Files stay in the workspace."))if(await act(()=>api("POST","/api/executions/"+id+"/cancel",{}),"Cancelled"))reload()};
+ $("execApprove").onclick=async()=>{let ack=false;if(j.needs_manual_ack){if(!confirm("Some checks need your own judgement (see 'manual' rows). Confirm you reviewed them and the files yourself."))return;ack=true}else if(!confirm("Approve these deliverables? Approval packages them; nothing is sent."))return;if(await act(()=>api("POST","/api/executions/"+id+"/approve",{approved_by_user:true,acknowledged_manual:ack}),"Approved and packaged"))reload()};
+ $("execSubmitted").onclick=async()=>{const ref=prompt("Platform reference for your submission (optional):","");if(ref===null)return;const date=prompt("Date you submitted it yourself (YYYY-MM-DD):",todayStr());if(date&&await act(()=>api("POST","/api/executions/"+id+"/submitted",{confirmed_by_user:true,reference:ref,submitted_at:date}),"Recorded as submitted"))reload()};
+ $("execOutcome").onchange=async e=>{if(e.target.value&&await act(()=>api("POST","/api/executions/"+id+"/outcome",{outcome:e.target.value}),"Outcome recorded"))reload()};
+ $("execDetail").querySelectorAll("[data-file]").forEach(a=>a.onclick=async ev=>{ev.preventDefault();const f=await act(()=>api("GET","/api/executions/"+id+"/files/"+a.dataset.file));if(f){const v=$("execFileView");v.classList.remove("hidden");v.textContent=f.text!=null?f.text+(f.truncated?"\n… (truncated)":""):(f.note+"\n"+f.path)}});
+}
+$("execForm").addEventListener("submit",async e=>{
+ e.preventDefault();
+ const inputs=[];
+ for(const f of $("execFiles").files){if(f.size>10*1024*1024){toast(f.name+" is over 10 MB",true);return}inputs.push({name:f.name,content_base64:await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(",")[1]||"");fr.onerror=rej;fr.readAsDataURL(f)})})}
+ const r=await act(()=>api("POST","/api/executions",{title:$("execTitle").value,instructions:$("execInstructions").value,platform_id:$("execPlatform").value||undefined,application_id:$("execApp").value?Number($("execApp").value):undefined,deadline:$("execDeadline").value||undefined,work_type:$("execType").value||undefined,ai_policy:$("execAi").value||undefined,ai_source:$("execAiSource").value,inputs}),"Execution job created");
+ if(r){ui.selExec=r.job.id;saveUi(ui);e.target.reset();$("execApp").value="";loadExecutions()}
 });
 
 // ---------------------------------------------------------------- earnings

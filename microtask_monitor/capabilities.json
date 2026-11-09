@@ -128,6 +128,24 @@
           "The worker terms could not be located, so automation rules are UNVERIFIED. robots.txt does not block public pages, but no public task list exists.",
           "Not classified as automation-prohibited without evidence; it simply has no permitted automated interface."
         ]
+      },
+      "execution": {
+        "verified_on": "2026-11-09",
+        "discovery": "None: tasks sit inside the logged-in marketplace. Worker terms could not be located.",
+        "instructions_retrieval": "manual_copy from the task page in your own account.",
+        "ai_assistance": {
+          "status": "unverified",
+          "note": "Worker terms were not found. Treat AI assistance as NOT allowed until the task's own rules say otherwise. Many microtasks check for human judgement."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Open the task in your own account and read its rules.",
+          "Complete and submit it yourself unless the task explicitly permits assistance.",
+          "Check Payment details for a Kenya-compatible payout before relying on income."
+        ],
+        "sources": []
       }
     },
     {
@@ -389,6 +407,26 @@
           "Company Terms of Service (Aug 2026) are generic: lawful use, account responsibility, termination at their discretion; they contain no worker-specific automation clause.",
           "The worker-facing Experts portal could not be read (HTTP 429), so its rules are UNVERIFIED. No public role feed was found."
         ]
+      },
+      "execution": {
+        "verified_on": "2026-11-09",
+        "discovery": "No public listing interface found. Experts portal is behind login and answered HTTP 429 to a first request: no automated access attempted.",
+        "instructions_retrieval": "manual_copy from your own signed-in Experts portal.",
+        "ai_assistance": {
+          "status": "unverified",
+          "note": "The company terms I read state no AI-assistance rule and the portal terms were not readable. Data-contribution work often restricts AI help: assume NOT allowed until the task rules say otherwise."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Open the task in your own Experts account and re-read its rules on AI assistance.",
+          "Submit the deliverables in the portal yourself.",
+          "Never use AI on work whose rules forbid it."
+        ],
+        "sources": [
+          "https://www.afterquery.com/terms"
+        ]
       }
     },
     {
@@ -523,6 +561,27 @@
           "Talent terms (Jul 19, 2023) forbid falsifying time or keystrokes and misrepresenting your experience or skills or another person's profile.",
           "The public /jobs page shows no job listings, so there is nothing to discover automatically. Role-specific eligibility and the payout method for Kenya remain unverified."
         ]
+      },
+      "execution": {
+        "verified_on": "2026-11-09",
+        "discovery": "No public listing interface: /jobs is a marketing page. Roles are inside your account.",
+        "instructions_retrieval": "manual_copy from the client's job post and contract in your own account.",
+        "ai_assistance": {
+          "status": "unverified",
+          "note": "The talent terms I read forbid misrepresenting experience and falsifying hours or activity. They did not state an AI rule I could extract. The CLIENT's brief decides: disclose AI use where the client expects it."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Read the client's brief and contract for any AI rule; ask the client if unclear.",
+          "Deliver through the platform yourself; keep communication on the platform.",
+          "Only bill time that was actually worked."
+        ],
+        "sources": [
+          "https://www.usebraintrust.com/talent-terms",
+          "https://www.usebraintrust.com/terms"
+        ]
       }
     },
     {
@@ -587,6 +646,29 @@
         "findings": [
           "The public jobs endpoint needs no key and is documented for search; applying, messaging and interviews stay human-performed.",
           "A job with no country list does not mean open worldwide (their FAQ)."
+        ]
+      },
+      "execution": {
+        "verified_on": "2026-11-09",
+        "discovery": "Job LISTINGS only, via the documented public API (GET /api/public/v1/jobs). Work instructions after hiring are inside your logged-in account (Project Instructions, Project To-dos): no documented API for them.",
+        "instructions_retrieval": "manual_copy: open Project Instructions in your own account and paste them into the Execution Centre.",
+        "ai_assistance": {
+          "status": "unverified",
+          "note": "The public docs I could read state no general AI-assistance rule. The job's Project Instructions and any AI-interview rules govern. AI interviews and identity checks must be done by you personally. Confirm per job and record where it says so."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Open the job in your own OpenTrain account and read Project Instructions and Project To-dos first.",
+          "Upload or paste the deliverables from the package yourself, following the milestone or tracking-tool rules in the project.",
+          "If time tracking is used, only the assigned tool counts; do not log time for AI work you did not supervise.",
+          "Request payout yourself (Complete & Request Payout) only when the milestone work is really delivered."
+        ],
+        "sources": [
+          "https://www.opentrain.ai/docs/trainers/finding-jobs/",
+          "https://www.opentrain.ai/docs/trainers/time-tracking/",
+          "https://www.opentrain.ai/docs/trainers/payments-payouts/"
         ]
       }
     },

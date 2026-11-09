@@ -4,6 +4,7 @@ without HTTP. The HTTP wiring (and its Host/Origin protection) lives in local_se
 from __future__ import annotations
 
 import base64
+import shutil
 import binascii
 import json
 import re
@@ -13,10 +14,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import (actions, assistant, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
+    from microtask_monitor import (actions, assistant, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
                                    reminders, workflow as wf)
 except ImportError:  # pragma: no cover
-    import actions, assistant, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
+    import actions, assistant, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -55,6 +56,7 @@ class Api:
         self.trigger_sync = trigger_sync
         self.sync_running = sync_running or (lambda: False)
         self.evidence_dir = evidence_dir or wf.EVIDENCE_DIR
+        self.exec_dir = (Path(evidence_dir).parent / "executions") if evidence_dir else ex.EXEC_DIR
 
     # ----------------------------------------------------------------------------- dispatch
     def handle(self, method: str, path: str, query: dict | None = None, body: dict | None = None) -> tuple[int, Any]:
@@ -68,7 +70,7 @@ class Api:
             return 409, {"ok": False, "error": str(exc), "blocked": True}
         except policy.PermissionDenied as exc:
             return 403, {"ok": False, "error": str(exc), "blocked": True}
-        except wf.WorkflowError as exc:
+        except (wf.WorkflowError, ex.ExecutionError) as exc:
             return 400, {"ok": False, "error": str(exc)}
 
     def _route(self, conn, method: str, path: str, q: dict, body: dict) -> Any:
@@ -107,6 +109,8 @@ class Api:
             return self.action_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["reminders"]:
             return self.reminder_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["executions"]:
+            return self.execution_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["profile-answers"]:
             return self.profile_endpoints(conn, method, parts[1:], body)
         if key == ("GET", "guidance") and n == 2:
@@ -358,6 +362,51 @@ class Api:
             except LookupError as exc:
                 raise ApiError(404, str(exc))
         raise ApiError(404, "No such daily endpoint")
+
+    def execution_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        """Execution Centre: jobs built from instructions YOU supply. Nothing here contacts a platform."""
+        if method == "GET" and not rest:
+            ex.recover_interrupted(conn) if not getattr(self, "_recovered", False) else 0
+            self._recovered = True
+            accepted = db.rows(conn.execute("""SELECT a.id, a.title, a.platform_id, a.apply_url, a.updated_at FROM applications a
+                WHERE a.status='accepted' AND NOT EXISTS (SELECT 1 FROM execution_jobs j WHERE j.application_id=a.id)"""))
+            caps = policy.load_capabilities()
+            return {"ok": True, "jobs": ex.list_jobs(conn), "summary": ex.summary(conn), "qualified": accepted, "work_types": list(ex.WORK_TYPES),
+                    "ai_tools": {k: bool(shutil.which(k)) for k in ("claude", "codex")},
+                    "platform_rules": {pid: c.get("execution") for pid, c in caps.items() if c.get("execution")}}
+        if method == "POST" and not rest:
+            inputs = {}
+            for f in (body.get("inputs") or [])[:10]:
+                try:
+                    inputs[str(f.get("name", "input"))] = base64.b64decode(str(f.get("content_base64", "")), validate=True)
+                except (binascii.Error, ValueError, AttributeError):
+                    raise ApiError(400, "An input file is not valid base64")
+            job = ex.create_job(conn, str(body.get("title", "")), str(body.get("instructions", "")), body.get("platform_id") or None, body.get("application_id"),
+                                body.get("deadline") or None, body.get("work_type") or None, body.get("ai_policy") or None, str(body.get("ai_source", "")),
+                                inputs, self.exec_dir, "user_file" if body.get("from_file") else "user_provided")
+            return {"ok": True, "job": job}
+        jid = _int(rest[0], 0) if rest else 0
+        if method == "GET" and len(rest) == 1:
+            return {"ok": True, "job": ex.get_job(conn, jid)}
+        if method == "GET" and len(rest) == 3 and rest[1] == "files":
+            return {"ok": True, **ex.read_file(conn, jid, _int(rest[2], 0))}
+        if method == "POST" and len(rest) == 2:
+            action = rest[1]
+            if action == "ai-permission":
+                return {"ok": True, "job": ex.set_ai_permission(conn, jid, str(body.get("status", "")), str(body.get("source", "")))}
+            if action == "start":
+                return {"ok": True, "job": ex.start(conn, jid, body.get("approve_ai_run") is True, None, self.db_path, background=True)}
+            if action == "pause":
+                return {"ok": True, "job": ex.pause(conn, jid)}
+            if action == "cancel":
+                return {"ok": True, "job": ex.cancel(conn, jid)}
+            if action == "approve":
+                return {"ok": True, "job": ex.approve_review(conn, jid, body.get("approved_by_user") is True, body.get("acknowledged_manual") is True)}
+            if action == "submitted":
+                return {"ok": True, "job": ex.record_submitted(conn, jid, body.get("confirmed_by_user") is True, str(body.get("reference", "")), body.get("submitted_at"))}
+            if action == "outcome":
+                return {"ok": True, "job": ex.record_outcome(conn, jid, str(body.get("outcome", "")))}
+        raise ApiError(404, "No such executions endpoint")
 
     def action_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
         """The daily action list (what to do next), persisted per Nairobi day."""

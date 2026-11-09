@@ -231,6 +231,27 @@ Everything here prepares and tracks; **you** open the platform, apply, sit asses
 ### Platform capability review
 Each platform record carries a `review` (what was read, when, and what it does and does not permit). Only Microworkers, Handshake AI, GainWorkers, Mindrift, REWORKIO and SproutGigs are AUTOMATION_PROHIBITED, each for a specific cited reason. Platforms whose terms could not be fully read stay UNVERIFIED.
 
+## Execution engine (doing the actual work)
+
+The **Execution Centre** tab turns real task instructions into checked deliverables:
+
+1. You paste the instructions from your own account (and upload input files). Nothing is fetched from a logged-in area or invented.
+2. The work is classified (software, writing, data, evaluation, content, automation). Unclear text stays `unknown` until you choose.
+3. **AI-use gate.** Instructions that forbid AI block AI work, and that cannot be overridden. If the rules say nothing, the status is `unknown`, which blocks AI work until you record where the rules permit it. Every AI run also needs your explicit approval.
+4. A specialist worker runs in an isolated folder `data/executions/job-N/` (`input/`, `output/`, `logs/`, `package/`):
+   - The data worker is deterministic and uses no AI. It applies a `spec.json` you supply (trim, case, required columns, dedupe, categorise, allowed values).
+   - Agent workers (software, writing, evaluation, content, automation) start your local **Claude Code** (`claude -p`) or **Codex** (`codex exec`) using your own sign-in. The prompt goes over stdin. The tools are restricted to the workspace, and the prompt forbids fabrication and platform contact.
+5. **Independent QA** re-inspects the files and re-runs the tests itself. Any `fail` keeps the job out of review. `manual` items (e.g. factual claims, live n8n runs, media) are never counted as passes, and you must acknowledge them when you approve.
+6. You approve the work. It is then packaged as a zip with deliverables, `QA_REPORT.txt`, `SUBMISSION_GUIDE.txt` and `MANIFEST.json` with SHA-256 hashes. You submit it yourself and record the reference.
+7. Accepted/rejected is recorded separately. Payments count only when you record money actually received.
+
+Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel are supported. After a restart a running job becomes `interrupted` and resumes from its saved workspace. A job owned by another live process is left alone while its heartbeat continues.
+
+**Platform execution rules** (`capabilities.json` → `execution`) for OpenTrain AI, AfterQuery, Braintrust and Clickworker:
+- Task instructions are copied by hand on all four.
+- None allows automated execution on the platform or automated submission.
+- AI-assistance status is **unverified** on all four. The task or client rules decide, and you record them per job.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.

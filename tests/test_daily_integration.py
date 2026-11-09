@@ -150,8 +150,10 @@ class SchedulerTests(unittest.TestCase):
                 stop.set()
             return {"analysis_id": len(calls)} if len(calls) == 2 else None
 
-        with mock.patch.object(daily, "run_if_due", side_effect=fake_run_if_due):
-            t = threading.Thread(target=local_server.daily_scheduler, args=(stop, 0.01, Path("x.sqlite3")), daemon=True)
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        with mock.patch.object(daily, "run_if_due", side_effect=fake_run_if_due), mock.patch.object(local_server, "maintain", lambda p: None):
+            t = threading.Thread(target=local_server.daily_scheduler, args=(stop, 0.01, Path(tmp.name) / "x.sqlite3"), daemon=True)
             t.start()
             t.join(10)
         self.assertFalse(t.is_alive())
