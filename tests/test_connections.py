@@ -242,6 +242,8 @@ class ClaudeEnvTests(unittest.TestCase):
         keep = {"ANTHROPIC_BASE_URL": "https://api.anthropic.com", "ANTHROPIC_API_KEY": "k"}
         self.assertEqual(workers.claude_env(dict(keep)), keep)
         self.assertEqual(workers.claude_env({"PATH": "p"}), {"PATH": "p"})
+        self.assertEqual(workers.claude_env({"ANTHROPIC_MODEL": "gemini-2.5-flash", "PATH": "p"}), {"PATH": "p"})       # non-Claude model alone
+        self.assertEqual(workers.claude_env({"ANTHROPIC_MODEL": "claude-sonnet-5-5"}), {"ANTHROPIC_MODEL": "claude-sonnet-5-5"})
 
 
 if __name__ == "__main__":

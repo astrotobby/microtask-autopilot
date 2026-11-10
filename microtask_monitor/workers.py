@@ -54,6 +54,9 @@ def claude_env(env: dict[str, str]) -> dict[str, str]:
     host = m.group(1) if m else ""
     if base and not (host == "anthropic.com" or host.endswith(".anthropic.com")):
         env = {k: v for k, v in env.items() if k not in ("ANTHROPIC_BASE_URL", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "ANTHROPIC_MODEL")}
+    model = env.get("ANTHROPIC_MODEL", "").strip().lower()
+    if model and not re.match(r"^(claude|opus|sonnet|haiku|fable|default|best)", model):     # e.g. gemini-2.5-flash
+        env = {k: v for k, v in env.items() if k != "ANTHROPIC_MODEL"}
     return env
 
 
