@@ -83,6 +83,12 @@ class ApiBase(unittest.TestCase):
         return self.call("POST", path, body or {})
 
 
+class SingleInstanceTests(ApiBase):
+    def test_a_second_server_cannot_take_the_same_port(self):
+        with self.assertRaises(OSError):
+            local_server.serve("127.0.0.1", self.port, self.db, self.latest, self.evidence)
+
+
 class ReadEndpointTests(ApiBase):
     def test_health_overview_and_legacy_status(self):
         s, h = self.get("/api/health")

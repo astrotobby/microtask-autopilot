@@ -259,12 +259,25 @@ class Handler(SimpleHTTPRequestHandler):
         LOG.info("%s - %s", self.address_string(), fmt % args)
 
 
+class LocalServer(ThreadingHTTPServer):
+    """Refuses to share its port. On Windows SO_REUSEADDR lets a second copy bind the same port and silently steal
+    requests (and lock the database), so reuse is disabled and the port is claimed exclusively."""
+    allow_reuse_address = False
+    daemon_threads = True
+
+    def server_bind(self):
+        import socket
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
 def serve(host: str = HOST, port: int = PORT, db_path: Path = DB_PATH, latest: Path = LATEST_REPORT,
-          evidence_dir: Path | None = None) -> ThreadingHTTPServer:
+          evidence_dir: Path | None = None) -> "LocalServer":
     """Create the server (used by main() and by tests with an ephemeral port)."""
     handler = type("BoundHandler", (Handler,), {"api": make_api(db_path, latest, evidence_dir), "port": port,
                                                 "db_path": Path(db_path), "latest_path": Path(latest)})
-    server = ThreadingHTTPServer((host, port), handler)
+    server = LocalServer((host, port), handler)
     handler.port = server.server_address[1]
     return server
 
@@ -290,7 +303,11 @@ def main() -> None:
         LOG.exception("Backend preparation failed; continuing with the existing database")
     threading.Thread(target=background_sync, daemon=True, name="github-report-sync").start()
     threading.Thread(target=daily_scheduler, daemon=True, name="daily-analysis-scheduler").start()
-    server = serve()
+    try:
+        server = serve()
+    except OSError:
+        print(f"Microtask Autopilot is already running (port {PORT} is in use). Open http://127.0.0.1:{PORT}/ instead of starting a second copy.")
+        return
     LOG.info("Dashboard: http://%s:%s", HOST, PORT)
     LOG.info("Local-only binding; not exposed to your network")
     try:
