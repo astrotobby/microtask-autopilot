@@ -302,4 +302,4 @@ Official policy references:
 - User Interviews: https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies ; https://support.userinterviews.com/hc/en-us/articles/51535828055699-Learn-how-and-when-you-ll-receive-your-incentive-payment
 - Prolific: https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific ; https://participant-help.prolific.com/en/articles/445062-how-do-i-cash-out-on-prolific
 - PaidViewpoint: https://paidviewpoint.com/support ; https://paidviewpoint.com/legal/terms-of-service
-- Whop: https://whop.com/whop-workforce ; https://whop.com/tos ; https://whop.com/earnings-terms/
+- Whop: https://whop.com/workforce/ ; https://whop.com/tos ; https://whop.com/earnings-terms/
