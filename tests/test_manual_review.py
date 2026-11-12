@@ -123,7 +123,7 @@ class ReworkioTests(unittest.TestCase):
 
 class ManualFallbackTests(unittest.TestCase):
     def test_scan_without_records_reports_manual_review_and_unavailable_discovery(self):
-        for pid in ("gainworkers", "reworkio"):
+        for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce"):
             with tempfile.TemporaryDirectory() as tmp:
                 result = mr.scan(pid, Path(tmp), NOW)
             self.assertEqual(result["items"], [])
@@ -148,8 +148,8 @@ class ManualFallbackTests(unittest.TestCase):
 
     def test_corrupt_manual_file_is_an_error_not_a_crash(self):
         with tempfile.TemporaryDirectory() as tmp:
-            (Path(tmp) / "reworkio_briefs.json").write_text("{not json")
-            result = mr.scan("reworkio", Path(tmp), NOW)
+            (Path(tmp) / "whop_workforce_bounties.json").write_text("{not json")
+            result = mr.scan("whop_workforce", Path(tmp), NOW)
         self.assertEqual(result["items"], [])
         self.assertIn("Could not read", result["health"]["error"])
 
