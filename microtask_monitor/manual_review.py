@@ -66,6 +66,14 @@ PLATFORMS = {
                    "access such as robots, spiders and scrapers without written consent. Manually "
                    "record only bounties you can actually access and whose country and payout rules you verify."),
     },
+    "telus_digital_ai": {"name":"TELUS Digital AI Community","kind":"fixed","file":"telus_digital_ai_roles.json","portal":"https://app.telusinternational.ai/contributor/jobs","reason":"Contributor roles are country- and qualification-specific. The supplied portal is account-facing; no supported worker API or automated access permission is verified."},
+    "crowdgen": {"name":"CrowdGen by Appen","kind":"fixed","file":"crowdgen_projects.json","portal":"https://crowdgen.com/","reason":"Project availability and payout methods are country/account-specific. Review projects and Dots payment settings manually; no worker-task API is enabled."},
+    "oneforma": {"name":"OneForma","kind":"fixed","file":"oneforma_projects.json","portal":"https://www.oneforma.com/","reason":"Project catalogues and payment settings depend on location, skills and account verification. Manual review only; no public worker API permission verified."},
+    "hivemicro": {"name":"Hive Micro","kind":"task","file":"hivemicro_tasks.json","portal":"https://hivemicro.com/","reason":"Jobs and qualification requirements are in the worker account. Record only tasks personally seen; the adapter does not log in or contact the platform."},
+    "timebucks": {"name":"TimeBucks","kind":"task","file":"timebucks_offers.json","portal":"https://timebucks.com/","reason":"Surveys and offers are personalized account content and payout methods vary by country. Only manually observed offers can be recorded."},
+    "neevo": {"name":"Neevo","kind":"task","file":"neevo_tasks.json","portal":"https://www.neevo.ai/","reason":"Jobs are matched by country and language in the contributor profile. Record only genuine available jobs; no automated account access."},
+    "swagbucks": {"name":"Swagbucks","kind":"task","file":"swagbucks_surveys.json","portal":"https://www.swagbucks.com/","reason":"Surveys and offers depend on country eligibility and member profile. Rewards are not employment income; import only offers you personally see."},
+    "blend": {"name":"BLEND (Tasq.ai)","kind":"fixed","file":"blend_projects.json","portal":"https://www.getblend.com/","reason":"Professional translation, voice and language-service projects require project-specific skills and language matching. Use manual review only."},
 }
 
 
