@@ -3,13 +3,14 @@ import os
 import tempfile
 import unittest
 import zipfile
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
 os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
 os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 
-from microtask_monitor import db, execution as ex, qa, workers, workflow as wf
+from microtask_monitor import db, execution as ex, intelligence as ig, policy, qa, workers, workflow as wf
 
 SAMPLE_CSV = (b"name,email,country,notes\n  alice  ,Alice@Example.com,ke,invoice for March\nBOB,bob@example.com,UG,refund request\n"
               b" ,,,\nalice,alice@example.com,KE,duplicate row\ncarol,,KE,missing email\ndave,dave@example.com,KE,general question\n")
@@ -147,6 +148,71 @@ class CreationAndPermissionTests(Base):
 
 class DataEndToEndTests(Base):
     """A genuine local assignment with sample data: no AI, real processing, real QA, real package."""
+
+    def test_synthetic_test_data_runs_from_discovery_through_partial_and_final_payment(self):
+        """TEST DATA only: all records stay in this test's temporary database."""
+        url = "https://www.opentrain.ai/jobs/test-data-synthetic-e2e"
+        listing = {
+            "platform_id": "opentrain_ai", "external_id": "TEST-DATA-E2E",
+            "source": "OpenTrain AI (TEST DATA)", "url": url,
+            "title": "[TEST DATA] Python CSV cleanup assignment",
+            "summary": "[TEST DATA] Clean the supplied CSV and normalize email addresses.",
+            "kenya_eligibility": "kenya_explicitly_eligible", "status": "open",
+            "payment_display": "TEST DATA: USD 10 fixed", "published": datetime.now(timezone.utc).isoformat(),
+        }
+        with db.tx(self.conn):
+            ingested = ig.ingest(self.conn, [listing], now=datetime.now(timezone.utc),
+                                 caps=policy.load_capabilities(), profile=ig.load_profile())
+        self.assertEqual(ingested["new"], 1)
+
+        app = wf.create_application(self.conn, url)
+        self.assertEqual(app["status"], "draft")
+        draft_id = app["drafts"][0]["id"]
+        with self.assertRaises(wf.WorkflowError):
+            wf.mark_submitted(self.conn, app["id"], confirmed_by_user=True)
+        wf.approve_draft(self.conn, draft_id, approved_by_user=True)
+        app = wf.mark_submitted(self.conn, app["id"], date.today().isoformat(), confirmed_by_user=True)
+        self.assertEqual(app["status"], "submitted")
+        app = wf.log_event(self.conn, app["id"], "decision", "TEST DATA: simulated acceptance", decision="accepted")
+        self.assertEqual(app["status"], "accepted")
+
+        job = ex.create_job(
+            self.conn, "[TEST DATA] Clean customer CSV", DATA_INSTR, "opentrain_ai",
+            application_id=app["id"], inputs={"customers.csv": SAMPLE_CSV, "spec.json": json.dumps(SPEC).encode()},
+            exec_dir=self.execs,
+        )
+        self.assertEqual(job["task_id"], self.conn.execute("SELECT id FROM tasks WHERE id=?", (job["task_id"],)).fetchone()[0])
+        self.assertEqual(job["application_id"], app["id"])
+        self.assertEqual(job["ai_policy"], "unknown")  # deterministic local processing uses no AI worker
+        job = ex.start(self.conn, job["id"], db_path=self.dbp)
+        self.assertEqual(job["status"], "awaiting_review")
+        self.assertTrue(job["files"])
+        self.assertTrue(all(len(f["sha256"]) == 64 for f in job["files"] if f.get("sha256")))
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM payments").fetchone()[0], 0)
+
+        job = ex.approve_review(self.conn, job["id"], approved_by_user=True)
+        self.assertEqual(job["status"], "ready_for_submission")
+        self.assertTrue((Path(job["workspace"]) / "package" / "MANIFEST.json").is_file())
+        with self.assertRaises(ex.ExecutionError):
+            ex.record_submitted(self.conn, job["id"], confirmed_by_user=False)
+        job = ex.record_submitted(self.conn, job["id"], confirmed_by_user=True,
+                                  reference="TEST-DATA-SIMULATED-REF", submitted_at=date.today().isoformat())
+        self.assertEqual(job["status"], "submitted")
+        job = ex.record_outcome(self.conn, job["id"], "accepted")
+        self.assertEqual(job["status"], "accepted")
+        self.assertEqual(wf.get_task(self.conn, job["task_id"])["status"], "approved")
+
+        earning = wf.add_earning(self.conn, 10, "USD", "pending", "opentrain_ai", job["task_id"],
+                                 "[TEST DATA] Simulated approved task", date.today().isoformat())
+        first = wf.record_payment(self.conn, 4, "USD", date.today().isoformat(), earning["id"], method="TEST DATA")
+        self.assertEqual(first["amount"], 4)
+        self.assertEqual(wf.list_earnings(self.conn)["summary"]["by_currency"]["USD"],
+                         {"expected": 0.0, "pending": 6.0, "received": 4.0})
+        wf.record_payment(self.conn, 6, "USD", date.today().isoformat(), earning["id"], method="TEST DATA")
+        self.assertEqual(wf.list_earnings(self.conn)["earnings"][0]["status"], "received")
+        self.assertEqual(wf.list_earnings(self.conn)["summary"]["by_currency"]["USD"]["received"], 10.0)
+        self.assertIn("[TEST DATA]", wf.get_application(self.conn, app["id"])["title"])
+        self.assertGreaterEqual(self.conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0], 8)
 
     def test_full_lifecycle_for_a_deterministic_data_job(self):
         j = self.data_job()
