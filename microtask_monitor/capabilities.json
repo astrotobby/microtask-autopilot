@@ -970,8 +970,7 @@
       "levels": [
         "MANUAL_ONLY",
         "HUMAN_APPROVAL_REQUIRED",
-        "UNVERIFIED",
-        "AUTOMATION_PROHIBITED"
+        "UNVERIFIED"
       ],
       "public_discovery": "none",
       "documented_api": {
@@ -1041,8 +1040,7 @@
       "levels": [
         "MANUAL_ONLY",
         "HUMAN_APPROVAL_REQUIRED",
-        "UNVERIFIED",
-        "AUTOMATION_PROHIBITED"
+        "UNVERIFIED"
       ],
       "public_discovery": "none",
       "documented_api": {
