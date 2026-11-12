@@ -103,6 +103,54 @@
       "authenticated_manual_review": "yes",
       "automation_permitted": "none",
       "health": "manual_review_required"
+    },
+    "telus_digital_ai": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "crowdgen": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "oneforma": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "hivemicro": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "timebucks": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "neevo": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "swagbucks": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "blend": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
     }
   }
 }
