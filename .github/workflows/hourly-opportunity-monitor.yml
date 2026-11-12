@@ -52,9 +52,9 @@ jobs:
             adapter-cache-
       - name: Validate platform registry safety rules
         run: python -m unittest discover -s tests -v
-      - name: Scan feeds and update the 17-platform directory and permitted adapters
+      - name: Scan feeds and update the 25-platform directory and permitted adapters
         # OpenTrain: documented public API. Mindrift: public eligibility-policy monitor only.
-        # GainWorkers / REWORKIO: manual-review integrations, no network access.
+        # GainWorkers / REWORKIO and new contributor platforms: local manual-import adapters only; no network access.
         env:
           ANALYSIS_TRIGGER: ${{ github.event.schedule == '0 5 * * *' && 'daily' || 'hourly' }}
         run: python microtask_monitor/scan_feeds.py

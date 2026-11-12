@@ -123,7 +123,7 @@ class ReworkioTests(unittest.TestCase):
 
 class ManualFallbackTests(unittest.TestCase):
     def test_scan_without_records_reports_manual_review_and_unavailable_discovery(self):
-        for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce"):
+        for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce", "telus_digital_ai", "crowdgen", "oneforma", "hivemicro", "timebucks", "neevo", "swagbucks", "blend"):
             with tempfile.TemporaryDirectory() as tmp:
                 result = mr.scan(pid, Path(tmp), NOW)
             self.assertEqual(result["items"], [])
@@ -135,7 +135,7 @@ class ManualFallbackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, \
              mock.patch("urllib.request.urlopen", side_effect=AssertionError("network used")), \
              mock.patch("socket.socket", side_effect=AssertionError("socket used")):
-            for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce"):
+            for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce", "telus_digital_ai", "crowdgen", "oneforma", "hivemicro", "timebucks", "neevo", "swagbucks", "blend"):
                 mr.scan(pid, Path(tmp), NOW)
 
     def test_scan_reads_user_records_and_reports_counts(self):
