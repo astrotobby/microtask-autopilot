@@ -135,7 +135,7 @@ class ManualFallbackTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp, \
              mock.patch("urllib.request.urlopen", side_effect=AssertionError("network used")), \
              mock.patch("socket.socket", side_effect=AssertionError("socket used")):
-            for pid in ("gainworkers", "reworkio"):
+            for pid in ("gainworkers", "reworkio", "usertesting", "paidviewpoint", "whop_workforce"):
                 mr.scan(pid, Path(tmp), NOW)
 
     def test_scan_reads_user_records_and_reports_counts(self):
