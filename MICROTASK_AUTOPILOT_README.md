@@ -34,7 +34,7 @@ These are supplementary remote-job sources, not direct task feeds from Atlas Cap
 2. Select **Hourly public opportunity monitor**.
 3. Click **Run workflow**, choose `main`, and confirm.
 4. Open the completed run and download `hourly-opportunity-report`.
-5. The artifact contains a JSON report, a spreadsheet-friendly CSV, and a standalone HTML dashboard. Open the HTML file in a browser for a readable overview of the eight-platform directory, reviewed role snapshots, and public-feed results.
+5. The artifact contains a JSON report, a spreadsheet-friendly CSV, and a standalone HTML dashboard. Open the HTML file in a browser for a readable overview of the seventeen-platform directory, reviewed role snapshots, and public-feed results.
 
 Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may delay scheduled runs, and usage is subject to account/repository limits.
 
@@ -71,9 +71,9 @@ The local agent must be running for automatic dashboard updates. If it is not ru
 
 ## Target platform registry
 
-The original eight services plus OpenTrain AI, GainWorkers, Mindrift and REWORKIO (twelve in total, see below) are recorded in `microtask_monitor/platforms.json`: Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery, Handshake AI and Braintrust.
+The original twelve services plus UserTesting, User Interviews, Prolific, PaidViewpoint and Whop Workforce (seventeen in total) are recorded in `microtask_monitor/platforms.json`.
 
-The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
+The seventeen-platform directory includes Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery Experts, Handshake AI, Braintrust, OpenTrain AI, GainWorkers, Mindrift, REWORKIO, UserTesting, User Interviews, Prolific, PaidViewpoint and Whop Workforce. It is a registry of target services, not proof that every service has live task discovery or accepts Kenyan participants. The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
 
 The registry is intentionally conservative: it tracks platform status and allowed/blocked actions but does not sign in, scrape private dashboards, accept tasks, complete work or submit proofs. Platform automation must remain disabled unless the exact service identity, current official terms and task-specific instructions explicitly permit the proposed action.
 
@@ -124,7 +124,7 @@ The report now carries discovery entry points for all eight target services:
 
 The source directory is `microtask_monitor/discovery_sources.json`. The hourly report packages all eight platform records and discovery links alongside public-feed listings. It does not scrape account dashboards, infer that a remote listing accepts Kenyan applicants, or claim a job is open just because a platform landing page exists.
 
-## Twelve-platform registry and integration modes
+## Seventeen-platform registry and integration modes
 
 The registry (`microtask_monitor/platforms.json`) now holds 12 platforms in three groups, with eligibility and integration health tracked independently (`microtask_monitor/integrations.json`):
 
@@ -281,3 +281,25 @@ Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel 
 - Microworkers, SproutGigs and RapidWorkers remain manual-only until their current official terms and task rules are verified.
 - Never automate CAPTCHA, MFA, KYC, private account access, task completion or proof submission without explicit platform permission. No fake work, fabricated evidence or location circumvention.
 - Public discovery pages are navigation aids, not live feeds. The hourly workflow currently refreshes configured RSS sources; it does not promise hourly refresh of the eight account portals.
+
+
+## Participant research and survey platforms (reviewed 2026-11-12)
+
+Five additional entries have been added to the platform directory and integration registry: UserTesting, User Interviews, Prolific, PaidViewpoint and Whop Workforce.
+
+| Platform | Kenya status | Participant payout / requirements | System handling |
+|---|---|---|---|
+| UserTesting | Dynamic signup eligibility; Kenya must be accepted by its current contributor signup flow | Verified PayPal; USD payments normally 14 days after a completed test; no minimum. Windows requires 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload | Manual signup and genuine human test participation; manual record import only |
+| User Interviews | Kenya is absent from the published participant-country list; currently unsupported | Study incentives vary. User Interviews may distribute Tremendous rewards; researchers may pay using the incentive type shown in the study | Disabled for Kenya; policy monitoring only |
+| Prolific | Kenya is absent from the supported-country list; waitlist may be available but does not guarantee access | PayPal; GBP 6 or USD 6 minimum cashout. Country of residence and PayPal rules apply | Waitlist/manual policy review only; no work recommendations while unsupported |
+| PaidViewpoint | Country acceptance is decided dynamically during signup; Kenya remains unverified until the signup flow confirms it | PayPal required; first cashout USD 15, then possibly USD 10 and USD 5 for eligible accounts in good standing; FAQ states processing within 72 hours | Manual signup and survey work; manual record import only |
+| Whop Workforce | Campaign-specific country eligibility and Kenya payout route require account-level confirmation | Seller-created bounties pay after the seller approves the submitted proof; participants must be 18+ and in good standing | Manual-only; Whop Terms prohibit automated access such as bots, robots and scrapers without written consent |
+
+None of these five is an automated account or task integration. UserTesting, PaidViewpoint and Whop Workforce accept manually imported records only after the user personally verifies the task and eligibility. User Interviews and Prolific are marked as country-restricted for Kenya based on their current official participant-country lists. The system must not infer eligibility from PayPal availability, website reachability, nationality or a remote label.
+
+Official policy references:
+- UserTesting: https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country ; https://support.usertesting.com/hc/en-us/articles/4405059155859-Where-do-I-apply ; https://participant-support.usertesting.com/hc/en-us/articles/38814220821523-FAQ-Payments
+- User Interviews: https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies ; https://support.userinterviews.com/hc/en-us/articles/51535828055699-Learn-how-and-when-you-ll-receive-your-incentive-payment
+- Prolific: https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific ; https://participant-help.prolific.com/en/articles/445062-how-do-i-cash-out-on-prolific
+- PaidViewpoint: https://paidviewpoint.com/support ; https://paidviewpoint.com/legal/terms-of-service
+- Whop: https://whop.com/workforce/ ; https://whop.com/tos ; https://whop.com/earnings-terms/

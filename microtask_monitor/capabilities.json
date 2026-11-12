@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-09",
+  "updated_at": "2026-11-12",
   "levels": [
     "PUBLIC_DISCOVERY_ALLOWED",
     "DOCUMENTED_API_ALLOWED",
@@ -889,6 +889,362 @@
       },
       "access_class": "prohibited_or_unverified",
       "access_note": "No automation permission; watch for fees or deposits."
+    },
+    {
+      "platform_id": "usertesting",
+      "name": "UserTesting",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "automated_screener_answers",
+        "automated_survey_answers",
+        "automated_test_completion",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scrape_logged_in",
+        "probe_private_endpoints"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "signup_gate_dynamic_country_availability_unverified"
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verified PayPal; USD; usually 14 days after completed test; no minimum threshold (official support article)."
+      },
+      "equipment": {
+        "requirements": "Windows 10 64-bit or later; 8 GB RAM; 1920x1080 display; microphone; at least 5 Mbps upload.",
+        "user_device_compatible": null,
+        "note": "User's laptop RAM, screen resolution and upload speed have not been measured; verify before applying."
+      },
+      "last_policy_verified": "2026-11-12",
+      "policy_urls": [
+        "https://www.usertesting.com/",
+        "https://support.usertesting.com/hc/en-us/articles/4405063917075-Applicant-FAQ",
+        "https://support.usertesting.com/hc/en-us/articles/4405059155859-Where-do-I-apply",
+        "https://participant-support.usertesting.com/hc/en-us/articles/38814220821523-FAQ-Payments",
+        "https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country"
+      ],
+      "notes": "Participant eligibility is dynamic: UserTesting says it does not publish a fixed eligible-country list and the contributor sign-up flow determines whether a location can join. Kenya must be checked in the real signup flow; do not infer eligibility. Payments are in USD to a verified PayPal account, normally 14 days after completing a test, with no minimum payout. Windows applicants need Windows 10 64-bit or later, at least 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload; user laptop RAM, display resolution and upload speed still need checking.",
+      "review": {
+        "reviewed_on": "2026-11-12",
+        "public_listing_interface": "No verified public participant-task feed/API or permission for automated participant-task discovery.",
+        "automation_clause": "No permission for automated account activity or task completion established; keep manual.",
+        "terms_read": [
+          "https://www.usertesting.com/",
+          "https://support.usertesting.com/hc/en-us/articles/4405063917075-Applicant-FAQ",
+          "https://support.usertesting.com/hc/en-us/articles/4405059155859-Where-do-I-apply",
+          "https://participant-support.usertesting.com/hc/en-us/articles/38814220821523-FAQ-Payments",
+          "https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "Participant eligibility is dynamic: UserTesting says it does not publish a fixed eligible-country list and the contributor sign-up flow determines whether a location can join. Kenya must be checked in the real signup flow; do not infer eligibility. Payments are in USD to a verified PayPal account, normally 14 days after completing a test, with no minimum payout. Windows applicants need Windows 10 64-bit or later, at least 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload; user laptop RAM, display resolution and upload speed still need checking."
+        ]
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Participant eligibility is dynamic: UserTesting says it does not publish a fixed eligible-country list and the contributor sign-up flow determines whether a location can join. Kenya must be checked in the real signup flow; do not infer eligibility. Payments are in USD to a verified PayPal account, normally 14 days after completing a test, with no minimum payout. Windows applicants need Windows 10 64-bit or later, at least 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload; user laptop RAM, display resolution and upload speed still need checking."
+    },
+    {
+      "platform_id": "user_interviews",
+      "name": "User Interviews",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": false,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "automated_screener_answers",
+        "automated_survey_answers",
+        "automated_test_completion",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scrape_logged_in",
+        "probe_private_endpoints"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unsupported",
+        "note": "currently_unsupported_country_list_kenya_not_listed"
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Participant incentive options vary by study. Platform-distributed rewards use Tremendous; researcher-paid incentives vary. Kenya participation is currently not supported under the published participant-country list."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null,
+        "note": null
+      },
+      "last_policy_verified": "2026-11-12",
+      "policy_urls": [
+        "https://www.userinterviews.com/",
+        "https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies",
+        "https://support.userinterviews.com/hc/en-us/articles/51535828055699-Learn-how-and-when-you-ll-receive-your-incentive-payment"
+      ],
+      "notes": "The current official participant country list does not include Kenya and says people in unlisted countries cannot yet participate in studies. Do not apply or attempt country workarounds while that policy remains. Some User Interviews-distributed incentives use Tremendous digital rewards; researcher-paid study incentives vary and may be selected by the researcher. Neither route overrides the country restriction.",
+      "review": {
+        "reviewed_on": "2026-11-12",
+        "public_listing_interface": "No verified public participant-task feed/API or permission for automated participant-task discovery.",
+        "automation_clause": "No permission for automated account activity or task completion established; keep manual.",
+        "terms_read": [
+          "https://www.userinterviews.com/",
+          "https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies",
+          "https://support.userinterviews.com/hc/en-us/articles/51535828055699-Learn-how-and-when-you-ll-receive-your-incentive-payment"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "The current official participant country list does not include Kenya and says people in unlisted countries cannot yet participate in studies. Do not apply or attempt country workarounds while that policy remains. Some User Interviews-distributed incentives use Tremendous digital rewards; researcher-paid study incentives vary and may be selected by the researcher. Neither route overrides the country restriction."
+        ]
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "The current official participant country list does not include Kenya and says people in unlisted countries cannot yet participate in studies. Do not apply or attempt country workarounds while that policy remains. Some User Interviews-distributed incentives use Tremendous digital rewards; researcher-paid study incentives vary and may be selected by the researcher. Neither route overrides the country restriction."
+    },
+    {
+      "platform_id": "prolific",
+      "name": "Prolific",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": false,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "automated_screener_answers",
+        "automated_survey_answers",
+        "automated_test_completion",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scrape_logged_in",
+        "probe_private_endpoints"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unsupported",
+        "note": "unsupported_country_waitlist_kenya_not_listed"
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "PayPal only; minimum cashout GBP 6 or USD 6; account and country matching rules apply. Kenya is currently unsupported for ordinary participant registration."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null,
+        "note": null
+      },
+      "last_policy_verified": "2026-11-12",
+      "policy_urls": [
+        "https://www.prolific.com/",
+        "https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific",
+        "https://participant-help.prolific.com/en/articles/445062-how-do-i-cash-out-on-prolific"
+      ],
+      "notes": "Kenya is not in Prolific's current supported participant-country list. Unsupported-country users may join the waitlist, but access is not guaranteed; some may be invited. Eligibility is based on current residence, not nationality. Do not use a different country or VPN. Cashouts require PayPal and a combined approved balance of at least GBP 6 or USD 6; PayPal country must match current residence or country of birth under Prolific's rules.",
+      "review": {
+        "reviewed_on": "2026-11-12",
+        "public_listing_interface": "No verified public participant-task feed/API or permission for automated participant-task discovery.",
+        "automation_clause": "No permission for automated account activity or task completion established; keep manual.",
+        "terms_read": [
+          "https://www.prolific.com/",
+          "https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific",
+          "https://participant-help.prolific.com/en/articles/445062-how-do-i-cash-out-on-prolific"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "Kenya is not in Prolific's current supported participant-country list. Unsupported-country users may join the waitlist, but access is not guaranteed; some may be invited. Eligibility is based on current residence, not nationality. Do not use a different country or VPN. Cashouts require PayPal and a combined approved balance of at least GBP 6 or USD 6; PayPal country must match current residence or country of birth under Prolific's rules."
+        ]
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Kenya is not in Prolific's current supported participant-country list. Unsupported-country users may join the waitlist, but access is not guaranteed; some may be invited. Eligibility is based on current residence, not nationality. Do not use a different country or VPN. Cashouts require PayPal and a combined approved balance of at least GBP 6 or USD 6; PayPal country must match current residence or country of birth under Prolific's rules."
+    },
+    {
+      "platform_id": "paidviewpoint",
+      "name": "PaidViewpoint",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "automated_screener_answers",
+        "automated_survey_answers",
+        "automated_test_completion",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scrape_logged_in",
+        "probe_private_endpoints"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "dynamic_signup_country_gate_unverified_kenya"
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "PayPal required; first cashout USD 15, later USD 10 then USD 5 if eligible and in good standing; stated processing within 72 hours. Kenya signup is unverified."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null,
+        "note": null
+      },
+      "last_policy_verified": "2026-11-12",
+      "policy_urls": [
+        "https://paidviewpoint.com/",
+        "https://paidviewpoint.com/support",
+        "https://paidviewpoint.com/legal/terms-of-service"
+      ],
+      "notes": "PaidViewpoint says it operates in 50 countries but does not publish a fixed list; the registration flow asks the country and confirms whether signup can continue or a future-country email waitlist is available. Kenya eligibility must therefore be checked in the actual signup flow. It requires PayPal for cashout; first withdrawal threshold is USD 15, then USD 10 and USD 5 for subsequent withdrawals when the account remains in good standing. Official FAQ says processing is expected within 72 hours. Survey volume is not guaranteed and PaidViewpoint says it should not be considered a job or work-from-home opportunity.",
+      "review": {
+        "reviewed_on": "2026-11-12",
+        "public_listing_interface": "No verified public participant-task feed/API or permission for automated participant-task discovery.",
+        "automation_clause": "No permission for automated account activity or task completion established; keep manual.",
+        "terms_read": [
+          "https://paidviewpoint.com/",
+          "https://paidviewpoint.com/support",
+          "https://paidviewpoint.com/legal/terms-of-service"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "PaidViewpoint says it operates in 50 countries but does not publish a fixed list; the registration flow asks the country and confirms whether signup can continue or a future-country email waitlist is available. Kenya eligibility must therefore be checked in the actual signup flow. It requires PayPal for cashout; first withdrawal threshold is USD 15, then USD 10 and USD 5 for subsequent withdrawals when the account remains in good standing. Official FAQ says processing is expected within 72 hours. Survey volume is not guaranteed and PaidViewpoint says it should not be considered a job or work-from-home opportunity."
+        ]
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "PaidViewpoint says it operates in 50 countries but does not publish a fixed list; the registration flow asks the country and confirms whether signup can continue or a future-country email waitlist is available. Kenya eligibility must therefore be checked in the actual signup flow. It requires PayPal for cashout; first withdrawal threshold is USD 15, then USD 10 and USD 5 for subsequent withdrawals when the account remains in good standing. Official FAQ says processing is expected within 72 hours. Survey volume is not guaranteed and PaidViewpoint says it should not be considered a job or work-from-home opportunity."
+    },
+    {
+      "platform_id": "whop_workforce",
+      "name": "Whop Workforce",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "none",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "automated_screener_answers",
+        "automated_survey_answers",
+        "automated_test_completion",
+        "captcha_mfa_kyc_bypass",
+        "vpn_or_proxy_location_spoofing",
+        "fabricated_evidence_or_identity",
+        "scrape_logged_in",
+        "probe_private_endpoints"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "unverified",
+        "note": "workforce_campaign_and_payout_country_unverified"
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Bounty reward is routed through Whop payment partners after seller approval; actual withdrawal route, KYC and Kenya availability must be checked in the account."
+      },
+      "equipment": {
+        "requirements": null,
+        "user_device_compatible": null,
+        "note": null
+      },
+      "last_policy_verified": "2026-11-12",
+      "policy_urls": [
+        "https://whop.com/workforce/",
+        "https://whop.com/tos",
+        "https://whop.com/earnings-terms/",
+        "https://whop.com/payout-terms"
+      ],
+      "notes": "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual.",
+      "review": {
+        "reviewed_on": "2026-11-12",
+        "public_listing_interface": "Workforce page is public but bounty/task listings are account/community-facing",
+        "automation_clause": "Whop Terms prohibit automated access/monitoring by robots, spiders and scrapers without written consent.",
+        "terms_read": [
+          "https://whop.com/workforce/",
+          "https://whop.com/tos",
+          "https://whop.com/earnings-terms/",
+          "https://whop.com/payout-terms"
+        ],
+        "not_read_or_unavailable": [],
+        "findings": [
+          "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual."
+        ]
+      },
+      "access_class": "prohibited_or_unverified",
+      "access_note": "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual."
     }
   ]
 }

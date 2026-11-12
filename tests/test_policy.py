@@ -187,9 +187,9 @@ class AdapterEnforcementTests(unittest.TestCase):
 class PersistenceTests(unittest.TestCase):
     def test_capabilities_are_mirrored_into_the_database(self):
         with tempfile.TemporaryDirectory() as tmp, db.session(Path(tmp) / "a.sqlite3") as conn:
-            self.assertEqual(policy.sync_to_db(conn), 12)
-            self.assertEqual(policy.sync_to_db(conn), 12)         # idempotent
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM platform_capabilities").fetchone()[0], 12)
+            self.assertEqual(policy.sync_to_db(conn), 17)
+            self.assertEqual(policy.sync_to_db(conn), 17)         # idempotent
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM platform_capabilities").fetchone()[0], 17)
             rec = json.loads(conn.execute("SELECT record_json FROM platform_capabilities WHERE platform_id='mindrift'").fetchone()[0])
             self.assertEqual(rec["country_eligibility"]["kenya"], "unsupported")
 

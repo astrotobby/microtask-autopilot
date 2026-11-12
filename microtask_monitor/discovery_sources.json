@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08",
+  "updated_at": "2026-11-12",
   "country_focus": "Kenya",
   "sources": [
     {
@@ -155,6 +155,116 @@
       "automated_fetch_enabled": false,
       "reason": "Client-rendered page backed by an undocumented API; dashboard requires sign-in. Automated discovery is unavailable.",
       "use": "Open the briefs page or your dashboard and review manually; check fees before applying."
+    },
+    {
+      "id": "usertesting_participant",
+      "platform_id": "usertesting",
+      "name": "UserTesting participant signup",
+      "url": "https://www.usertesting.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "UserTesting's contributor country support is dynamic. Use the sign-up flow to check whether Kenya is currently accepted; a fixed public country list is not provided. Verified PayPal required.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "usertesting_country_support",
+      "platform_id": "usertesting",
+      "name": "UserTesting country eligibility support",
+      "url": "https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Manual policy review only. Country availability changes with contributor supply and demand; the signup page determines eligibility.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "user_interviews_participants",
+      "platform_id": "user_interviews",
+      "name": "User Interviews participant portal",
+      "url": "https://www.userinterviews.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Kenya is absent from the current official participant-country list. Mark disabled for Kenya until the official policy changes.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "user_interviews_countries",
+      "platform_id": "user_interviews",
+      "name": "User Interviews supported participant countries",
+      "url": "https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Official list currently omits Kenya and says unlisted countries cannot yet participate. Manual policy monitoring only.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "prolific_participants",
+      "platform_id": "prolific",
+      "name": "Prolific participant portal",
+      "url": "https://www.prolific.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Kenya is not in the supported participant-country list. Waitlist only; access is not guaranteed. Do not use a false country or VPN.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "prolific_countries",
+      "platform_id": "prolific",
+      "name": "Prolific participant country eligibility",
+      "url": "https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Official list omits Kenya; unsupported-country waitlist may be available. PayPal is required for cashout.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "paidviewpoint_portal",
+      "platform_id": "paidviewpoint",
+      "name": "PaidViewpoint participant portal",
+      "url": "https://app.paidviewpoint.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "The registration flow asks for country and dynamically confirms availability. Kenya is unverified until the actual signup flow confirms it.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "paidviewpoint_support",
+      "platform_id": "paidviewpoint",
+      "name": "PaidViewpoint participant support and payout FAQ",
+      "url": "https://paidviewpoint.com/support",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Operates in 50 countries but does not publish a full list. PayPal is required; first cashout USD 15, later thresholds may reduce if account remains in good standing.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "whop_workforce_portal",
+      "platform_id": "whop_workforce",
+      "name": "Whop Workforce",
+      "url": "https://whop.com/workforce/",
+      "source_type": "official_workforce_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Bounties are created by sellers and paid after seller approval. Whop Terms prohibit automated scraping/robots without written consent. Check each bounty's country, age and payout requirements manually.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "whop_workforce_earnings",
+      "platform_id": "whop_workforce",
+      "name": "Whop Earnings Terms",
+      "url": "https://whop.com/earnings-terms/",
+      "source_type": "official_earnings_terms",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Participants must be 18+ and in good standing; bounty work and proof submission are handled through Whop's platform. Manual review only.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
     }
   ],
   "current_reviewed_roles": [

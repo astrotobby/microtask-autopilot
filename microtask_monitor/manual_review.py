@@ -1,10 +1,9 @@
-"""Manual-review adapters for GainWorkers and REWORKIO.
+"""Manual-review adapters for selected platforms with no permitted public task feed.
 
-Neither platform offers a supported public interface for automated worker-task/brief
-discovery (see the integration notes in integrations.json), so these adapters NEVER touch
-the network. A human reviews the portal while signed in (AUTHENTICATED MANUAL REVIEW) and may
-record what they saw in ``data/manual/<platform>.json``; this module normalizes, scores,
-deduplicates and tracks availability for those records.
+These adapters NEVER touch the network. A human reviews the portal and may record what they
+actually saw in ``data/manual/<platform>.json``; this module normalizes, scores, deduplicates
+and tracks availability for those records. Country-restricted services are deliberately not
+wired to this importer. No login, scraping, acceptance, task completion or submission occurs.
 
 Nothing is accepted, applied for, paid for, or submitted here.
 """
@@ -45,6 +44,27 @@ PLATFORMS = {
         "reason": ("The public /projects/ and /opportunities/ pages are client-rendered shells whose "
                    "briefs load from an undocumented backend, and the dashboard requires sign-in. "
                    "No supported public discovery interface was found."),
+    },
+    "usertesting": {
+        "name": "UserTesting", "kind": "task", "file": "usertesting_tests.json",
+        "portal": "https://www.usertesting.com/",
+        "reason": ("Contributor availability is country- and demand-dependent. Kenya must first be "
+                   "accepted by the official sign-up flow. Tests are visible in the signed-in account; "
+                   "record only tests you personally see. Verified PayPal is required."),
+    },
+    "paidviewpoint": {
+        "name": "PaidViewpoint", "kind": "task", "file": "paidviewpoint_surveys.json",
+        "portal": "https://app.paidviewpoint.com/",
+        "reason": ("The registration flow dynamically checks country availability and there is no "
+                   "published full country list. Kenya must be accepted by signup before any survey "
+                   "is considered eligible. Survey opportunities and volume are not guaranteed."),
+    },
+    "whop_workforce": {
+        "name": "Whop Workforce", "kind": "task", "file": "whop_workforce_bounties.json",
+        "portal": "https://whop.com/workforce/",
+        "reason": ("Workforce bounties are community/account-facing. Whop's Terms prohibit automated "
+                   "access such as robots, spiders and scrapers without written consent. Manually "
+                   "record only bounties you can actually access and whose country and payout rules you verify."),
     },
 }
 
