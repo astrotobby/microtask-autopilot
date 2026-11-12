@@ -13,7 +13,7 @@ class AutonomousReadinessTests(unittest.TestCase):
         self.assertFalse(result["enabled"])
         self.assertEqual(result["eligible_platforms"], [])
         self.assertIn("No platform", result["message"])
-        self.assertEqual(len(result["blocked_platforms"]), 12)
+        self.assertEqual(len(result["blocked_platforms"]), 17)
 
     def test_missing_contract_fails_closed(self):
         result = autonomy.evaluate("demo", {
