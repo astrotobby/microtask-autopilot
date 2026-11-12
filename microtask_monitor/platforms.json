@@ -2,7 +2,7 @@
   "profile": {
     "country": "Kenya",
     "currency": "KES",
-    "purpose": "Track target work platforms; do not infer access or permission from a platform name."
+    "purpose": "Track target work platforms; distinguish manual links/imports from permitted public discovery; never infer access or permission from a platform name."
   },
   "platforms": [
     {
@@ -43,6 +43,56 @@
         "captcha_or_identity_bypass"
       ],
       "notes": "Do not automate account activity unless current official terms and task rules explicitly permit it.",
+      "platform_type": "microtask"
+    },
+    {
+      "id": "gainworkers",
+      "name": "GainWorkers",
+      "platform_type": "microtask",
+      "official_url": "https://www.gainworkers.com/",
+      "identity_status": "official_homepage_and_terms_reviewed",
+      "kenya_eligibility": "task_specific_geo_rules_visible_only_after_login",
+      "automation_status": "manual_portal_review_required_no_automated_fetch",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "scraping",
+        "automated_logged_in_browsing",
+        "automated_task_acceptance",
+        "automated_proof_submission",
+        "engagement_manipulation",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Reviewed 2026-11-08. Task listings are behind login (/jobs redirects to /login; robots.txt disallows /jobs/ and other work areas). The Terms of Service prohibit scraping and bots and VPN/proxy use to bypass geo rules. The documented API (/api/v2) is an employer/SMM-reseller API (services, orders, wallet) and is not a worker-task discovery API, so it is not used. Review tasks manually in your own signed-in session; optionally record them in data/manual/gainworkers_tasks.json for scoring."
+    },
+    {
+      "id": "hivemicro",
+      "name": "Hive Micro",
+      "official_url": "https://hivemicro.com/",
+      "identity_status": "official_homepage_and_payment_docs_reviewed",
+      "kenya_eligibility": "signup_and_job_specific_country_check_required",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "automated_logged_in_browsing",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Microtasks include image categorization, bounding boxes, transcription and segmentation. The official help pages describe PayPal (USD 10 minimum) and Bitcoin (USD 20 minimum), with reviewed jobs generally processed in weekly batches. Kenya eligibility and PayPal availability must be verified in the actual account and job qualification flow.",
       "platform_type": "microtask"
     },
     {
@@ -105,6 +155,32 @@
       "platform_type": "microtask"
     },
     {
+      "id": "timebucks",
+      "name": "TimeBucks",
+      "official_url": "https://timebucks.com/",
+      "identity_status": "official_homepage_payment_and_terms_docs_reviewed",
+      "kenya_eligibility": "country_specific_account_payout_methods_unverified",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_logged_in_browsing",
+        "automated_survey_answers",
+        "automated_task_completion",
+        "automated_submission",
+        "multiple_accounts",
+        "location_spoofing",
+        "vpn_or_proxy_geo_bypass",
+        "captcha_or_identity_bypass"
+      ],
+      "notes": "Offers and payout methods vary by country and account verification. Official payout help describes a USD 3 minimum, with options generated for the user's country; PayPal may carry a 4% fee (minimum USD 0.25), and scheduled payouts run Sunday–Thursday. Verify the payment methods shown in your account. No multiple accounts, location spoofing or automated survey/offer completion.",
+      "platform_type": "microtask"
+    },
+    {
       "id": "afterquery",
       "name": "AfterQuery",
       "official_url": "https://experts.afterquery.com/home",
@@ -123,6 +199,32 @@
         "automated_submission"
       ],
       "notes": "Experts portal identity confirmed. Public listings include remote expert contracts, including a Content Writer and Evaluator - Global listing; requirements, pay, work location, weekly commitment and payout method vary by role. Applications, assessments, identity checks, contract acceptance and work submissions remain human-reviewed.",
+      "platform_type": "ai_training"
+    },
+    {
+      "id": "crowdgen",
+      "name": "CrowdGen by Appen",
+      "official_url": "https://crowdgen.com/",
+      "identity_status": "official_homepage_and_payment_docs_reviewed",
+      "kenya_eligibility": "project_specific_country_and_account_checks_required",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "automated_logged_in_browsing",
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Projects are country- and qualification-specific. CrowdGen's Dots payment methods vary by country and account; methods documented include PayPal, local bank transfer, Airtm, SWIFT and Payoneer, but availability must be confirmed in your account. Official support describes monthly payment by the 14th for the previous month's approved work. Verify the project and Kenya payout route before spending time.",
       "platform_type": "ai_training"
     },
     {
@@ -145,26 +247,77 @@
       "platform_type": "ai_training"
     },
     {
-      "id": "braintrust",
-      "name": "Braintrust",
-      "official_url": "https://app.usebraintrust.com/talent/dashboard/welcome/",
-      "identity_status": "user_confirmed_official_talent_dashboard",
-      "kenya_eligibility": "not_in_restricted_territories_but_verify_role_and_payment_method",
-      "automation_status": "public_role_discovery_only_manual_profile_and_applications",
+      "id": "mindrift",
+      "name": "Mindrift",
+      "platform_type": "ai_training",
+      "official_url": "https://mindrift.ai/",
+      "identity_status": "official_website_dashboard_and_policy_urls_confirmed",
+      "kenya_eligibility": "restricted_for_user_location",
+      "automation_status": "disabled_restricted_for_user_location_policy_monitor_only",
       "allowed_actions": [
         "track_status",
-        "public_role_discovery",
-        "open_official_talent_dashboard"
+        "monitor_public_eligibility_policy"
       ],
       "blocked_actions": [
-        "automated_identity_or_skill_claims",
-        "automated_profile_submission",
-        "automated_assessment_answers",
-        "automated_contract_acceptance",
+        "opportunity_discovery",
+        "application_recommendations",
+        "account_creation",
+        "task_access",
+        "vpn_or_proxy_or_alternate_identity",
         "captcha_or_identity_bypass"
       ],
-      "notes": "User supplied the official Talent dashboard URL. Braintrust's current Terms list restricted territories (Cuba, Iran, North Korea, Syria and specified Ukrainian regions); Kenya is not named in that list, but account eligibility and role-specific country restrictions still need confirmation. Profile must be truthful; ID/location and financial-account verification may be requested. Treat Braintrust as a vetted professional talent marketplace, not a generic microtask site. Current public talent page describes AI skills interview and certification; profile creation and application remain human-reviewed. Verify Kenya payout method in the account before investing significant time.",
-      "platform_type": "professional_marketplace"
+      "notes": "Kenya is explicitly listed as not currently supported in https://mindrift.ai/legal/eligibility-and-geographic-restrictions (policy 'Last updated: May 27, 2026'; verified 2026-11-08). The registry keeps the platform but it is NOT counted as an active Kenya-eligible source. The eligibility monitor only flags policy changes for manual review; it never enables discovery automatically."
+    },
+    {
+      "id": "neevo",
+      "name": "Neevo",
+      "official_url": "https://www.neevo.ai/",
+      "identity_status": "official_homepage_and_payment_docs_reviewed",
+      "kenya_eligibility": "project_specific_country_and_language_match_unverified",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "automated_logged_in_browsing",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Tasks can involve text, audio, images and video. Neevo's official help says a verified PayPal account is required; payment follows completion of a job, its deadline and quality validation, and rates vary by job. Kenya availability and relevant language/project access are not confirmed until the actual account shows them.",
+      "platform_type": "ai_training"
+    },
+    {
+      "id": "oneforma",
+      "name": "OneForma",
+      "official_url": "https://www.oneforma.com/",
+      "identity_status": "official_homepage_and_payment_docs_reviewed",
+      "kenya_eligibility": "project_specific_country_and_account_checks_required",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "automated_logged_in_browsing",
+        "automated_application_submission",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_proof_submission",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Project eligibility, languages, location and assessment requirements vary. Official help lists Payoneer, PayPal or Tipalti depending on country/account; its current help information describes a typical USD 10 minimum and weekly or bi-weekly project payment cycles. Confirm the methods shown in your own Payment Settings; project selection, assessments and work remain manual.",
+      "platform_type": "ai_training"
     },
     {
       "id": "opentrain_ai",
@@ -189,51 +342,78 @@
       "notes": "Public discovery uses the documented anonymous GET https://app.opentrain.ai/api/public/v1/jobs (no key; documented 120 requests/minute/IP limit). A job's eligible countries are set by the employer and are separate from OpenTrain's payout-country list (Kenya is on the payout list as of 2026-11-08). An empty country list is never treated as Kenya-eligible. Applications, AI interviews, location checks and contracts remain human-performed."
     },
     {
-      "id": "gainworkers",
-      "name": "GainWorkers",
-      "platform_type": "microtask",
-      "official_url": "https://www.gainworkers.com/",
-      "identity_status": "official_homepage_and_terms_reviewed",
-      "kenya_eligibility": "task_specific_geo_rules_visible_only_after_login",
-      "automation_status": "manual_portal_review_required_no_automated_fetch",
+      "id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community",
+      "official_url": "https://app.telusinternational.ai/contributor/jobs",
+      "identity_status": "official_contributor_portal_user_supplied",
+      "kenya_eligibility": "role_specific_kenya_openings_seen_verify_current_listing",
+      "automation_status": "manual_only_no_worker_api_permission_verified",
       "allowed_actions": [
         "track_status",
         "public_information_review",
-        "manual_task_record_import"
+        "manual_task_record_import",
+        "open_official_site"
       ],
       "blocked_actions": [
         "automated_task_discovery",
-        "scraping",
         "automated_logged_in_browsing",
+        "automated_application_submission",
         "automated_task_acceptance",
+        "automated_task_completion",
         "automated_proof_submission",
-        "engagement_manipulation",
         "captcha_or_identity_bypass",
         "vpn_or_proxy_geo_bypass"
       ],
-      "notes": "Reviewed 2026-11-08. Task listings are behind login (/jobs redirects to /login; robots.txt disallows /jobs/ and other work areas). The Terms of Service prohibit scraping and bots and VPN/proxy use to bypass geo rules. The documented API (/api/v2) is an employer/SMM-reseller API (services, orders, wallet) and is not a worker-task discovery API, so it is not used. Review tasks manually in your own signed-in session; optionally record them in data/manual/gainworkers_tasks.json for scoring."
+      "notes": "TELUS Digital AI Community roles are country- and project-specific. Official job-board results have previously included a Kenya Personalized Internet Assessor role, but current availability must be rechecked on the live job board or contributor account. Qualification tests, identity checks, contracts, task work and submissions remain human-performed; payout depends on the specific role and contract.",
+      "platform_type": "ai_training"
     },
     {
-      "id": "mindrift",
-      "name": "Mindrift",
-      "platform_type": "ai_training",
-      "official_url": "https://mindrift.ai/",
-      "identity_status": "official_website_dashboard_and_policy_urls_confirmed",
-      "kenya_eligibility": "restricted_for_user_location",
-      "automation_status": "disabled_restricted_for_user_location_policy_monitor_only",
+      "id": "blend",
+      "name": "BLEND (Tasq.ai)",
+      "official_url": "https://www.getblend.com/",
+      "identity_status": "official_careers_and_payment_docs_reviewed",
+      "kenya_eligibility": "project_language_pair_and_payout_country_unverified",
+      "automation_status": "manual_project_review_and_submission_only",
       "allowed_actions": [
         "track_status",
-        "monitor_public_eligibility_policy"
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
       ],
       "blocked_actions": [
-        "opportunity_discovery",
-        "application_recommendations",
-        "account_creation",
-        "task_access",
-        "vpn_or_proxy_or_alternate_identity",
+        "automated_project_discovery",
+        "automated_logged_in_browsing",
+        "automated_application_submission",
+        "automated_project_acceptance",
+        "automated_project_completion",
+        "automated_delivery",
+        "captcha_or_identity_bypass",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "BLEND is now part of Tasq.ai and is a language-services marketplace for translators, voice talent, linguistics experts and content creators—not a generic microtask site. Project rates depend on language pair, domain and project type. Official help describes Payoneer, PayPal and Payoneer-managed bank transfer, with a reported USD 20 withdrawal minimum; confirm current Kenya availability and payout options before accepting work.",
+      "platform_type": "professional_marketplace"
+    },
+    {
+      "id": "braintrust",
+      "name": "Braintrust",
+      "official_url": "https://app.usebraintrust.com/talent/dashboard/welcome/",
+      "identity_status": "user_confirmed_official_talent_dashboard",
+      "kenya_eligibility": "not_in_restricted_territories_but_verify_role_and_payment_method",
+      "automation_status": "public_role_discovery_only_manual_profile_and_applications",
+      "allowed_actions": [
+        "track_status",
+        "public_role_discovery",
+        "open_official_talent_dashboard"
+      ],
+      "blocked_actions": [
+        "automated_identity_or_skill_claims",
+        "automated_profile_submission",
+        "automated_assessment_answers",
+        "automated_contract_acceptance",
         "captcha_or_identity_bypass"
       ],
-      "notes": "Kenya is explicitly listed as not currently supported in https://mindrift.ai/legal/eligibility-and-geographic-restrictions (policy 'Last updated: May 27, 2026'; verified 2026-11-08). The registry keeps the platform but it is NOT counted as an active Kenya-eligible source. The eligibility monitor only flags policy changes for manual review; it never enables discovery automatically."
+      "notes": "User supplied the official Talent dashboard URL. Braintrust's current Terms list restricted territories (Cuba, Iran, North Korea, Syria and specified Ukrainian regions); Kenya is not named in that list, but account eligibility and role-specific country restrictions still need confirmation. Profile must be truthful; ID/location and financial-account verification may be requested. Treat Braintrust as a vetted professional talent marketplace, not a generic microtask site. Current public talent page describes AI skills interview and certification; profile creation and application remain human-reviewed. Verify Kenya payout method in the account before investing significant time.",
+      "platform_type": "professional_marketplace"
     },
     {
       "id": "reworkio",
@@ -259,26 +439,76 @@
       "notes": "AI/automation expert marketplace (not a microtask site). /projects/ and /opportunities/ are client-rendered shells whose briefs load from an undocumented backend, and the dashboard needs sign-in, so no supported public discovery interface exists. Use the manual-review links. Treat any paid membership, deposit, escrow funding or other upfront cost as a stop-and-decide item; nothing is purchased or paid automatically."
     },
     {
-      "id": "usertesting",
-      "name": "UserTesting",
-      "official_url": "https://www.usertesting.com/",
-      "identity_status": "official_participant_support_and_signup_docs_reviewed",
-      "kenya_eligibility": "signup_gate_dynamic_country_availability_unverified",
-      "automation_status": "manual_participant_signup_and_test_completion_only",
+      "id": "paidviewpoint",
+      "name": "PaidViewpoint",
+      "official_url": "https://paidviewpoint.com/",
+      "identity_status": "official_support_and_terms_reviewed",
+      "kenya_eligibility": "dynamic_signup_country_gate_unverified_kenya",
+      "automation_status": "manual_signup_and_surveys_only",
       "allowed_actions": [
         "track_status",
         "public_information_review",
-        "open_official_participant_signup"
+        "manual_record_import",
+        "open_official_signup"
       ],
       "blocked_actions": [
         "automated_account_creation",
-        "automated_screener_answers",
-        "automated_test_completion",
-        "automated_test_submission",
-        "automated_payment_actions",
-        "captcha_or_identity_bypass"
+        "automated_survey_answers",
+        "automated_survey_submission",
+        "multiple_accounts",
+        "location_spoofing",
+        "automated_payout_actions"
       ],
-      "notes": "Participant eligibility is dynamic: UserTesting says it does not publish a fixed eligible-country list and the contributor sign-up flow determines whether a location can join. Kenya must be checked in the real signup flow; do not infer eligibility. Payments are in USD to a verified PayPal account, normally 14 days after completing a test, with no minimum payout. Windows applicants need Windows 10 64-bit or later, at least 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload; user laptop RAM, display resolution and upload speed still need checking.",
+      "notes": "PaidViewpoint says it operates in 50 countries but does not publish a fixed list; the registration flow asks the country and confirms whether signup can continue or a future-country email waitlist is available. Kenya eligibility must therefore be checked in the actual signup flow. It requires PayPal for cashout; first withdrawal threshold is USD 15, then USD 10 and USD 5 for subsequent withdrawals when the account remains in good standing. Official FAQ says processing is expected within 72 hours. Survey volume is not guaranteed and PaidViewpoint says it should not be considered a job or work-from-home opportunity.",
+      "platform_type": "user_research"
+    },
+    {
+      "id": "prolific",
+      "name": "Prolific",
+      "official_url": "https://www.prolific.com/",
+      "identity_status": "official_participant_country_and_cashout_docs_reviewed",
+      "kenya_eligibility": "unsupported_country_waitlist_kenya_not_listed",
+      "automation_status": "waitlist_or_manual_only_no_account_automation",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "open_official_waitlist"
+      ],
+      "blocked_actions": [
+        "automated_account_creation",
+        "automated_study_submission",
+        "automated_screener_answers",
+        "country_spoofing",
+        "vpn_or_proxy_geo_bypass",
+        "automated_payout_actions"
+      ],
+      "notes": "Kenya is not in Prolific's current supported participant-country list. Unsupported-country users may join the waitlist, but access is not guaranteed; some may be invited. Eligibility is based on current residence, not nationality. Do not use a different country or VPN. Cashouts require PayPal and a combined approved balance of at least GBP 6 or USD 6; PayPal country must match current residence or country of birth under Prolific's rules.",
+      "platform_type": "user_research",
+      "eligibility_status": "restricted_for_user_location"
+    },
+    {
+      "id": "swagbucks",
+      "name": "Swagbucks",
+      "official_url": "https://www.swagbucks.com/",
+      "identity_status": "official_homepage_and_country_reward_docs_reviewed",
+      "kenya_eligibility": "african_country_availability_not_confirmed_kenya",
+      "automation_status": "manual_only_signup_and_surveys_or_offers",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_account_creation",
+        "automated_survey_answers",
+        "automated_offer_completion",
+        "automated_reward_redemption",
+        "multiple_accounts",
+        "location_spoofing",
+        "vpn_or_proxy_geo_bypass"
+      ],
+      "notes": "Swagbucks is a rewards/survey and offer platform rather than employment. Its official help says availability varies and includes only some African countries; Kenya must be accepted by the live signup flow. Reward-store options (such as gift cards or PayPal when offered) vary by account and region. Do not treat points as cash received until redemption settles.",
       "platform_type": "user_research"
     },
     {
@@ -306,51 +536,26 @@
       "eligibility_status": "restricted_for_user_location"
     },
     {
-      "id": "prolific",
-      "name": "Prolific",
-      "official_url": "https://www.prolific.com/",
-      "identity_status": "official_participant_country_and_cashout_docs_reviewed",
-      "kenya_eligibility": "unsupported_country_waitlist_kenya_not_listed",
-      "automation_status": "waitlist_or_manual_only_no_account_automation",
+      "id": "usertesting",
+      "name": "UserTesting",
+      "official_url": "https://www.usertesting.com/",
+      "identity_status": "official_participant_support_and_signup_docs_reviewed",
+      "kenya_eligibility": "signup_gate_dynamic_country_availability_unverified",
+      "automation_status": "manual_participant_signup_and_test_completion_only",
       "allowed_actions": [
         "track_status",
         "public_information_review",
-        "open_official_waitlist"
+        "open_official_participant_signup"
       ],
       "blocked_actions": [
         "automated_account_creation",
-        "automated_study_submission",
         "automated_screener_answers",
-        "country_spoofing",
-        "vpn_or_proxy_geo_bypass",
-        "automated_payout_actions"
+        "automated_test_completion",
+        "automated_test_submission",
+        "automated_payment_actions",
+        "captcha_or_identity_bypass"
       ],
-      "notes": "Kenya is not in Prolific's current supported participant-country list. Unsupported-country users may join the waitlist, but access is not guaranteed; some may be invited. Eligibility is based on current residence, not nationality. Do not use a different country or VPN. Cashouts require PayPal and a combined approved balance of at least GBP 6 or USD 6; PayPal country must match current residence or country of birth under Prolific's rules.",
-      "platform_type": "user_research",
-      "eligibility_status": "restricted_for_user_location"
-    },
-    {
-      "id": "paidviewpoint",
-      "name": "PaidViewpoint",
-      "official_url": "https://paidviewpoint.com/",
-      "identity_status": "official_support_and_terms_reviewed",
-      "kenya_eligibility": "dynamic_signup_country_gate_unverified_kenya",
-      "automation_status": "manual_signup_and_surveys_only",
-      "allowed_actions": [
-        "track_status",
-        "public_information_review",
-        "manual_record_import",
-        "open_official_signup"
-      ],
-      "blocked_actions": [
-        "automated_account_creation",
-        "automated_survey_answers",
-        "automated_survey_submission",
-        "multiple_accounts",
-        "location_spoofing",
-        "automated_payout_actions"
-      ],
-      "notes": "PaidViewpoint says it operates in 50 countries but does not publish a fixed list; the registration flow asks the country and confirms whether signup can continue or a future-country email waitlist is available. Kenya eligibility must therefore be checked in the actual signup flow. It requires PayPal for cashout; first withdrawal threshold is USD 15, then USD 10 and USD 5 for subsequent withdrawals when the account remains in good standing. Official FAQ says processing is expected within 72 hours. Survey volume is not guaranteed and PaidViewpoint says it should not be considered a job or work-from-home opportunity.",
+      "notes": "Participant eligibility is dynamic: UserTesting says it does not publish a fixed eligible-country list and the contributor sign-up flow determines whether a location can join. Kenya must be checked in the real signup flow; do not infer eligibility. Payments are in USD to a verified PayPal account, normally 14 days after completing a test, with no minimum payout. Windows applicants need Windows 10 64-bit or later, at least 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload; user laptop RAM, display resolution and upload speed still need checking.",
       "platform_type": "user_research"
     },
     {
