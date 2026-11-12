@@ -61,7 +61,7 @@ PLATFORMS = {
     },
     "whop_workforce": {
         "name": "Whop Workforce", "kind": "task", "file": "whop_workforce_bounties.json",
-        "portal": "https://whop.com/whop-workforce",
+        "portal": "https://whop.com/workforce/",
         "reason": ("Workforce bounties are community/account-facing. Whop's Terms prohibit automated "
                    "access such as robots, spiders and scrapers without written consent. Manually "
                    "record only bounties you can actually access and whose country and payout rules you verify."),
