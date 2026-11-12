@@ -1222,7 +1222,7 @@
       },
       "last_policy_verified": "2026-11-12",
       "policy_urls": [
-        "https://whop.com/whop-workforce",
+        "https://whop.com/workforce/",
         "https://whop.com/tos",
         "https://whop.com/earnings-terms/",
         "https://whop.com/payout-terms"
@@ -1233,7 +1233,7 @@
         "public_listing_interface": "Workforce page is public but bounty/task listings are account/community-facing",
         "automation_clause": "Whop Terms prohibit automated access/monitoring by robots, spiders and scrapers without written consent.",
         "terms_read": [
-          "https://whop.com/whop-workforce",
+          "https://whop.com/workforce/",
           "https://whop.com/tos",
           "https://whop.com/earnings-terms/",
           "https://whop.com/payout-terms"
