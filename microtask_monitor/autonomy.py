@@ -6,7 +6,10 @@ for unattended earning? Missing or ambiguous evidence always blocks the source.
 """
 from __future__ import annotations
 
+import re
+from datetime import date
 from typing import Any
+from urllib.parse import urlparse
 
 REQUIRED_STAGES = (
     "public_discovery",
@@ -14,8 +17,13 @@ REQUIRED_STAGES = (
     "task_acceptance",
     "task_execution",
     "evidence_submission",
+    "outcome_retrieval",
     "payout_confirmation",
 )
+
+STAGE_STATES = {"permitted", "human_required", "prohibited", "unverified"}
+_PLACEHOLDER_DOMAINS = {"example.com", "example.org", "example.net", "example.test", "test", "localhost"}
+_SHA256 = re.compile(r"^[0-9a-fA-F]{64}$")
 
 CONTRACT = {
     "official_api": "A documented official API or permitted integration is required.",
@@ -26,13 +34,41 @@ CONTRACT = {
 }
 
 
-def _stage(record: dict[str, Any], key: str) -> str:
-    value = record.get("autonomous_earning", {})
-    if not isinstance(value, dict):
-        return "unverified"
-    stages = value.get("stages", {})
+def _url_host(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    parsed = urlparse(value)
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password:
+        return None
+    host = parsed.hostname.lower().rstrip(".")
+    if host in _PLACEHOLDER_DOMAINS or any(host.endswith("." + d) for d in _PLACEHOLDER_DOMAINS):
+        return None
+    return host
+
+
+def _official_url(value: Any, domain: Any) -> bool:
+    host = _url_host(value)
+    if not host or not isinstance(domain, str):
+        return False
+    expected = domain.lower().strip().rstrip(".")
+    if not expected or expected in _PLACEHOLDER_DOMAINS:
+        return False
+    return host == expected or host.endswith("." + expected)
+
+
+def _stage(auto: dict[str, Any], key: str) -> str:
+    stages = auto.get("stages", {})
     result = stages.get(key) if isinstance(stages, dict) else None
-    return result if isinstance(result, str) else "unverified"
+    return result if result in STAGE_STATES else "unverified"
+
+
+def _date_is_current(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    try:
+        return date.fromisoformat(value[:10]) >= date.today()
+    except ValueError:
+        return False
 
 
 def evaluate(platform_id: str, record: dict[str, Any]) -> dict[str, Any]:
@@ -46,24 +82,40 @@ def evaluate(platform_id: str, record: dict[str, Any]) -> dict[str, Any]:
         reasons.append("end-to-end automation is not verified")
     if auto.get("official_api") is not True:
         reasons.append("no verified official end-to-end API/integration")
-    if not auto.get("terms_url"):
-        reasons.append("current official automation terms are missing")
-    if not auto.get("last_verified"):
-        reasons.append("automation permission has no verification date")
+    domain = auto.get("official_domain")
+    if not isinstance(domain, str) or not _url_host("https://" + domain):
+        reasons.append("official platform domain is missing or invalid")
+    for key in ("terms_url", "documentation_url"):
+        if not _official_url(auto.get(key), domain):
+            reasons.append(f"{key} is not a verified HTTPS official-domain source")
+    if not isinstance(auto.get("policy_clause"), str) or not auto["policy_clause"].strip():
+        reasons.append("an exact reviewed policy clause is missing")
+    if not _SHA256.fullmatch(str(auto.get("evidence_sha256", ""))):
+        reasons.append("reviewed policy evidence SHA-256 is missing or invalid")
+    if not auto.get("reviewer"):
+        reasons.append("policy evidence reviewer or verification method is missing")
+    if not _date_is_current(auto.get("next_review")):
+        reasons.append("policy verification is expired or has no valid next review date")
+    if not _date_is_current(auto.get("last_verified")):
+        reasons.append("automation permission has no current verification date")
+    if auto.get("contradictions"):
+        reasons.append("platform permission evidence contains unresolved contradictions")
+    if auto.get("restrictions"):
+        reasons.append("platform contract records restrictions that must be resolved manually")
+    for field in ("api_scope", "api_operations", "api_authentication", "rate_limits", "required_user_authorization"):
+        value = auto.get(field)
+        if value is None or value == "" or value == [] or value == {}:
+            reasons.append(f"documented {field.replace('_', ' ')} is missing")
     for stage in REQUIRED_STAGES:
-        if _stage({"autonomous_earning": auto}, stage) != "permitted":
-            reasons.append(f"{stage} is not explicitly permitted")
-    country = record.get("country_eligibility") or {}
-    if country.get("kenya") not in ("confirmed", "eligible"):
-        reasons.append("Kenya eligibility is not explicitly confirmed")
-    payout = record.get("payment_verification") or {}
-    if payout.get("status") != "documented":
-        reasons.append("Kenya-compatible payout route is not documented")
-    prohibited = set(record.get("prohibited_automation") or [])
-    if prohibited & {"captcha_mfa_kyc_bypass", "vpn_or_proxy_location_spoofing", "scrape_logged_in", "probe_private_endpoints"}:
-        # These entries are normal for many records; they do not by themselves
-        # disqualify a source because the autonomous contract never permits bypasses.
-        pass
+        state = _stage(auto, stage)
+        if state != "permitted":
+            reasons.append(f"{stage} is {state}, not explicitly permitted for unattended operation")
+    country = record.get("country_eligibility")
+    if not isinstance(country, dict) or country.get("kenya") not in ("confirmed", "eligible") or not country.get("evidence"):
+        reasons.append("Kenya eligibility is not directly evidenced and explicitly confirmed")
+    payout = record.get("payment_verification")
+    if not isinstance(payout, dict) or payout.get("status") != "documented" or not payout.get("evidence"):
+        reasons.append("Kenya-compatible payout route is not directly evidenced")
     eligible = not reasons
     return {
         "platform_id": platform_id,
@@ -72,7 +124,7 @@ def evaluate(platform_id: str, record: dict[str, Any]) -> dict[str, Any]:
         "reasons": reasons,
         "verified_on": auto.get("last_verified"),
         "terms_url": auto.get("terms_url"),
-        "stages": {stage: _stage({"autonomous_earning": auto}, stage) for stage in REQUIRED_STAGES},
+        "stages": {stage: _stage(auto, stage) for stage in REQUIRED_STAGES},
     }
 
 
