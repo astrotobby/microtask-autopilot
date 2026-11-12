@@ -182,10 +182,15 @@ def run_integrations(platforms):
 
 
 def active_kenya_eligible_sources(platforms, eligibility):
-    """Platforms that may be treated as live Kenya-eligible sources (Mindrift is never one)."""
+    """Return only platforms whose registry explicitly confirms Kenyan eligibility.
+
+    Reachability, a remote label, or absence from the restricted list is not proof.
+    Listings can still have narrower role-specific country rules.
+    """
     restricted = {pid for pid, e in eligibility.items() if e.get("eligibility_status") == "restricted_for_user_location"}
+    confirmed = {"KENYA_CONFIRMED", "WORLDWIDE_CONFIRMED"}
     return [p["id"] for p in platforms
-            if p["id"] not in restricted and p.get("kenya_eligibility") != "restricted_for_user_location"]
+            if p["id"] not in restricted and p.get("kenya_eligibility_class") in confirmed]
 
 
 def safe_link(url):

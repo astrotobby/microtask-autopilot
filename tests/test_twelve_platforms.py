@@ -57,13 +57,23 @@ class ClassificationTests(unittest.TestCase):
 
 
 class EligibilityCountingTests(unittest.TestCase):
-    def test_mindrift_is_not_an_active_kenya_eligible_source(self):
+    def test_unverified_platforms_are_not_counted_as_kenya_eligible(self):
         eligibility = {"mindrift": {"eligibility_status": "restricted_for_user_location"}}
         active = scan_feeds.active_kenya_eligible_sources(PLATFORMS, eligibility)
         self.assertNotIn("mindrift", active)
-        self.assertEqual(len(active), 11)
-        # Even if the monitor failed to run, the registry itself keeps Mindrift out.
+        self.assertEqual(active, [])
+        # Absence from a restriction feed is not positive country evidence.
         self.assertNotIn("mindrift", scan_feeds.active_kenya_eligible_sources(PLATFORMS, {}))
+
+    def test_only_explicitly_confirmed_country_classes_count(self):
+        platforms = [
+            {"id": "kenya", "kenya_eligibility_class": "KENYA_CONFIRMED"},
+            {"id": "world", "kenya_eligibility_class": "WORLDWIDE_CONFIRMED"},
+            {"id": "unknown", "kenya_eligibility_class": "KENYA_UNVERIFIED"},
+            {"id": "manual", "kenya_eligibility_class": "MANUAL_REVIEW_REQUIRED"},
+            {"id": "unsupported", "kenya_eligibility_class": "KENYA_UNSUPPORTED"},
+        ]
+        self.assertEqual(scan_feeds.active_kenya_eligible_sources(platforms, {}), ["kenya", "world"])
 
 
 class ReportIntegrationTests(unittest.TestCase):
