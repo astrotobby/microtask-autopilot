@@ -71,7 +71,7 @@ class IndividualReviewTests(unittest.TestCase):
 
     def test_automation_is_prohibited_only_where_the_evidence_says_so(self):
         explicit = {pid for pid, rec in CAPS.items() if "AUTOMATION_PROHIBITED" in rec["levels"]}
-        self.assertEqual(explicit, {"microworkers", "handshake_ai", "gainworkers", "mindrift", "reworkio", "sproutgigs"})
+        self.assertEqual(explicit, {"microworkers", "handshake_ai", "gainworkers", "mindrift", "reworkio", "sproutgigs", "user_interviews", "prolific"})
         for pid in explicit:
             clause = CAPS[pid]["review"]["automation_clause"]
             self.assertTrue(clause.startswith(("explicit_prohibition", "restricted_per_robots", "policy_monitor_only", "undocumented_private")), f"{pid}: {clause}")
@@ -187,9 +187,9 @@ class AdapterEnforcementTests(unittest.TestCase):
 class PersistenceTests(unittest.TestCase):
     def test_capabilities_are_mirrored_into_the_database(self):
         with tempfile.TemporaryDirectory() as tmp, db.session(Path(tmp) / "a.sqlite3") as conn:
-            self.assertEqual(policy.sync_to_db(conn), 12)
+            self.assertEqual(policy.sync_to_db(conn), 17)
             self.assertEqual(policy.sync_to_db(conn), 12)         # idempotent
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM platform_capabilities").fetchone()[0], 12)
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM platform_capabilities").fetchone()[0], 17)
             rec = json.loads(conn.execute("SELECT record_json FROM platform_capabilities WHERE platform_id='mindrift'").fetchone()[0])
             self.assertEqual(rec["country_eligibility"]["kenya"], "unsupported")
 
