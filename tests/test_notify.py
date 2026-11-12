@@ -7,7 +7,7 @@ from unittest import mock
 
 os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 
-from microtask_monitor import db, intelligence as ig, notify, policy, workflow as wf
+from microtask_monitor import db, intelligence as ig, notify, policy, profile_answers as pa, workflow as wf
 
 NOW = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
 CAPS = policy.load_capabilities()
@@ -118,6 +118,13 @@ class TriggerTests(NotifyBase):
     def test_application_response_and_task_and_payment_alerts(self):
         self.ingest(opp(1))
         app = wf.create_application(self.conn, "https://www.opentrain.ai/jobs/j1")
+        with db.tx(self.conn):
+            pa.ensure_defaults(self.conn)
+        for key, value in {"full_name": "Test User", "contact_email": "test.user@example.com",
+                           "availability": "20 hours per week from next Monday",
+                           "experience_summary": "Built a Python scraper for my own project.",
+                           "portfolio_links": "https://github.com/example/real-project"}.items():
+            pa.set_answer(self.conn, key, value)
         wf.approve_draft(self.conn, app["drafts"][0]["id"], True)
         wf.mark_submitted(self.conn, app["id"], confirmed_by_user=True)
         wf.record_response(self.conn, app["id"], "interview", "Please book a slot")

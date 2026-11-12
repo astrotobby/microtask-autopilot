@@ -177,6 +177,11 @@ class ApplicationFlowTests(ApiBase):
         self.assertEqual(r["application"]["drafts"][0]["body"], "Final text I wrote")
         s, r = self.post(f"/api/applications/{app['id']}/approve", {"draft_id": did, "approved_by_user": True})
         self.assertEqual(r["application"]["status"], "approved")
+        for key, value in {"full_name": "Test User", "contact_email": "test.user@example.com",
+                           "availability": "20 hours per week from next Monday",
+                           "experience_summary": "Built a Python scraper for my own project.",
+                           "portfolio_links": "https://github.com/example/real-project"}.items():
+            self.call("PUT", f"/api/profile-answers/{key}", {"answer": value})
         s, r = self.post(f"/api/applications/{app['id']}/submit", {"confirmed_by_user": True, "submitted_at": "2026-11-09"})
         self.assertEqual(r["application"]["status"], "submitted")
         s, r = self.post(f"/api/applications/{app['id']}/response", {"status": "interview", "text": "Book a slot"})

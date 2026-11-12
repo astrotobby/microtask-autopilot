@@ -70,6 +70,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <button data-tab="tasks">Tasks</button>
   <button data-tab="execution">Execution Centre</button>
   <button data-tab="earnings">Earnings</button>
+  <button data-tab="earning-proof">Earning Proof</button>
   <button data-tab="platforms">Platforms (25)</button>
   <button data-tab="connections">Connections</button>
   <button data-tab="notifications">Notifications <span class="badge hidden" id="notifBadge">0</span></button>
@@ -223,6 +224,13 @@ footer{padding:22px 0;color:#778398;font-size:12px}
    <div><h2>Earnings (expected / pending)</h2><div id="earningTable" class="table-wrap"></div><h2 style="margin-top:14px">Payments received</h2><div id="paymentTable" class="table-wrap"></div></div>
   </div>
  </section>
+ <section id="earning-proof" class="panel">
+  <h1>Earning Proof</h1>
+  <p class="muted">This section shows payment records that you entered as actually received. It does not independently verify bank, wallet or platform statements; retain the original evidence and reference it without storing sensitive account details.</p>
+  <div class="grid" id="proofCards" style="margin:12px 0"></div>
+  <div class="card"><h2>Received payment ledger</h2><div id="proofTable" class="table-wrap"></div></div>
+  <div class="card" style="margin-top:12px"><h2>Evidence checklist</h2><ul><li>Confirm the payment reached your account before recording it.</li><li>Keep the platform approval and payment notification outside this dashboard.</li><li>Use a non-sensitive payment reference so the audit trail can be reconciled.</li><li>Expected and pending amounts are excluded from this proof view.</li></ul></div>
+ </section>
 
  <section id="platforms" class="panel">
   <h1>Platform Monitor</h1><p class="muted">Eligibility and integration health are independent: a healthy integration does not mean you are eligible. Capability levels come from the recorded platform terms.</p>
@@ -297,7 +305,7 @@ function platformOptions(first){return '<option value="">'+(first||"Select platf
 function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
 
 // ---------------------------------------------------------------- navigation
-const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,connections:loadConnections,earnings:loadEarnings,platforms:loadPlatforms,notifications:loadNotifications};
+const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,connections:loadConnections,earnings:loadEarnings,"earning-proof":loadEarningProof,platforms:loadPlatforms,notifications:loadNotifications};
 function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
@@ -390,11 +398,12 @@ function oppQuery(){
  [["platform","platformFilter"],["eligibility","kenyaFilter"],["category","categoryFilter"],["skill","skillFilter"],["payment","paymentFilter"],["min_rate","minRate"],["sort","sortBy"],["status","statusFilter"],["q","oppSearch"]].forEach(([k,id])=>{if(g(id))p.set(k,g(id))});
  p.set("limit",oppLimit);p.set("offset",oppOffset);return p.toString();
 }
-function oppTable(items,compact){
- return '<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Task / job</th><th>Payment</th><th>Discovered</th><th>Status</th><th>Link</th><th>Score</th></tr></thead><tbody>'+items.map(o=>{
+ function oppTable(items,compact){
+ return '<table><thead><tr><th>Platform</th><th>Kenya eligibility</th><th>Task / job</th><th>Payment</th><th>Risk</th><th>Discovered</th><th>Status</th><th>Link</th><th>Score</th></tr></thead><tbody>'+items.map(o=>{
   const flags=(o.skills||[]).slice(0,4).map(s=>'<span class="tag">'+esc(s.replace(/_/g," "))+'</span>').join("");
   const a=link(o.apply_url||o.url,"Open original");
-  return '<tr><td>'+esc(o.platform_id?platformName(o.platform_id):(o.source||"Feed"))+'</td><td>'+classTag(o)+'</td><td><strong>'+esc(o.title)+'</strong><div class="muted">'+esc(o.category||"")+(o.equipment?" · needs "+esc(o.equipment):"")+(o.effort?" · "+esc(o.effort):"")+'</div>'+(compact?"":'<div>'+esc((o.summary||"").slice(0,200))+'</div>')+'<div>'+flags+'</div></td><td>'+esc(o.payment_text||"Not disclosed")+((o.payment_usd_per_hour||0)>150?'<div><span class="tag warn">unusually high: verify manually</span></div>':"")+'</td><td>'+esc(day(o.first_seen_utc))+'</td><td>'+esc(o.status||"")+'</td><td>'+a+'<div style="margin-top:4px"><button class="btn small" data-detail="'+esc(o.url)+'">Details</button> <button class="btn small primary" data-prepare="'+esc(o.url)+'">Prepare application</button></div></td><td>'+esc(o.relevance_score)+'</td></tr>'}).join("")+'</tbody></table>';
+  const riskClass=o.risk_label==='HIGH_RISK'?'bad':o.risk_label==='REQUIRES_REVIEW'?'warn':'info';
+  return '<tr><td>'+esc(o.platform_id?platformName(o.platform_id):(o.source||"Feed"))+'</td><td>'+classTag(o)+'</td><td><strong>'+esc(o.title)+'</strong><div class="muted">'+esc(o.category||"")+(o.equipment?" · needs "+esc(o.equipment):"")+(o.effort?" · "+esc(o.effort):"")+'</div>'+(compact?"":'<div>'+esc((o.summary||"").slice(0,200))+'</div>')+'<div>'+flags+'</div></td><td>'+esc(o.payment_text||"Not disclosed")+((o.payment_usd_per_hour||0)>150?'<div><span class="tag warn">unusually high: verify manually</span></div>':"")+'</td><td><span class="tag '+riskClass+'">'+esc(o.risk_label||"UNASSESSED")+'</span><div class="muted">'+esc(o.risk_score==null?"":o.risk_score)+((o.risk_flags||[]).length?' · '+esc(o.risk_flags.slice(0,2).join(', ')):"")+'</div></td><td>'+esc(day(o.first_seen_utc))+'</td><td>'+esc(o.status||"")+'</td><td>'+a+'<div style="margin-top:4px"><button class="btn small" data-detail="'+esc(o.url)+'">Details</button> <button class="btn small primary" data-prepare="'+esc(o.url)+'">Prepare application</button></div></td><td>'+esc(o.relevance_score)+'</td></tr>'}).join("")+'</tbody></table>';
 }
 function bindOppActions(root){
  root.querySelectorAll("[data-detail]").forEach(b=>b.addEventListener("click",()=>showDetail(b.dataset.detail)));
@@ -421,6 +430,7 @@ async function showDetail(url){
  const r=await act(()=>api("GET","/api/opportunities/detail?url="+encodeURIComponent(url)));if(!r)return;const o=r.opportunity,b=o.breakdown||{},q=o.requirements||{};
  const parts=Object.entries(b).filter(([k,v])=>typeof v==="number").map(([k,v])=>'<tr><td>'+esc(k.replace(/_/g," "))+'</td><td>'+(v>0?"+":"")+v+'</td></tr>').join("");
  $("detailBody").innerHTML='<h2>'+esc(o.title)+'</h2><div>'+classTag(o)+'</div><p class="muted">Reason: '+esc(o.eligibility_reason||"")+'</p><p>'+esc(o.summary||"")+'</p><p><strong>Pay:</strong> '+esc(o.payment_text||"Not disclosed")+' · <strong>Deadline:</strong> '+esc(o.deadline||"none stated")+' · <strong>Last verified:</strong> '+esc(when(o.last_verified_utc))+'</p>'
+  +'<h3>Risk assessment</h3><p><span class="tag '+(o.risk_label==='HIGH_RISK'?'bad':o.risk_label==='REQUIRES_REVIEW'?'warn':'info')+'">'+esc(o.risk_label||"UNASSESSED")+'</span> score '+esc(o.risk_score==null?"":o.risk_score)+'</p><p class="muted">'+esc((o.risk_evidence||[]).join("; ")||"No risk evidence recorded")+'</p>'
   +'<h3>Score '+esc(o.relevance_score)+' (transparent)</h3><div class="table-wrap"><table><tbody>'+parts+'</tbody></table></div>'
   +((b.qualification_gaps||[]).length?'<h3>Gaps you must confirm</h3><ul>'+b.qualification_gaps.map(g=>'<li>'+esc(g)+'</li>').join("")+'</ul>':"")
   +'<h3>Requirements found in the text</h3><p class="muted">Experience: '+esc(q.min_years_experience||"not stated")+' · Qualifications: '+esc((q.qualifications||[]).join(", ")||"none stated")+' · Equipment: '+esc((q.equipment||[]).join(", ")||"none stated")+' · Application needs: '+esc((q.application_requirements||[]).join(", ")||"none stated")+'</p>'
@@ -657,8 +667,14 @@ async function loadEarnings(){
  $("payEarning").innerHTML='<option value="">None / standalone</option>'+r.earnings.filter(e=>["expected","pending"].includes(e.status)).map(e=>'<option value="'+e.id+'">#'+e.id+' '+esc(e.description||platformName(e.platform_id))+' ('+e.amount+' '+esc(e.currency)+')</option>').join("");
  $("earningTable").innerHTML=r.earnings.length?'<table><thead><tr><th>Type</th><th>Platform</th><th>Amount</th><th>Description</th></tr></thead><tbody>'+r.earnings.map(e=>'<tr><td><span class="tag '+(e.status==="received"?"ok":"warn")+'">'+esc(e.status)+'</span></td><td>'+esc(platformName(e.platform_id))+'</td><td>'+money(e.amount,e.currency)+'</td><td>'+esc(e.description||"")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">None.</div>';
  $("paymentTable").innerHTML=r.payments.length?'<table><thead><tr><th>Date</th><th>Platform</th><th>Amount</th><th>Method</th><th>Reference</th></tr></thead><tbody>'+r.payments.map(p=>'<tr><td>'+esc(p.received_date)+'</td><td>'+esc(platformName(p.platform_id))+'</td><td>'+money(p.amount,p.currency)+'</td><td>'+esc(p.method||"")+'</td><td>'+esc(p.reference||"")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No payments recorded.</div>';
+ }
+async function loadEarningProof(){
+ const r=await act(()=>api("GET","/api/earnings"));if(!r)return;const by=r.summary.by_currency||{};
+ const received=r.payments||[];
+ $("proofCards").innerHTML=Object.keys(by).length?Object.keys(by).map(c=>'<div class="card"><div class="muted">'+esc(c)+'</div><div>Received and recorded: <strong>'+money(by[c].received,c)+'</strong></div><div class="muted">Only payment records are included.</div></div>').join(""):'<div class="card"><div class="muted">No received payments recorded yet.</div></div>';
+ $("proofTable").innerHTML=received.length?'<table><thead><tr><th>Received date</th><th>Platform</th><th>Amount</th><th>Method</th><th>Reference</th><th>Linked earning</th></tr></thead><tbody>'+received.map(p=>'<tr><td>'+esc(p.received_date)+'</td><td>'+esc(platformName(p.platform_id))+'</td><td>'+money(p.amount,p.currency)+'</td><td>'+esc(p.method||"")+'</td><td>'+esc(p.reference||"")+'</td><td>'+esc(p.earning_id||"standalone")+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No payment evidence has been recorded.</div>';
 }
-$("earningForm").addEventListener("submit",async e=>{e.preventDefault();if(await act(()=>api("POST","/api/earnings",{amount:Number($("earnAmount").value),currency:$("earnCurrency").value,status:$("earnStatus").value,platform_id:$("earnPlatform").value||undefined,description:$("earnDesc").value}),"Earning added")){e.target.reset();loadEarnings()}});
+ $("earningForm").addEventListener("submit",async e=>{e.preventDefault();if(await act(()=>api("POST","/api/earnings",{amount:Number($("earnAmount").value),currency:$("earnCurrency").value,status:$("earnStatus").value,platform_id:$("earnPlatform").value||undefined,description:$("earnDesc").value}),"Earning added")){e.target.reset();loadEarnings()}});
 $("paymentForm").addEventListener("submit",async e=>{e.preventDefault();if(await act(()=>api("POST","/api/payments",{amount:Number($("payAmount").value),currency:$("payCurrency").value,received_date:$("payDate").value,platform_id:$("payPlatform").value||undefined,earning_id:$("payEarning").value?Number($("payEarning").value):undefined,method:$("payMethod").value,reference:$("payRef").value}),"Payment recorded")){e.target.reset();loadEarnings()}});
 
 // ---------------------------------------------------------------- platforms

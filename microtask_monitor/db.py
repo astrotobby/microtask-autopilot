@@ -218,7 +218,15 @@ def _m6_platform_connections(conn: sqlite3.Connection) -> None:
         required_action TEXT, human_step TEXT, last_checked_at TEXT, last_success_at TEXT, profile_dir TEXT, note TEXT, updated_at TEXT NOT NULL)""")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections)]
+def _m7_opportunity_risk(conn: sqlite3.Connection) -> None:
+    """Persist deterministic legitimacy/risk signals without claiming independent verification."""
+    for column, decl in (("risk_label", "TEXT"), ("risk_score", "INTEGER"),
+                         ("risk_flags_json", "TEXT"), ("risk_evidence_json", "TEXT")):
+        _add_column(conn, "opportunities", column, decl)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_opp_risk ON opportunities(risk_label, risk_score DESC)")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections), (7, _m7_opportunity_risk)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

@@ -228,12 +228,15 @@ class Api:
         total = conn.execute(f"SELECT COUNT(*) FROM opportunities WHERE {clause}", args).fetchone()[0]
         rows = conn.execute(f"SELECT url,title,source,summary,category,platform_id,eligibility_class,eligibility_confidence,"
                             f"eligibility_reason,status,deadline,payment_text,payment_usd_per_hour,skills_json,equipment,effort,"
-                            f"relevance_score,priority,published,first_seen_utc,last_seen_utc,last_verified_utc,apply_url,duplicate_of "
+                            f"relevance_score,priority,published,first_seen_utc,last_seen_utc,last_verified_utc,apply_url,duplicate_of,"
+                            f"risk_label,risk_score,risk_flags_json,risk_evidence_json "
                             f"FROM opportunities WHERE {clause} ORDER BY {sort} LIMIT ? OFFSET ?", [*args, limit, offset]).fetchall()
         items = []
         for r in rows:
             d = dict(r)
             d["skills"] = json.loads(d.pop("skills_json") or "[]")
+            d["risk_flags"] = json.loads(d.pop("risk_flags_json") or "[]")
+            d["risk_evidence"] = json.loads(d.pop("risk_evidence_json") or "[]")
             items.append(d)
         return {"ok": True, "total": total, "limit": limit, "offset": offset, "items": items}
 
@@ -485,6 +488,8 @@ class Api:
                     "warning": "Write only true facts. Never enter passwords, one-time codes, ID numbers or payment details."}
         if method == "PUT" and len(rest) == 1:
             try:
+                with db.tx(conn):
+                    pa.ensure_defaults(conn)
                 return {"ok": True, "answer": pa.set_answer(conn, rest[0], str(body.get("answer", "")))}
             except pa.AnswerError as exc:
                 raise ApiError(400, str(exc))

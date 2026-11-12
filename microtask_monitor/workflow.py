@@ -16,9 +16,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from microtask_monitor import assistant, db, guidance, intelligence as ig, policy
+    from microtask_monitor import assistant, db, guidance, intelligence as ig, packets, policy
 except ImportError:  # pragma: no cover
-    import assistant, db, guidance, intelligence as ig, policy
+    import assistant, db, guidance, intelligence as ig, packets, policy
 
 ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE_DIR = ROOT / "data" / "evidence"
@@ -131,6 +131,14 @@ def mark_submitted(conn, app_id: int, submitted_at: str | None = None, confirmed
     app = _require(_one(conn, "SELECT * FROM applications WHERE id=?", (app_id,)), "Application")
     if not conn.execute("SELECT 1 FROM application_drafts WHERE application_id=? AND approved=1", (app_id,)).fetchone():
         raise WorkflowError("Approve a draft first: applications need your explicit approval before submission")
+    try:
+        packet = packets.build_packet(conn, app_id)
+    except packets.PacketError as exc:
+        raise WorkflowError(str(exc)) from exc
+    if not packet["ready_to_apply"]:
+        blockers = "; ".join(packet["blockers"][:3])
+        more = "" if len(packet["blockers"]) <= 3 else f" (+{len(packet['blockers']) - 3} more)"
+        raise WorkflowError(f"Application packet is not ready: resolve its blockers before submission: {blockers}{more}")
     policy.require(app["platform_id"] or "", "record_manual_submission")
     when = _day(submitted_at or date.today().isoformat(), "submitted_at")
     with db.tx(conn):

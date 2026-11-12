@@ -8,7 +8,7 @@ from unittest import mock
 
 os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 
-from microtask_monitor import assistant, db, intelligence as ig, policy, workflow as wf
+from microtask_monitor import assistant, db, intelligence as ig, policy, profile_answers as pa, workflow as wf
 
 NOW = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
 CAPS = policy.load_capabilities()
@@ -152,6 +152,13 @@ class ApplicationTests(WorkflowBase):
         self.assertEqual(app["drafts"][0]["body"], "My edited application")
         app = wf.approve_draft(self.conn, draft_id, approved_by_user=True)
         self.assertEqual(app["status"], "approved")
+        with db.tx(self.conn):
+            pa.ensure_defaults(self.conn)
+        for key, value in {"full_name": "Test User", "contact_email": "test.user@example.com",
+                           "availability": "20 hours per week from next Monday",
+                           "experience_summary": "Built a Python scraper for my own project.",
+                           "portfolio_links": "https://github.com/example/real-project"}.items():
+            pa.set_answer(self.conn, key, value)
         app = wf.mark_submitted(self.conn, app["id"], "2026-11-08", confirmed_by_user=True)
         self.assertEqual((app["status"], app["submitted_at"]), ("submitted", "2026-11-08"))
         app = wf.record_response(self.conn, app["id"], "interview", "They replied", "2026-11-10")

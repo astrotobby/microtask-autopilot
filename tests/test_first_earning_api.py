@@ -44,6 +44,11 @@ class FirstEarningApiTests(ApiBase):
         self.assertEqual(s, 200)                                    # notes are allowed any time
         did = r["application"]["drafts"][0]["id"]
         self.post(f"/api/applications/{app['id']}/approve", {"draft_id": did, "approved_by_user": True})
+        for key, value in {"full_name": "Test User", "contact_email": "test.user@example.com",
+                           "availability": "20 hours per week from next Monday",
+                           "experience_summary": "Built a Python scraper for my own project.",
+                           "portfolio_links": "https://github.com/example/real-project"}.items():
+            self.call("PUT", f"/api/profile-answers/{key}", {"answer": value})
         s, r = self.post(f"/api/applications/{app['id']}/submit", {"confirmed_by_user": True, "submitted_at": "2026-11-09"})
         self.assertEqual((s, r["application"]["next_followup_at"]), (200, "2026-11-16"))
         s, r = self.post(f"/api/applications/{app['id']}/events", {"kind": "decision", "decision": "accepted", "event_date": "2026-11-12"})

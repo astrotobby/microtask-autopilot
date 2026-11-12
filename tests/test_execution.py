@@ -10,7 +10,7 @@ os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
 os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
 os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 
-from microtask_monitor import db, execution as ex, intelligence as ig, packets, policy, qa, workers, workflow as wf
+from microtask_monitor import db, execution as ex, intelligence as ig, packets, policy, profile_answers as pa, qa, workers, workflow as wf
 
 SAMPLE_CSV = (b"name,email,country,notes\n  alice  ,Alice@Example.com,ke,invoice for March\nBOB,bob@example.com,UG,refund request\n"
               b" ,,,\nalice,alice@example.com,KE,duplicate row\ncarol,,KE,missing email\ndave,dave@example.com,KE,general question\n")
@@ -177,6 +177,14 @@ class DataEndToEndTests(Base):
         draft_id = app["drafts"][0]["id"]
         with self.assertRaises(wf.WorkflowError):
             wf.mark_submitted(self.conn, app["id"], confirmed_by_user=True)
+        wf.edit_draft(self.conn, draft_id, "Application for the synthetic CSV assignment.")
+        for key, value in {
+            "full_name": "Test User", "contact_email": "test.user@example.com",
+            "availability": "20 hours per week from next Monday",
+            "portfolio_links": "https://github.com/example/real-project",
+            "experience_summary": "Built a Python scraper for my own project.",
+        }.items():
+            pa.set_answer(self.conn, key, value)
         wf.approve_draft(self.conn, draft_id, approved_by_user=True)
         app = wf.mark_submitted(self.conn, app["id"], date.today().isoformat(), confirmed_by_user=True)
         self.assertEqual(app["status"], "submitted")

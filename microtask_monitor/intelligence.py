@@ -15,9 +15,9 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from microtask_monitor import db, opportunity_common as oc, policy
+    from microtask_monitor import db, opportunity_common as oc, policy, risk
 except ImportError:  # pragma: no cover
-    import db, opportunity_common as oc, policy
+    import db, opportunity_common as oc, policy, risk
 
 ROOT = Path(__file__).resolve().parents[1]
 PROFILE_PATH = ROOT / "microtask_monitor" / "profile.json"
@@ -196,6 +196,8 @@ def enrich(item: dict[str, Any], caps=None, profile=None, now: datetime | None =
     req = extract_requirements(text + " " + " ".join(str(s) for s in (item.get("skills") or [])))
     cls, conf, reason = classify(item, caps, now)
     sc, breakdown = score(item, cls, req, caps, profile, now)
+    risk_result = risk.assess(item)
+    breakdown["risk"] = risk_result
     return {
         "url": canonical_url(item["url"]), "platform_id": item.get("platform_id"),
         "external_id": item.get("external_id"), "eligibility_class": cls,
@@ -209,6 +211,9 @@ def enrich(item: dict[str, Any], caps=None, profile=None, now: datetime | None =
         "requirements_json": json.dumps(req, ensure_ascii=False),
         "equipment": ", ".join(req["equipment"]) or None, "effort": req["effort"],
         "score": sc, "priority": priority_for(sc, cls), "breakdown": breakdown,
+        "risk_label": risk_result["label"], "risk_score": risk_result["score"],
+        "risk_flags_json": json.dumps(risk_result["flags"], ensure_ascii=False),
+        "risk_evidence_json": json.dumps(risk_result["evidence"], ensure_ascii=False),
         "apply_url": item.get("apply_url") or item["url"],
         "dedupe_key": f"{item.get('platform_id')}:{item.get('external_id')}" if item.get("external_id")
         else f"title:{_norm_title(item.get('title', ''))}",
@@ -260,8 +265,9 @@ def ingest(conn, items: list[dict[str, Any]], *, now: datetime | None = None, co
             kenya_eligibility,published,first_seen_utc,last_seen_utc,report_checked_at_utc,raw_json,
             platform_id,external_id,eligibility_class,eligibility_confidence,eligibility_reason,status,deadline,
             payment_text,payment_currency,payment_amount,payment_usd_per_hour,skills_json,requirements_json,
-            equipment,effort,score_breakdown_json,content_hash,last_verified_utc,expired_utc,duplicate_of,apply_url)
-            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            equipment,effort,score_breakdown_json,content_hash,last_verified_utc,expired_utc,duplicate_of,apply_url,
+            risk_label,risk_score,risk_flags_json,risk_evidence_json)
+            VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             ON CONFLICT(url) DO UPDATE SET title=excluded.title, source=excluded.source, summary=excluded.summary,
             priority=excluded.priority, relevance_score=excluded.relevance_score, category=excluded.category,
             kenya_eligibility=excluded.kenya_eligibility, published=excluded.published, last_seen_utc=excluded.last_seen_utc,
@@ -274,7 +280,9 @@ def ingest(conn, items: list[dict[str, Any]], *, now: datetime | None = None, co
             skills_json=excluded.skills_json, requirements_json=excluded.requirements_json,
             equipment=excluded.equipment, effort=excluded.effort, score_breakdown_json=excluded.score_breakdown_json,
             content_hash=excluded.content_hash, last_verified_utc=excluded.last_verified_utc,
-            expired_utc=excluded.expired_utc, duplicate_of=excluded.duplicate_of, apply_url=excluded.apply_url""",
+            expired_utc=excluded.expired_utc, duplicate_of=excluded.duplicate_of, apply_url=excluded.apply_url,
+            risk_label=excluded.risk_label, risk_score=excluded.risk_score,
+            risk_flags_json=excluded.risk_flags_json, risk_evidence_json=excluded.risk_evidence_json""",
                      (url, item.get("title") or "Untitled", item.get("source", ""), (item.get("summary") or "")[:1200],
                       rec["priority"], rec["score"], item.get("category", ""), item.get("kenya_eligibility", ""),
                       item.get("published", ""), old["first_seen_utc"] if old else stamp, stamp,
@@ -284,7 +292,8 @@ def ingest(conn, items: list[dict[str, Any]], *, now: datetime | None = None, co
                       rec["payment_currency"], rec["payment_amount"], rec["payment_usd_per_hour"], rec["skills_json"],
                       rec["requirements_json"], rec["equipment"], rec["effort"],
                       json.dumps(rec["breakdown"], ensure_ascii=False), chash, stamp,
-                      stamp if rec["status"] == "expired" else None, duplicate_of, rec["apply_url"]))
+                      stamp if rec["status"] == "expired" else None, duplicate_of, rec["apply_url"],
+                      rec["risk_label"], rec["risk_score"], rec["risk_flags_json"], rec["risk_evidence_json"]))
     stats["expired"] = expire_missing(conn, seen, complete_platforms or set(), now)
     return stats
 
