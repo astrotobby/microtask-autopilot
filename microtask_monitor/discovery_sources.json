@@ -248,7 +248,7 @@
       "id": "whop_workforce_portal",
       "platform_id": "whop_workforce",
       "name": "Whop Workforce",
-      "url": "https://whop.com/whop-workforce",
+      "url": "https://whop.com/workforce/",
       "source_type": "official_workforce_portal",
       "access_mode": "manual_review_required",
       "automated_fetch_enabled": false,
