@@ -57,7 +57,7 @@ No third-party Python package is required for the current report sync/server com
 - User Interviews: https://www.userinterviews.com/ (Kenya absent from current official participant-country list; disabled while unsupported; monitor official country policy)
 - Prolific: https://www.prolific.com/ (Kenya absent from supported participant-country list; waitlist only, not guaranteed; PayPal cashout; no geo workarounds)
 - PaidViewpoint: https://app.paidviewpoint.com/ (signup dynamically checks supported countries; Kenya unverified until signup confirms; PayPal required; manual surveys only)
-- Whop Workforce: https://whop.com/whop-workforce (seller bounties; manual review/submission only; Whop Terms prohibit automated scraping/robots without written consent; check campaign country and payout rules)
+- Whop Workforce: https://whop.com/workforce/ (seller bounties; manual review/submission only; Whop Terms prohibit automated scraping/robots without written consent; check campaign country and payout rules)
 
 ## Platform and safety boundaries
 - Use only official APIs, public feeds, or public pages whose access is permitted.
