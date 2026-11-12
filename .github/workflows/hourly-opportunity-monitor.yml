@@ -9,6 +9,14 @@ on:
       - "tests/**"
       - "dashboard/**"
       - ".github/workflows/hourly-opportunity-monitor.yml"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "microtask_monitor/**"
+      - "tests/**"
+      - "dashboard/**"
+      - ".github/workflows/hourly-opportunity-monitor.yml"
   schedule:
     - cron: "17 * * * *"
     # 05:00 UTC = 08:00 East Africa Time (Africa/Nairobi, UTC+3). GitHub may delay scheduled runs.
