@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import (actions, assistant, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
+    from microtask_monitor import (actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
                                    reminders, workflow as wf)
 except ImportError:  # pragma: no cover
-    import actions, assistant, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
+    import actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -97,6 +97,8 @@ class Api:
             return self.list_opportunities(conn, q)
         if key == ("GET", "platforms"):
             return self.platforms(conn)
+        if key == ("GET", "autonomy"):
+            return self.autonomy_status()
         if parts[:1] == ["applications"]:
             return self.applications(conn, method, parts[1:], body)
         if method == "PUT" and parts[:1] == ["drafts"] and n == 2:
@@ -154,6 +156,11 @@ class Api:
                 "last_report": last, "opportunity_count": conn.execute("SELECT COUNT(*) FROM opportunities").fetchone()[0],
                 "capabilities": conn.execute("SELECT COUNT(*) FROM platform_capabilities").fetchone()[0],
                 "explanation": assistant.explain_error(sync.get("last_error") or "") if sync.get("last_error") else None}
+
+    def autonomy_status(self) -> dict[str, Any]:
+        """Report whether any source is explicitly authorized for unattended earning."""
+        result = autonomy.assess(policy.load_capabilities())
+        return {"ok": True, **result}
 
     def overview(self, conn) -> dict[str, Any]:
         now = datetime.now(timezone.utc)

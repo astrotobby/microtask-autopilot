@@ -62,6 +62,18 @@ def check_action(platform_id: str, action: str, *, caps: dict[str, dict[str, Any
         return Decision(False, f"'{action}' is never permitted on any platform")
     if action in LOCAL_ACTIONS:
         return Decision(True, "local-only action; no platform contact")
+    if action == "autonomous_earning":
+        try:
+            from microtask_monitor import autonomy
+        except ImportError:  # pragma: no cover
+            import autonomy
+        capset = load_capabilities() if caps is None else caps
+        result = autonomy.evaluate(platform_id, capset.get(platform_id, {}))
+        if not result["eligible"]:
+            return Decision(False, f"autonomous earning is blocked for {platform_id}: {'; '.join(result['reasons'])}")
+        if not user_authorized:
+            return Decision(False, "autonomous earning needs explicit user authorization")
+        return Decision(True, f"verified autonomous earning contract for {platform_id} and authorized by you")
     caps = load_capabilities() if caps is None else caps
     record = caps.get(platform_id)
     if record is None:

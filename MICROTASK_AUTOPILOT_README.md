@@ -57,6 +57,10 @@ The report sync uses the public GitHub REST API and needs no GitHub token becaus
 
 The local agent must be running for automatic dashboard updates. If it is not running, double-click `open-dashboard.bat` again. Do not store passwords, cookies, tokens, OTPs, identity documents or payment credentials in the dashboard. Currency totals are kept separate; no exchange rate is assumed.
 
+### Autonomous earning readiness
+
+`GET /api/autonomy` evaluates whether any configured source has a verified, official end-to-end automation contract. A source is eligible only when current official terms explicitly permit public discovery, application submission, task acceptance, task execution, evidence submission and payout confirmation; Kenya eligibility and a Kenya-compatible payout route must also be documented. Missing evidence fails closed. The endpoint currently reports no eligible platform, which is intentional: the project must not pretend that read-only discovery or browser access is permission to earn autonomously.
+
 ## Scope and safety
 
 - Public feeds only; no worker-account logins or private dashboards.
@@ -135,6 +139,8 @@ Every platform is described by three separate boundaries:
 - **PUBLIC DISCOVERY** – unauthenticated, documented, permitted automated reads.
 - **AUTHENTICATED MANUAL REVIEW** – you sign in and review yourself; nothing here logs in for you.
 - **AUTOMATION PERMITTED** – only the read-only monitoring listed below. No platform permits automated applications, task acceptance, submissions, payments or contract acceptance.
+
+The autonomous mode is separate from read-only monitoring. A platform is not eligible for autonomous earning merely because it has a public API or appears in the report. It must satisfy the complete contract returned by `/api/autonomy`; otherwise the source remains blocked.
 
 | Platform | Public discovery | Automation permitted | Status (verified 2026-11-08) |
 |---|---|---|---|
