@@ -125,7 +125,7 @@ class ConnectionTests(unittest.TestCase):
 
     def test_every_platform_has_a_status_and_nothing_starts_connected(self):
         rows = cx.list_status(self.conn)
-        self.assertEqual(len(rows), 17)
+        self.assertEqual(len(rows), 25)
         self.assertTrue(all(r["status"] in ("not_connected", "blocked") for r in rows))
         self.assertEqual(next(r for r in rows if r["platform_id"] == "mindrift")["status"], "blocked")
         for r in rows:
@@ -207,7 +207,7 @@ class ConnectionApiTests(ApiBase):
 
     def test_connection_flow_over_local_http(self):
         s, r = self.get("/api/connections")
-        self.assertEqual((s, len(r["connections"])), (200, 17))
+        self.assertEqual((s, len(r["connections"])), (200, 25))
         body = json.dumps(r).lower()
         for banned in ("password", "cookie\"", "api_key\""):
             self.assertNotIn(banned, body)
