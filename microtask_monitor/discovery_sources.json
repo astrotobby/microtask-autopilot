@@ -265,6 +265,105 @@
       "automated_fetch_enabled": false,
       "reason": "Participants must be 18+ and in good standing; bounty work and proof submission are handled through Whop's platform. Manual review only.",
       "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "telus_digital_ai_contributor",
+      "platform_id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community contributor jobs",
+      "url": "https://app.telusinternational.ai/contributor/jobs",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Role listings require manual review; no public contributor API permission verified.",
+      "use": "Open your contributor jobs page; review country, language, assessment and payment terms manually."
+    },
+    {
+      "id": "telus_digital_ai_kenya_jobs",
+      "platform_id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community Kenya job search",
+      "url": "https://jobs.telusdigital.com/search/jobs/in/kenya?cfm5=AI+Community&ns_category=ai-community",
+      "source_type": "official_careers_search",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "A past Kenya role search result does not guarantee a role is currently open.",
+      "use": "Check live results, closing dates, country, qualifications and payout terms."
+    },
+    {
+      "id": "crowdgen_contributor",
+      "platform_id": "crowdgen",
+      "name": "CrowdGen by Appen contributor portal",
+      "url": "https://crowdgen.com/",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Projects and payout methods are country/account-specific; no worker-side API fetch enabled.",
+      "use": "Sign in yourself, confirm Kenya project availability and inspect Dots payment methods."
+    },
+    {
+      "id": "oneforma_projects",
+      "platform_id": "oneforma",
+      "name": "OneForma projects and contributor help",
+      "url": "https://www.oneforma.com/",
+      "source_type": "official_project_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Projects are account- and country-specific; no public worker API or automated fetch permission verified.",
+      "use": "Review live projects and country/language requirements; verify Payment Settings."
+    },
+    {
+      "id": "hivemicro_worker",
+      "platform_id": "hivemicro",
+      "name": "Hive Micro worker portal",
+      "url": "https://hivemicro.com/",
+      "source_type": "official_worker_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Jobs are manually reviewed in the contributor account; no automated task access.",
+      "use": "Check account country eligibility, job qualification and PayPal/Bitcoin withdrawal setup."
+    },
+    {
+      "id": "timebucks_offers",
+      "platform_id": "timebucks",
+      "name": "TimeBucks offers and surveys",
+      "url": "https://timebucks.com/",
+      "source_type": "official_worker_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Offers and payout methods vary by country and account; no worker feed fetch enabled.",
+      "use": "Review current offer rules and account-specific withdrawal methods manually."
+    },
+    {
+      "id": "neevo_contributor",
+      "platform_id": "neevo",
+      "name": "Neevo contributor platform",
+      "url": "https://www.neevo.ai/",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Country/language/job matching and tasks are account-specific; no public task API permission verified.",
+      "use": "Review profile-matched jobs and verify PayPal before accepting a project."
+    },
+    {
+      "id": "swagbucks_member",
+      "platform_id": "swagbucks",
+      "name": "Swagbucks rewards and surveys",
+      "url": "https://www.swagbucks.com/",
+      "source_type": "official_member_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Country availability is not confirmed for Kenya and member offers are account-specific.",
+      "use": "Check official signup availability and reward-store payout options for Kenya."
+    },
+    {
+      "id": "blend_tasq_projects",
+      "platform_id": "blend",
+      "name": "BLEND / Tasq.ai contributor projects",
+      "url": "https://www.getblend.com/",
+      "source_type": "official_professional_services_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Language-service projects are skill/language-specific; no public worker API verified.",
+      "use": "Review language projects manually and confirm Kenya payment availability."
     }
   ],
   "current_reviewed_roles": [
