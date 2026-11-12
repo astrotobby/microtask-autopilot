@@ -10,7 +10,7 @@ os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
 os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
 os.environ.setdefault("AUTOPILOT_SQLITE_SYNCHRONOUS", "OFF")
 
-from microtask_monitor import db, execution as ex, intelligence as ig, policy, qa, workers, workflow as wf
+from microtask_monitor import db, execution as ex, intelligence as ig, packets, policy, qa, workers, workflow as wf
 
 SAMPLE_CSV = (b"name,email,country,notes\n  alice  ,Alice@Example.com,ke,invoice for March\nBOB,bob@example.com,UG,refund request\n"
               b" ,,,\nalice,alice@example.com,KE,duplicate row\ncarol,,KE,missing email\ndave,dave@example.com,KE,general question\n")
@@ -164,16 +164,24 @@ class DataEndToEndTests(Base):
             ingested = ig.ingest(self.conn, [listing], now=datetime.now(timezone.utc),
                                  caps=policy.load_capabilities(), profile=ig.load_profile())
         self.assertEqual(ingested["new"], 1)
+        opportunity = self.conn.execute("SELECT * FROM opportunities WHERE url=?", (url,)).fetchone()
+        self.assertEqual(opportunity["eligibility_class"], ig.KENYA_CONFIRMED)
+        self.assertIsNotNone(opportunity["relevance_score"])  # discovery was ranked from the synthetic fixture
 
         app = wf.create_application(self.conn, url)
         self.assertEqual(app["status"], "draft")
+        packet = packets.save_packet(self.conn, app["id"])
+        self.assertFalse(packet["ready_to_apply"])
+        self.assertTrue(any("profile answer" in item.lower() for item in packet["blockers"]))
+        self.assertTrue(packet["unresolved_placeholders"])
         draft_id = app["drafts"][0]["id"]
         with self.assertRaises(wf.WorkflowError):
             wf.mark_submitted(self.conn, app["id"], confirmed_by_user=True)
         wf.approve_draft(self.conn, draft_id, approved_by_user=True)
         app = wf.mark_submitted(self.conn, app["id"], date.today().isoformat(), confirmed_by_user=True)
         self.assertEqual(app["status"], "submitted")
-        app = wf.log_event(self.conn, app["id"], "decision", "TEST DATA: simulated acceptance", decision="accepted")
+        app = wf.record_response(self.conn, app["id"], "accepted", "TEST DATA: simulated acceptance",
+                                 date.today().isoformat())
         self.assertEqual(app["status"], "accepted")
 
         job = ex.create_job(
@@ -181,7 +189,8 @@ class DataEndToEndTests(Base):
             application_id=app["id"], inputs={"customers.csv": SAMPLE_CSV, "spec.json": json.dumps(SPEC).encode()},
             exec_dir=self.execs,
         )
-        self.assertEqual(job["task_id"], self.conn.execute("SELECT id FROM tasks WHERE id=?", (job["task_id"],)).fetchone()[0])
+        self.assertIsNotNone(job["task_id"])
+        self.assertEqual(wf.get_task(self.conn, job["task_id"])["application_id"], app["id"])
         self.assertEqual(job["application_id"], app["id"])
         self.assertEqual(job["ai_policy"], "unknown")  # deterministic local processing uses no AI worker
         job = ex.start(self.conn, job["id"], db_path=self.dbp)
@@ -212,7 +221,10 @@ class DataEndToEndTests(Base):
         self.assertEqual(wf.list_earnings(self.conn)["earnings"][0]["status"], "received")
         self.assertEqual(wf.list_earnings(self.conn)["summary"]["by_currency"]["USD"]["received"], 10.0)
         self.assertIn("[TEST DATA]", wf.get_application(self.conn, app["id"])["title"])
-        self.assertGreaterEqual(self.conn.execute("SELECT COUNT(*) FROM audit_log").fetchone()[0], 8)
+        audit_actions = {row[0] for row in self.conn.execute("SELECT action FROM audit_log")}
+        for action in ("application.create", "packet.generate", "draft.approve", "application.submitted_manually",
+                       "application.response", "execution.create", "execution.approve", "earning.add", "payment.record"):
+            self.assertIn(action, audit_actions, action)
 
     def test_full_lifecycle_for_a_deterministic_data_job(self):
         j = self.data_job()
