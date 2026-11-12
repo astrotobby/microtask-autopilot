@@ -92,7 +92,7 @@ class SingleInstanceTests(ApiBase):
 class ReadEndpointTests(ApiBase):
     def test_health_overview_and_legacy_status(self):
         s, h = self.get("/api/health")
-        self.assertEqual((s, h["ok"], h["database_version"], h["capabilities"]), (200, True, db.LATEST_VERSION, 12))
+        self.assertEqual((s, h["ok"], h["database_version"], h["capabilities"]), (200, True, db.LATEST_VERSION, 25))
         s, o = self.get("/api/overview")
         self.assertEqual(o["opportunities"]["kenya_confirmed"], 1)
         self.assertEqual(o["opportunities"]["total"], 6)
@@ -141,10 +141,10 @@ class ReadEndpointTests(ApiBase):
         self.assertNotIn("raw_json", o)
         self.assertEqual(self.get("/api/opportunities/detail?url=https://nope.example/")[0], 404)
 
-    def test_platform_monitor_lists_all_twelve_with_capabilities_and_mindrift_restriction(self):
+    def test_platform_monitor_lists_all_twenty_five_with_capabilities_and_mindrift_restriction(self):
         s, r = self.get("/api/platforms")
         by_id = {p["id"]: p for p in r["platforms"]}
-        self.assertEqual(len(by_id), 12)
+        self.assertEqual(len(by_id), 25)
         self.assertEqual(by_id["mindrift"]["kenya_status"], "unsupported")
         self.assertIn("AUTOMATION_PROHIBITED", by_id["mindrift"]["levels"])
         self.assertFalse(by_id["atlas_capture"]["equipment"]["user_device_compatible"])

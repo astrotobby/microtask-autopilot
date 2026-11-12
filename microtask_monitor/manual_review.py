@@ -1,10 +1,9 @@
-"""Manual-review adapters for GainWorkers and REWORKIO.
+"""Manual-review adapters for selected platforms with no permitted public task feed.
 
-Neither platform offers a supported public interface for automated worker-task/brief
-discovery (see the integration notes in integrations.json), so these adapters NEVER touch
-the network. A human reviews the portal while signed in (AUTHENTICATED MANUAL REVIEW) and may
-record what they saw in ``data/manual/<platform>.json``; this module normalizes, scores,
-deduplicates and tracks availability for those records.
+These adapters NEVER touch the network. A human reviews the portal and may record what they
+actually saw in ``data/manual/<platform>.json``; this module normalizes, scores, deduplicates
+and tracks availability for those records. Country-restricted services are deliberately not
+wired to this importer. No login, scraping, acceptance, task completion or submission occurs.
 
 Nothing is accepted, applied for, paid for, or submitted here.
 """
@@ -46,6 +45,35 @@ PLATFORMS = {
                    "briefs load from an undocumented backend, and the dashboard requires sign-in. "
                    "No supported public discovery interface was found."),
     },
+    "usertesting": {
+        "name": "UserTesting", "kind": "task", "file": "usertesting_tests.json",
+        "portal": "https://www.usertesting.com/",
+        "reason": ("Contributor availability is country- and demand-dependent. Kenya must first be "
+                   "accepted by the official sign-up flow. Tests are visible in the signed-in account; "
+                   "record only tests you personally see. Verified PayPal is required."),
+    },
+    "paidviewpoint": {
+        "name": "PaidViewpoint", "kind": "task", "file": "paidviewpoint_surveys.json",
+        "portal": "https://app.paidviewpoint.com/",
+        "reason": ("The registration flow dynamically checks country availability and there is no "
+                   "published full country list. Kenya must be accepted by signup before any survey "
+                   "is considered eligible. Survey opportunities and volume are not guaranteed."),
+    },
+    "whop_workforce": {
+        "name": "Whop Workforce", "kind": "task", "file": "whop_workforce_bounties.json",
+        "portal": "https://whop.com/workforce/",
+        "reason": ("Workforce bounties are community/account-facing. Whop's Terms prohibit automated "
+                   "access such as robots, spiders and scrapers without written consent. Manually "
+                   "record only bounties you can actually access and whose country and payout rules you verify."),
+    },
+    "telus_digital_ai": {"name":"TELUS Digital AI Community","kind":"fixed","file":"telus_digital_ai_roles.json","portal":"https://app.telusinternational.ai/contributor/jobs","reason":"Contributor roles are country- and qualification-specific. The supplied portal is account-facing; no supported worker API or automated access permission is verified."},
+    "crowdgen": {"name":"CrowdGen by Appen","kind":"fixed","file":"crowdgen_projects.json","portal":"https://crowdgen.com/","reason":"Project availability and payout methods are country/account-specific. Review projects and Dots payment settings manually; no worker-task API is enabled."},
+    "oneforma": {"name":"OneForma","kind":"fixed","file":"oneforma_projects.json","portal":"https://www.oneforma.com/","reason":"Project catalogues and payment settings depend on location, skills and account verification. Manual review only; no public worker API permission verified."},
+    "hivemicro": {"name":"Hive Micro","kind":"task","file":"hivemicro_tasks.json","portal":"https://hivemicro.com/","reason":"Jobs and qualification requirements are in the worker account. Record only tasks personally seen; the adapter does not log in or contact the platform."},
+    "timebucks": {"name":"TimeBucks","kind":"task","file":"timebucks_offers.json","portal":"https://timebucks.com/","reason":"Surveys and offers are personalized account content and payout methods vary by country. Only manually observed offers can be recorded."},
+    "neevo": {"name":"Neevo","kind":"task","file":"neevo_tasks.json","portal":"https://www.neevo.ai/","reason":"Jobs are matched by country and language in the contributor profile. Record only genuine available jobs; no automated account access."},
+    "swagbucks": {"name":"Swagbucks","kind":"task","file":"swagbucks_surveys.json","portal":"https://www.swagbucks.com/","reason":"Surveys and offers depend on country eligibility and member profile. Rewards are not employment income; import only offers you personally see."},
+    "blend": {"name":"BLEND (Tasq.ai)","kind":"fixed","file":"blend_projects.json","portal":"https://www.getblend.com/","reason":"Professional translation, voice and language-service projects require project-specific skills and language matching. Use manual review only."},
 }
 
 

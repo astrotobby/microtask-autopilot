@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08",
+  "updated_at": "2026-11-12",
   "note": "PUBLIC DISCOVERY = unauthenticated, documented, permitted automated reads. AUTHENTICATED MANUAL REVIEW = a human signs in and reviews. AUTOMATION PERMITTED = only the read-only monitoring listed here; no platform permits automated applications, task acceptance or submissions.",
   "platforms": {
     "atlas_capture": {
@@ -70,6 +70,84 @@
     },
     "reworkio": {
       "public_discovery": "unavailable_no_supported_public_interface",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "usertesting": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "user_interviews": {
+      "public_discovery": "disabled_current_country_policy",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "disabled_country_restricted"
+    },
+    "prolific": {
+      "public_discovery": "unsupported_country_waitlist",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "country_waitlist"
+    },
+    "paidviewpoint": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "whop_workforce": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "telus_digital_ai": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "crowdgen": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "oneforma": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "hivemicro": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "timebucks": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "neevo": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "swagbucks": {
+      "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "blend": {
+      "public_discovery": "manual_portal_review_only",
       "authenticated_manual_review": "yes",
       "automation_permitted": "none",
       "health": "manual_review_required"

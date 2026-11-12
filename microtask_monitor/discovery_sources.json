@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-08",
+  "updated_at": "2026-11-12",
   "country_focus": "Kenya",
   "sources": [
     {
@@ -155,6 +155,215 @@
       "automated_fetch_enabled": false,
       "reason": "Client-rendered page backed by an undocumented API; dashboard requires sign-in. Automated discovery is unavailable.",
       "use": "Open the briefs page or your dashboard and review manually; check fees before applying."
+    },
+    {
+      "id": "usertesting_participant",
+      "platform_id": "usertesting",
+      "name": "UserTesting participant signup",
+      "url": "https://www.usertesting.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "UserTesting's contributor country support is dynamic. Use the sign-up flow to check whether Kenya is currently accepted; a fixed public country list is not provided. Verified PayPal required.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "usertesting_country_support",
+      "platform_id": "usertesting",
+      "name": "UserTesting country eligibility support",
+      "url": "https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Manual policy review only. Country availability changes with contributor supply and demand; the signup page determines eligibility.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "user_interviews_participants",
+      "platform_id": "user_interviews",
+      "name": "User Interviews participant portal",
+      "url": "https://www.userinterviews.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Kenya is absent from the current official participant-country list. Mark disabled for Kenya until the official policy changes.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "user_interviews_countries",
+      "platform_id": "user_interviews",
+      "name": "User Interviews supported participant countries",
+      "url": "https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Official list currently omits Kenya and says unlisted countries cannot yet participate. Manual policy monitoring only.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "prolific_participants",
+      "platform_id": "prolific",
+      "name": "Prolific participant portal",
+      "url": "https://www.prolific.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Kenya is not in the supported participant-country list. Waitlist only; access is not guaranteed. Do not use a false country or VPN.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "prolific_countries",
+      "platform_id": "prolific",
+      "name": "Prolific participant country eligibility",
+      "url": "https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Official list omits Kenya; unsupported-country waitlist may be available. PayPal is required for cashout.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "paidviewpoint_portal",
+      "platform_id": "paidviewpoint",
+      "name": "PaidViewpoint participant portal",
+      "url": "https://app.paidviewpoint.com/",
+      "source_type": "official_participant_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "The registration flow asks for country and dynamically confirms availability. Kenya is unverified until the actual signup flow confirms it.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "paidviewpoint_support",
+      "platform_id": "paidviewpoint",
+      "name": "PaidViewpoint participant support and payout FAQ",
+      "url": "https://paidviewpoint.com/support",
+      "source_type": "official_participant_support",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Operates in 50 countries but does not publish a full list. PayPal is required; first cashout USD 15, later thresholds may reduce if account remains in good standing.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "whop_workforce_portal",
+      "platform_id": "whop_workforce",
+      "name": "Whop Workforce",
+      "url": "https://whop.com/workforce/",
+      "source_type": "official_workforce_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Bounties are created by sellers and paid after seller approval. Whop Terms prohibit automated scraping/robots without written consent. Check each bounty's country, age and payout requirements manually.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "whop_workforce_earnings",
+      "platform_id": "whop_workforce",
+      "name": "Whop Earnings Terms",
+      "url": "https://whop.com/earnings-terms/",
+      "source_type": "official_earnings_terms",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Participants must be 18+ and in good standing; bounty work and proof submission are handled through Whop's platform. Manual review only.",
+      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+    },
+    {
+      "id": "telus_digital_ai_contributor",
+      "platform_id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community contributor jobs",
+      "url": "https://app.telusinternational.ai/contributor/jobs",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Role listings require manual review; no public contributor API permission verified.",
+      "use": "Open your contributor jobs page; review country, language, assessment and payment terms manually."
+    },
+    {
+      "id": "telus_digital_ai_kenya_jobs",
+      "platform_id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community Kenya job search",
+      "url": "https://jobs.telusdigital.com/search/jobs/in/kenya?cfm5=AI+Community&ns_category=ai-community",
+      "source_type": "official_careers_search",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "A past Kenya role search result does not guarantee a role is currently open.",
+      "use": "Check live results, closing dates, country, qualifications and payout terms."
+    },
+    {
+      "id": "crowdgen_contributor",
+      "platform_id": "crowdgen",
+      "name": "CrowdGen by Appen contributor portal",
+      "url": "https://crowdgen.com/",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Projects and payout methods are country/account-specific; no worker-side API fetch enabled.",
+      "use": "Sign in yourself, confirm Kenya project availability and inspect Dots payment methods."
+    },
+    {
+      "id": "oneforma_projects",
+      "platform_id": "oneforma",
+      "name": "OneForma projects and contributor help",
+      "url": "https://www.oneforma.com/",
+      "source_type": "official_project_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Projects are account- and country-specific; no public worker API or automated fetch permission verified.",
+      "use": "Review live projects and country/language requirements; verify Payment Settings."
+    },
+    {
+      "id": "hivemicro_worker",
+      "platform_id": "hivemicro",
+      "name": "Hive Micro worker portal",
+      "url": "https://hivemicro.com/",
+      "source_type": "official_worker_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Jobs are manually reviewed in the contributor account; no automated task access.",
+      "use": "Check account country eligibility, job qualification and PayPal/Bitcoin withdrawal setup."
+    },
+    {
+      "id": "timebucks_offers",
+      "platform_id": "timebucks",
+      "name": "TimeBucks offers and surveys",
+      "url": "https://timebucks.com/",
+      "source_type": "official_worker_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Offers and payout methods vary by country and account; no worker feed fetch enabled.",
+      "use": "Review current offer rules and account-specific withdrawal methods manually."
+    },
+    {
+      "id": "neevo_contributor",
+      "platform_id": "neevo",
+      "name": "Neevo contributor platform",
+      "url": "https://www.neevo.ai/",
+      "source_type": "official_contributor_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Country/language/job matching and tasks are account-specific; no public task API permission verified.",
+      "use": "Review profile-matched jobs and verify PayPal before accepting a project."
+    },
+    {
+      "id": "swagbucks_member",
+      "platform_id": "swagbucks",
+      "name": "Swagbucks rewards and surveys",
+      "url": "https://www.swagbucks.com/",
+      "source_type": "official_member_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Country availability is not confirmed for Kenya and member offers are account-specific.",
+      "use": "Check official signup availability and reward-store payout options for Kenya."
+    },
+    {
+      "id": "blend_tasq_projects",
+      "platform_id": "blend",
+      "name": "BLEND / Tasq.ai contributor projects",
+      "url": "https://www.getblend.com/",
+      "source_type": "official_professional_services_portal",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Language-service projects are skill/language-specific; no public worker API verified.",
+      "use": "Review language projects manually and confirm Kenya payment availability."
     }
   ],
   "current_reviewed_roles": [

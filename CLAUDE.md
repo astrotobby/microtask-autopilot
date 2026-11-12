@@ -11,7 +11,7 @@ Build and maintain a reliable, free, Kenya-aware microtask opportunity workflow.
 
 ## Current architecture
 1. GitHub Actions runs `.github/workflows/hourly-opportunity-monitor.yml` hourly and on code pushes/manual dispatch.
-2. The cloud scanner reads four supplementary public RSS feeds and runs the platform adapters: OpenTrain AI (documented public jobs API), a Mindrift eligibility-policy monitor (Kenya is unsupported; discovery disabled), and manual-review integrations for GainWorkers and REWORKIO (no network access). It does NOT scrape any platform account or logged-in area.
+2. The cloud scanner reads four supplementary public RSS feeds and runs the platform adapters: OpenTrain AI (documented public jobs API), a Mindrift eligibility-policy monitor (Kenya is unsupported; discovery disabled), and manual-review imports for GainWorkers, REWORKIO, UserTesting, PaidViewpoint and Whop Workforce (no network access). User Interviews and Prolific are disabled for Kenya under their current participant-country rules. It does NOT scrape any platform account or logged-in area.
 3. Each successful run uploads `hourly-opportunity-report` with JSON, CSV and HTML.
 4. `microtask_monitor/sync_reports.py` polls the public GitHub Actions API, downloads the latest successful non-expired report artifact, validates it, writes `data/latest_report.json`, and deduplicates listings in `data/autopilot.sqlite3`.
 5. `microtask_monitor/local_server.py` binds only to 127.0.0.1:8765, runs report sync every 15 minutes, and serves the dashboard/API.
@@ -53,6 +53,11 @@ No third-party Python package is required for the current report sync/server com
 - GainWorkers: https://www.gainworkers.com/ (manual portal review only; Terms prohibit scraping/bots)
 - Mindrift: https://mindrift.ai/ — RESTRICTED: Kenya is listed as unsupported in https://mindrift.ai/legal/eligibility-and-geographic-restrictions. Do not apply, create accounts, or use VPNs/proxies. Not an active Kenya-eligible source.
 - REWORKIO: https://reworkio.com/ (professional AI/automation marketplace; manual review, automated discovery unavailable; watch for fees/deposits)
+- UserTesting: https://www.usertesting.com/ (dynamic contributor country eligibility; Kenya must be accepted by the live signup flow; verified PayPal; no automated account or test access)
+- User Interviews: https://www.userinterviews.com/ (Kenya absent from current official participant-country list; disabled while unsupported; monitor official country policy)
+- Prolific: https://www.prolific.com/ (Kenya absent from supported participant-country list; waitlist only, not guaranteed; PayPal cashout; no geo workarounds)
+- PaidViewpoint: https://app.paidviewpoint.com/ (signup dynamically checks supported countries; Kenya unverified until signup confirms; PayPal required; manual surveys only)
+- Whop Workforce: https://whop.com/workforce/ (seller bounties; manual review/submission only; Whop Terms prohibit automated scraping/robots without written consent; check campaign country and payout rules)
 
 ## Platform and safety boundaries
 - Use only official APIs, public feeds, or public pages whose access is permitted.
@@ -81,3 +86,10 @@ No third-party Python package is required for the current report sync/server com
 - First-earning workflow modules (`packets`, `reminders`, `actions`, `profile_answers`, `guidance`) only read and prepare. They must not import network code or call `approve_draft`, `mark_submitted` or `record_submission` (a test enforces this). Never invent profile answers; unverified platform guidance must stay labelled UNVERIFIED.
 - Execution engine (`execution.py`, `workers.py`, `qa.py`): instructions only come from the user; AI workers need ai_policy=allowed WITH a source AND approve_ai_run=true per run; instructions that prohibit AI can never be overridden. QA must actually execute checks (never report a test that was not run); any fail blocks review; manual checks need acknowledgement. Never add platform login, task acceptance, upload or submission to the engine. Tests use fake runners and temp paths, never real AI calls or `data/`.
 - Connections (`connections.py`, `secret_store.py`, `connect.py`): no secrets in SQLite, logs, API responses or source; API rejects credential fields; API keys only via Credential Manager. Browser windows are plain dedicated profiles (no remote debugging). Any authenticated account action must go through `connections.require_session` (policy permission + user authorization + live user-confirmed session). Do not set any platform to `browser_automation_permitted` without reading and citing its current terms.
+
+
+## Platform directory and safe integrations
+
+The current registry contains 25 target platforms. Keep the registry, integrations, capabilities, discovery sources, manual-review adapter list, dashboard, tests and README in sync whenever adding a platform.
+
+The eight additional entries (TELUS Digital AI Community, CrowdGen, OneForma, Hive Micro, TimeBucks, Neevo, Swagbucks and BLEND) are manual-only. Their importers may read only user-entered files under the gitignored `data/manual/` directory. Do not add network fetches, scraping, logged-in browser automation, task acceptance/completion, survey answers, application submission or evidence delivery without explicit, documented permission from the relevant platform. Kenya eligibility and payout options must be verified at listing/account level; do not infer them from region or platform reachability.

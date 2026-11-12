@@ -34,7 +34,7 @@ These are supplementary remote-job sources, not direct task feeds from Atlas Cap
 2. Select **Hourly public opportunity monitor**.
 3. Click **Run workflow**, choose `main`, and confirm.
 4. Open the completed run and download `hourly-opportunity-report`.
-5. The artifact contains a JSON report, a spreadsheet-friendly CSV, and a standalone HTML dashboard. Open the HTML file in a browser for a readable overview of the eight-platform directory, reviewed role snapshots, and public-feed results.
+5. The artifact contains a JSON report, a spreadsheet-friendly CSV, and a standalone HTML dashboard. Open the HTML file in a browser for a readable overview of the seventeen-platform directory, reviewed role snapshots, and public-feed results.
 
 Scheduled runs are configured for 17 minutes past each hour (UTC). GitHub may delay scheduled runs, and usage is subject to account/repository limits.
 
@@ -71,9 +71,9 @@ The local agent must be running for automatic dashboard updates. If it is not ru
 
 ## Target platform registry
 
-The original eight services plus OpenTrain AI, GainWorkers, Mindrift and REWORKIO (twelve in total, see below) are recorded in `microtask_monitor/platforms.json`: Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery, Handshake AI and Braintrust.
+The original twelve services, five user-research/bounty additions and eight further contributor platforms (twenty-five in total) are recorded in `microtask_monitor/platforms.json`.
 
-The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
+The twenty-five-platform directory includes Atlas Capture, Clickworker, Microworkers, RapidWorkers, SproutGigs, AfterQuery Experts, Handshake AI, Braintrust, OpenTrain AI, GainWorkers, Mindrift, REWORKIO, UserTesting, User Interviews, Prolific, PaidViewpoint, Whop Workforce, TELUS Digital AI Community, CrowdGen, OneForma, Hive Micro, TimeBucks, Neevo, Swagbucks and BLEND. It is a registry of target services, not proof that every service has live task discovery or accepts Kenyan participants. The hourly report includes this registry so the monitor can distinguish target platforms from supplementary public job-board listings. Unknown official URLs and uncertain service identities remain explicitly unverified. Kenya eligibility is not assumed; check the individual task, role and account restrictions.
 
 The registry is intentionally conservative: it tracks platform status and allowed/blocked actions but does not sign in, scrape private dashboards, accept tasks, complete work or submit proofs. Platform automation must remain disabled unless the exact service identity, current official terms and task-specific instructions explicitly permit the proposed action.
 
@@ -124,9 +124,9 @@ The report now carries discovery entry points for all eight target services:
 
 The source directory is `microtask_monitor/discovery_sources.json`. The hourly report packages all eight platform records and discovery links alongside public-feed listings. It does not scrape account dashboards, infer that a remote listing accepts Kenyan applicants, or claim a job is open just because a platform landing page exists.
 
-## Twelve-platform registry and integration modes
+## Seventeen-platform registry and integration modes
 
-The registry (`microtask_monitor/platforms.json`) now holds 12 platforms in three groups, with eligibility and integration health tracked independently (`microtask_monitor/integrations.json`):
+The registry (`microtask_monitor/platforms.json`) now holds 25 platforms in five groups, with eligibility and integration health tracked independently (`microtask_monitor/integrations.json`):
 
 | Group | Platforms |
 |---|---|
@@ -174,7 +174,7 @@ The dashboard is now a control panel backed by the local SQLite database (`data/
 | **Application Manager** | Prepares a tailored draft from your *established* profile only, lists what is missing, lets you edit and approve it, and records when you submitted and what the platform answered. | Submitting. Approval never sends anything. |
 | **Task Workspace** | Paste task instructions: get a simplified summary, rules, materials, evidence needs, common mistakes and a checklist; track work sessions, evidence (stored locally with a SHA-256) and your submission record. | Doing and submitting the work. |
 | **Earnings** | Separates *expected*, *pending* and *received*. Only a payment you record (with a received date, not in the future) counts as received. Advertised pay is never earnings. | Receiving and verifying payment. |
-| **Platform Monitor** | All 12 platforms: Kenya status, capability levels, integration health, policy verification date, restrictions, required manual action. | Everything the platform requires. |
+| **Platform Monitor** | All 25 platforms: Kenya status, capability levels, integration health, policy verification date, restrictions, required manual action. | Everything the platform requires. |
 | **Notifications** | Dashboard (always), Windows desktop balloon, optional email and Telegram. Deduplicated; a first run gives the top few plus one digest. | – |
 
 ### Eligibility classes (never guessed)
@@ -260,7 +260,7 @@ Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel 
 
 ## Platform connections and secrets (local only)
 
-- **Connections tab.** For each of the 12 platforms it shows the connection status, the last successful check (confirmed by you), the permitted automation level and your next action.
+- **Connections tab.** For each of the 25 platforms it shows the connection status, the last successful check (confirmed by you), the permitted automation level and your next action.
 - **"Open login window".** Starts Edge or Chrome with a dedicated profile under `data/browser-profiles/<platform>` at the official sign-in page. No remote-debugging or automation flags are used.
   - You sign in yourself and complete any CAPTCHA, MFA, identity check or KYC personally. Then press "I'm signed in".
   - The browser keeps the session in its own OS-encrypted store. This program never reads cookies or passwords.
@@ -281,3 +281,54 @@ Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel 
 - Microworkers, SproutGigs and RapidWorkers remain manual-only until their current official terms and task rules are verified.
 - Never automate CAPTCHA, MFA, KYC, private account access, task completion or proof submission without explicit platform permission. No fake work, fabricated evidence or location circumvention.
 - Public discovery pages are navigation aids, not live feeds. The hourly workflow currently refreshes configured RSS sources; it does not promise hourly refresh of the eight account portals.
+
+
+## Participant research and survey platforms (reviewed 2026-11-12)
+
+Five additional entries have been added to the platform directory and integration registry: UserTesting, User Interviews, Prolific, PaidViewpoint and Whop Workforce.
+
+| Platform | Kenya status | Participant payout / requirements | System handling |
+|---|---|---|---|
+| UserTesting | Dynamic signup eligibility; Kenya must be accepted by its current contributor signup flow | Verified PayPal; USD payments normally 14 days after a completed test; no minimum. Windows requires 8 GB RAM, 1920x1080 display, microphone and at least 5 Mbps upload | Manual signup and genuine human test participation; manual record import only |
+| User Interviews | Kenya is absent from the published participant-country list; currently unsupported | Study incentives vary. User Interviews may distribute Tremendous rewards; researchers may pay using the incentive type shown in the study | Disabled for Kenya; policy monitoring only |
+| Prolific | Kenya is absent from the supported-country list; waitlist may be available but does not guarantee access | PayPal; GBP 6 or USD 6 minimum cashout. Country of residence and PayPal rules apply | Waitlist/manual policy review only; no work recommendations while unsupported |
+| PaidViewpoint | Country acceptance is decided dynamically during signup; Kenya remains unverified until the signup flow confirms it | PayPal required; first cashout USD 15, then possibly USD 10 and USD 5 for eligible accounts in good standing; FAQ states processing within 72 hours | Manual signup and survey work; manual record import only |
+| Whop Workforce | Campaign-specific country eligibility and Kenya payout route require account-level confirmation | Seller-created bounties pay after the seller approves the submitted proof; participants must be 18+ and in good standing | Manual-only; Whop Terms prohibit automated access such as bots, robots and scrapers without written consent |
+
+None of these five is an automated account or task integration. UserTesting, PaidViewpoint and Whop Workforce accept manually imported records only after the user personally verifies the task and eligibility. User Interviews and Prolific are marked as country-restricted for Kenya based on their current official participant-country lists. The system must not infer eligibility from PayPal availability, website reachability, nationality or a remote label.
+
+Official policy references:
+- UserTesting: https://participant-support.usertesting.com/hc/en-us/articles/38410176419603-Can-I-join-the-UserTesting-Network-from-my-country ; https://support.usertesting.com/hc/en-us/articles/4405059155859-Where-do-I-apply ; https://participant-support.usertesting.com/hc/en-us/articles/38814220821523-FAQ-Payments
+- User Interviews: https://support.userinterviews.com/hc/en-us/articles/51535822654099-Countries-where-you-can-participate-in-studies ; https://support.userinterviews.com/hc/en-us/articles/51535828055699-Learn-how-and-when-you-ll-receive-your-incentive-payment
+- Prolific: https://participant-help.prolific.com/en/articles/445007-who-can-participate-in-studies-on-prolific ; https://participant-help.prolific.com/en/articles/445062-how-do-i-cash-out-on-prolific
+- PaidViewpoint: https://paidviewpoint.com/support ; https://paidviewpoint.com/legal/terms-of-service
+- Whop: https://whop.com/workforce/ ; https://whop.com/tos ; https://whop.com/earnings-terms/
+
+
+## Eight additional contributor platforms (reviewed 2026-11-12)
+
+Eight further services are registered and wired to **local manual-review importers**. They appear in the dashboard, capability/policy records, connection tracker, integration-health report and scan output. They do not have automated task discovery or logged-in account automation enabled.
+
+| Platform | Kenya access and payment checks |
+|---|---|
+| TELUS Digital AI Community | Role-specific. A Kenya assessor role has appeared on the official careers search, but that does not mean it is currently open. Recheck the live role, requirements and contract payout. |
+| CrowdGen by Appen | Project country and qualification rules apply. Dots payment options vary by country/account; official help describes monthly payment by the 14th for the prior month's approved work. |
+| OneForma | Projects are country/language-specific. Current help lists Payoneer, PayPal or Tipalti depending on account, a typical USD 10 threshold and project-dependent weekly/bi-weekly cycles. |
+| Hive Micro | Check country/job access and PayPal country support. Official help lists PayPal (USD 10 minimum) or Bitcoin (USD 20 minimum); tasks remain manual. |
+| TimeBucks | Offers and payout methods are country/account-specific. Official help describes a USD 3 minimum; PayPal may carry a 4% fee (minimum USD 0.25). Verify the actual method shown in your account. |
+| Neevo | Country/language matching is project-specific. Verified PayPal is required; payout follows job completion, deadline and quality validation. |
+| Swagbucks | Available in some African countries, not confirmed for Kenya. Check live signup; reward types depend on the regional store and points are not cash until redeemed and paid. |
+| BLEND (Tasq.ai) | Professional language-services projects (translation, voice and linguistics), not generic microtasks. Official help describes Payoneer, PayPal or Payoneer-managed bank transfer and a USD 20 withdrawal threshold; Kenya methods need in-account confirmation. |
+
+Manual record files are gitignored and never created with fabricated listings. After you personally verify a real opportunity and its eligibility, add a JSON file under `data/manual/` with a top-level `records` array:
+
+- `telus_digital_ai_roles.json`
+- `crowdgen_projects.json`
+- `oneforma_projects.json`
+- `hivemicro_tasks.json`
+- `timebucks_offers.json`
+- `neevo_tasks.json`
+- `swagbucks_surveys.json`
+- `blend_projects.json`
+
+Each record can use `id`, `title`, `url`, `description`, `skills`, `region`, `payment` or `budget`, `status`, `deadline` and `posted`. Keep the evidence real: a missing or blank region stays unverified; it is never automatically treated as Kenya-eligible. Applications, qualification tests, task acceptance, work, proof/delivery and payment steps are still performed by you.
