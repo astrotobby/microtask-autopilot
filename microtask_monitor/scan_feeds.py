@@ -159,6 +159,9 @@ def run_integrations(platforms):
         "opentrain_ai": opentrain.scan,
         "gainworkers": lambda: manual_review.scan("gainworkers"),
         "reworkio": lambda: manual_review.scan("reworkio"),
+        "usertesting": lambda: manual_review.scan("usertesting"),
+        "paidviewpoint": lambda: manual_review.scan("paidviewpoint"),
+        "whop_workforce": lambda: manual_review.scan("whop_workforce"),
         "mindrift": mindrift.scan,
     }
     for pid, run in adapters.items():
@@ -275,7 +278,7 @@ th{background:#f7f9fb}a{color:#0759a5} .notice{background:#fff8e6;border-left:4p
 <div class="stat"><strong>""" + str(report.get("medium_review_count", 0)) + """</strong>Medium-priority reviews</div>
 </div>
 <p class="notice">""" + note + """ This report does not log in to platform accounts, accept tasks, or submit work.</p>
-<section><h2>Twelve-platform discovery directory</h2><p class="muted">These are navigation links, not proof of live tasks or Kenya eligibility.</p>
+<section><h2>Seventeen-platform discovery directory</h2><p class="muted">These are navigation links, not proof of live tasks or Kenya eligibility.</p>
 <table><thead><tr><th>Platform</th><th>Source and notes</th><th>Link</th></tr></thead><tbody>""" + "".join(source_rows) + """</tbody></table></section>
 <section><h2>Integration health</h2><p class="muted">Eligibility and integration health are separate: a healthy integration does not mean you are eligible.</p>
 <table><thead><tr><th>Platform</th><th>Type</th><th>Status</th><th>Last successful scan</th><th>Error</th></tr></thead><tbody>""" + ("".join(health_rows) or "<tr><td colspan='5'>No integration data in this report.</td></tr>") + """</tbody></table></section>
