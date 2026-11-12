@@ -16,16 +16,19 @@ DASH = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
 MICROTASK = {"atlas_capture", "clickworker", "microworkers", "rapidworkers", "sproutgigs", "gainworkers"}
 AI_TRAINING = {"afterquery", "handshake_ai", "opentrain_ai", "mindrift"}
 PROFESSIONAL = {"braintrust", "reworkio"}
+USER_RESEARCH = {"usertesting", "user_interviews", "prolific", "paidviewpoint"}
+BOUNTY = {"whop_workforce"}
 
 
 class ClassificationTests(unittest.TestCase):
-    def test_all_twelve_platforms_are_classified_into_three_groups(self):
-        self.assertEqual(len(PLATFORMS), 12)
+    def test_all_seventeen_platforms_are_classified_into_five_groups(self):
+        self.assertEqual(len(PLATFORMS), 17)
         for ids, kind in ((MICROTASK, "microtask"), (AI_TRAINING, "ai_training"),
-                          (PROFESSIONAL, "professional_marketplace")):
+                          (PROFESSIONAL, "professional_marketplace"), (USER_RESEARCH, "user_research"),
+                          (BOUNTY, "bounty_marketplace")):
             for pid in ids:
                 self.assertEqual(BY_ID[pid]["platform_type"], kind, pid)
-        self.assertEqual(len(MICROTASK | AI_TRAINING | PROFESSIONAL), 12)
+        self.assertEqual(len(MICROTASK | AI_TRAINING | PROFESSIONAL | USER_RESEARCH | BOUNTY), 17)
 
     def test_reworkio_is_a_professional_marketplace_not_a_microtask_site(self):
         self.assertEqual(BY_ID["reworkio"]["platform_type"], "professional_marketplace")
@@ -50,7 +53,7 @@ class ClassificationTests(unittest.TestCase):
 
     def test_no_new_platform_allows_automated_submission_or_acceptance(self):
         risky = ("automated_application_submission", "automated_task_acceptance", "automated_applications")
-        for pid in ("opentrain_ai", "gainworkers", "mindrift", "reworkio"):
+        for pid in ("opentrain_ai", "gainworkers", "mindrift", "reworkio", *USER_RESEARCH, *BOUNTY):
             for action in BY_ID[pid]["allowed_actions"]:
                 self.assertNotIn(action, risky)
                 self.assertNotIn("submit", action)
@@ -121,7 +124,7 @@ class ReportIntegrationTests(unittest.TestCase):
                   "medium_review_count": 0, "important_note": "Verify."}
         page = scan_feeds.render_html(report)
         self.assertIn("Integration health", page)
-        self.assertIn("Twelve-platform", page)
+        self.assertIn("Seventeen-platform", page)
         self.assertIn("REWORKIO", page)
         self.assertIn("Job &lt;b&gt;1&lt;/b&gt;", page)
         self.assertNotIn("<b>1</b>", page)
@@ -133,12 +136,13 @@ class ReportIntegrationTests(unittest.TestCase):
 
 
 class DashboardDisplayTests(unittest.TestCase):
-    def test_twelve_platforms_in_three_groups_with_independent_eligibility_and_health(self):
-        self.assertIn("Platforms (12)", DASH)
+    def test_seventeen_platforms_in_five_groups_with_independent_eligibility_and_health(self):
+        self.assertIn("Platforms (17)", DASH)
         for pid in BY_ID:
             self.assertIn(f'id:"{pid}"', DASH)
         for title in ("Microtask platforms", "AI training and evaluation platforms",
-                      "Professional freelance and expert marketplaces"):
+                      "Professional freelance and expert marketplaces", "User research and survey panels",
+                      "Creator bounties and task marketplaces"):
             self.assertIn(title, DASH)
         self.assertIn("Eligibility: restricted for your location", DASH)
         self.assertIn("Integration: ", DASH)
