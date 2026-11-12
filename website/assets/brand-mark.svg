@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Microtask Autopilot mark">
+  <rect width="64" height="64" rx="15" fill="#102b4b"/>
+  <path d="M16 21h20M16 32h31M16 43h20" fill="none" stroke="#eef5fc" stroke-linecap="round" stroke-width="4"/>
+  <circle cx="46" cy="21" r="5" fill="#8ce0ca"/>
+  <circle cx="37" cy="43" r="5" fill="#8ce0ca"/>
+</svg>

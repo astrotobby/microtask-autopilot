@@ -1,0 +1,258 @@
+{
+  "updated_at": "2026-11-12",
+  "platform_count": 25,
+  "automated_public_discovery_sources": 1,
+  "fully_autonomous_earning_sources": 0,
+  "platforms": [
+    {
+      "id": "atlas_capture",
+      "name": "Atlas Capture",
+      "type": "microtask",
+      "official_url": "https://www.atlascapture.io/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "clickworker",
+      "name": "Clickworker",
+      "type": "microtask",
+      "official_url": "https://www.clickworker.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "gainworkers",
+      "name": "GainWorkers",
+      "type": "microtask",
+      "official_url": "https://www.gainworkers.com/",
+      "kenya_status": "Per task; verify",
+      "discovery": "No public worker feed; manual portal review only",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-08"
+    },
+    {
+      "id": "hivemicro",
+      "name": "Hive Micro",
+      "type": "microtask",
+      "official_url": "https://hivemicro.com/",
+      "kenya_status": "Account-level check required",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "microworkers",
+      "name": "Microworkers",
+      "type": "microtask",
+      "official_url": "https://www.microworkers.com/",
+      "kenya_status": "Per task; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "rapidworkers",
+      "name": "RapidWorkers",
+      "type": "microtask",
+      "official_url": "https://rapidworkers.io/",
+      "kenya_status": "Per task; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "sproutgigs",
+      "name": "SproutGigs",
+      "type": "microtask",
+      "official_url": "https://sproutgigs.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "timebucks",
+      "name": "TimeBucks",
+      "type": "microtask",
+      "official_url": "https://timebucks.com/",
+      "kenya_status": "Account-level check required",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "afterquery",
+      "name": "AfterQuery",
+      "type": "ai_training",
+      "official_url": "https://experts.afterquery.com/home",
+      "kenya_status": "Unverified",
+      "discovery": "Manual link review only",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "crowdgen",
+      "name": "CrowdGen by Appen",
+      "type": "ai_training",
+      "official_url": "https://crowdgen.com/",
+      "kenya_status": "Per project; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "handshake_ai",
+      "name": "Handshake AI",
+      "type": "ai_training",
+      "official_url": null,
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Disabled pending identity verification",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "mindrift",
+      "name": "Mindrift",
+      "type": "ai_training",
+      "official_url": "https://mindrift.ai/",
+      "kenya_status": "Unsupported for Kenya",
+      "discovery": "Discovery disabled by location policy",
+      "tracking_status": "Policy monitor only",
+      "review_date": "2026-11-08"
+    },
+    {
+      "id": "neevo",
+      "name": "Neevo",
+      "type": "ai_training",
+      "official_url": "https://www.neevo.ai/",
+      "kenya_status": "Per project; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "oneforma",
+      "name": "OneForma",
+      "type": "ai_training",
+      "official_url": "https://www.oneforma.com/",
+      "kenya_status": "Per project; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "opentrain_ai",
+      "name": "OpenTrain AI",
+      "type": "ai_training",
+      "official_url": "https://app.opentrain.ai/",
+      "kenya_status": "Per job; verify",
+      "discovery": "Documented public API — read-only discovery",
+      "tracking_status": "Public API · read-only discovery",
+      "review_date": "2026-11-08"
+    },
+    {
+      "id": "telus_digital_ai",
+      "name": "TELUS Digital AI Community",
+      "type": "ai_training",
+      "official_url": "https://app.telusinternational.ai/contributor/jobs",
+      "kenya_status": "Per role; verify",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "blend",
+      "name": "BLEND (Tasq.ai)",
+      "type": "professional_marketplace",
+      "official_url": "https://www.getblend.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "braintrust",
+      "name": "Braintrust",
+      "type": "professional_marketplace",
+      "official_url": "https://app.usebraintrust.com/talent/dashboard/welcome/",
+      "kenya_status": "Per job; verify",
+      "discovery": "Manual link review only",
+      "tracking_status": "Manual only",
+      "review_date": "2026-11-09"
+    },
+    {
+      "id": "reworkio",
+      "name": "REWORKIO",
+      "type": "professional_marketplace",
+      "official_url": "https://reworkio.com/",
+      "kenya_status": "Unverified",
+      "discovery": "No supported public discovery interface",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-08"
+    },
+    {
+      "id": "paidviewpoint",
+      "name": "PaidViewpoint",
+      "type": "user_research",
+      "official_url": "https://paidviewpoint.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "prolific",
+      "name": "Prolific",
+      "type": "user_research",
+      "official_url": "https://www.prolific.com/",
+      "kenya_status": "Unsupported-country waitlist",
+      "discovery": "Unsupported-country waitlist only",
+      "tracking_status": "Waitlist only",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "swagbucks",
+      "name": "Swagbucks",
+      "type": "user_research",
+      "official_url": "https://www.swagbucks.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "user_interviews",
+      "name": "User Interviews",
+      "type": "user_research",
+      "official_url": "https://www.userinterviews.com/",
+      "kenya_status": "Unsupported for Kenya",
+      "discovery": "Discovery disabled by current country policy",
+      "tracking_status": "Disabled by country restriction",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "usertesting",
+      "name": "UserTesting",
+      "type": "user_research",
+      "official_url": "https://www.usertesting.com/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    },
+    {
+      "id": "whop_workforce",
+      "name": "Whop Workforce",
+      "type": "bounty_marketplace",
+      "official_url": "https://whop.com/workforce/",
+      "kenya_status": "Unverified",
+      "discovery": "Manual review only — no automated task discovery",
+      "tracking_status": "Manual review required",
+      "review_date": "2026-11-12"
+    }
+  ]
+}
