@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14233d">
+  <meta name="description" content="Evidence-first Kenya-focused opportunity and earnings dashboard.">
+  <title>Microtask Autopilot — Public Dashboard</title>
+  <link rel="icon" href="/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-lockup"><img src="/logo.svg" alt="" class="logo"><div><div class="eyebrow">KENYA-FOCUSED OPPORTUNITY CONSOLE</div><h1>Microtask Autopilot</h1><p>See what is actually connected, what needs review, and what still requires you.</p></div></div>
+    <div class="top-actions"><span class="live-dot"><i></i> Hosted snapshot</span><a class="button ghost" href="https://github.com/astrotobby/microtask-autopilot" target="_blank" rel="noreferrer">View source</a></div>
+  </header>
+  <main class="shell">
+    <section class="hero-grid">
+      <div class="hero-copy"><div class="eyebrow gold">CONTROL WHAT YOU CAN PROVE</div><h2>A public window into the Autopilot system.</h2><p>This site is a read-only hosted snapshot of the local project. It separates public discovery from human-only platform actions, and recorded payments from independently verified income.</p><div class="hero-meta"><span id="snapshotDate">Loading snapshot…</span><span>•</span><span id="commitRef">Source commit loading…</span></div></div>
+      <aside class="boundary-card"><div class="section-kicker">BOUNDARY CHECK</div><h3>A discovered listing is not a paid result.</h3><p>Applications, contracts, identity checks, task completion, evidence submission and payout requests remain human actions. Received-payment records are entered by the worker and are not independently verified here.</p><div class="status-line"><span class="status-dot green"></span><strong>Honest by design</strong></div></aside>
+    </section>
+
+    <section class="metric-grid" id="metrics" aria-label="Snapshot metrics"></section>
+
+    <section class="section-block">
+      <div class="section-heading"><div><div class="section-kicker">OPPORTUNITY SIGNAL</div><h2>Current opportunity picture</h2></div><span class="section-note" id="dataNote"></span></div>
+      <div class="signal-grid"><div class="signal-card"><span class="signal-label">KENYA-CONFIRMED</span><strong id="kenyaCount">—</strong><p>Listings whose own data names Kenya.</p></div><div class="signal-card"><span class="signal-label">WORLDWIDE-CONFIRMED</span><strong id="worldwideCount">—</strong><p>Listings that explicitly state worldwide access.</p></div><div class="signal-card amber"><span class="signal-label">NEEDS REVIEW</span><strong id="reviewCount">—</strong><p>Eligibility or source evidence is not enough yet.</p></div><div class="signal-card coral"><span class="signal-label">HIGH RISK FLAGS</span><strong id="riskCount">—</strong><p>Fee, deposit, domain or suspicious-language signals.</p></div></div>
+    </section>
+
+    <section class="section-block" id="opportunitiesSection">
+      <div class="section-heading"><div><div class="section-kicker">TOP RECORDS</div><h2>Best current opportunities</h2></div><div class="toolbar"><label class="search"><span>⌕</span><input id="opportunitySearch" type="search" placeholder="Filter by title or platform" aria-label="Filter opportunities"></label><select id="eligibilityFilter" aria-label="Filter by eligibility"><option value="">All eligibility states</option><option value="KENYA_CONFIRMED">Kenya confirmed</option><option value="WORLDWIDE_CONFIRMED">Worldwide confirmed</option><option value="KENYA_UNVERIFIED">Needs Kenya review</option></select></div></div>
+      <div class="table-shell"><table><thead><tr><th>Opportunity</th><th>Eligibility</th><th>Score</th><th>Pay</th><th>Risk</th><th>Source</th></tr></thead><tbody id="opportunityRows"></tbody></table></div><div class="table-foot" id="opportunityFoot"></div>
+    </section>
+
+    <section class="section-block">
+      <div class="section-heading"><div><div class="section-kicker">PLATFORM MAP</div><h2>25 tracked platforms</h2></div><div class="toolbar"><label class="search"><span>⌕</span><input id="platformSearch" type="search" placeholder="Find a platform" aria-label="Filter platforms"></label><select id="healthFilter" aria-label="Filter by integration status"><option value="">All integration states</option><option value="automated">Automated discovery</option><option value="policy_monitor">Policy monitor</option><option value="manual_only">Manual / unverified</option></select></div></div>
+      <div class="platform-grid" id="platformGrid"></div>
+    </section>
+
+    <section class="section-block proof-section">
+      <div class="section-heading"><div><div class="section-kicker">EARNING PROOF</div><h2>What counts as received</h2></div><span class="tag green-tag">Worker-recorded only</span></div>
+      <div class="proof-grid"><div class="proof-number"><span>Received-payment records</span><strong id="receivedRecords">—</strong><small>Expected and pending amounts stay outside this proof view.</small></div><div class="proof-number"><span>Recorded total</span><strong id="receivedTotal">—</strong><small>Currency is shown as recorded; no bank or wallet verification is claimed.</small></div><div class="proof-copy"><p>The hosted dashboard does not log into platforms, payment providers or bank accounts. Keep original approval and payment evidence separately, and use this page as an administrative ledger rather than an independent financial statement.</p></div></div>
+    </section>
+
+    <footer><span>Microtask Autopilot</span><span>Read-only snapshot · <a href="https://github.com/astrotobby/microtask-autopilot" target="_blank" rel="noreferrer">open the repository</a></span></footer>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>

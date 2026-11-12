@@ -1,0 +1,9 @@
+{
+  "name": "microtask-autopilot-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Read-only hosted dashboard for the Microtask Autopilot opportunity registry.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
