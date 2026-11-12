@@ -1,5 +1,8 @@
 # Local runtime data and user records
 data/
+!website/data/
+website/data/*
+!website/data/platforms.json
 *.sqlite
 *.sqlite3
 *.db
