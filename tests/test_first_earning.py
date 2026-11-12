@@ -307,7 +307,11 @@ class ReminderTests(Base):
         self.assertTrue(any("tomorrow" in t for t in titles) and any("today" in t for t in titles))
 
     def test_stale_draft_review_reminder(self):
-        self.application()
+        app = self.application()
+        stale_at = (NOW - timedelta(days=3)).isoformat()
+        with db.tx(self.conn):
+            self.conn.execute("UPDATE applications SET created_at=?, updated_at=? WHERE id=?", (stale_at, stale_at, app["id"]))
+            self.conn.execute("UPDATE application_drafts SET created_at=? WHERE application_id=?", (stale_at, app["id"]))
         self.generate(NOW + timedelta(days=3))
         self.assertEqual(len(self.reminders_for("draft_review")), 1)
 
