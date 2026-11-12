@@ -153,7 +153,7 @@ class DashboardDisplayTests(unittest.TestCase):
         self.assertIsNotNone(match)
         self.assertIn("restricted:true", match.group(0))
         self.assertIn("Kenya is listed as unsupported", match.group(0))
-        self.assertIn("PLATFORMS.filter(p=>!p.restricted).length", DASH)
+        self.assertIn("PLATFORMS.filter(p=>p.kenyaConfirmed===true).length", DASH)
 
     def test_dashboard_shows_required_opportunity_columns(self):
         for column in ("Platform", "Kenya eligibility", "Task / job", "Payment", "Discovered", "Status", "Link"):
