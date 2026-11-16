@@ -183,6 +183,44 @@ def onboarding(conn) -> list[dict[str, Any]]:
     return out
 
 
+# ------------------------------------------------------------------------------------------- milestone 1 views
+def opportunity_intelligence(conn, limit: int = 200) -> dict[str, Any]:
+    """Section B: every recorded opportunity in its 8-way category, ranked, with the reason and public state."""
+    rows = []
+    for r in conn.execute("SELECT a.id FROM assignments a LEFT JOIN task_intel t ON t.assignment_id=a.id ORDER BY COALESCE(t.score,0) DESC, a.updated_at DESC LIMIT ?", (limit,)):
+        a = lifecycle.view(conn, r["id"])
+        intel = a.get("intel") or {}
+        x, eco = intel.get("extracted") or {}, intel.get("economics") or {}
+        job = conn.execute("SELECT status FROM execution_jobs WHERE id=?", (a.get("execution_job_id"),)).fetchone() if a.get("execution_job_id") else None
+        rows.append({"assignment_id": a["id"], "platform_id": a["platform_id"], "title": a["title"], "url": a.get("source_url"), "reward": a.get("reward_gross"),
+                     "currency": a.get("currency"), "deadline": a.get("deadline"), "category": intel.get("category"), "automation_class": intel.get("automation_class"),
+                     "category8": x.get("category8"), "category8_label": x.get("category8_label"), "category8_reason": x.get("category8_reason"),
+                     "reasons": intel.get("reasons") or [], "score": intel.get("score"), "hourly_usd": eco.get("hourly_comparable_usd"),
+                     "state": lifecycle.spec_state(a, job["status"] if job else None)})
+    counts = {k: 0 for k in task_intel.CATEGORY8}
+    for r in rows:
+        if r["category8"]:
+            counts[r["category8"]] += 1
+    return {"opportunities": rows, "category_counts": [{"category": k, "label": task_intel.CATEGORY8[k], "count": counts[k]} for k in counts],
+            "states": list(lifecycle.SPEC_STATES)}
+
+
+def system_health(conn) -> dict[str, Any]:
+    """Section F: is everything that should be running, running, and what failed last."""
+    try:
+        from microtask_monitor import email_discovery
+    except ImportError:  # pragma: no cover
+        import email_discovery
+    sch = scheduler.status(conn)
+    failing = [{"job": j["name"], "failures": j.get("consecutive_failures"), "error": j.get("last_error")} for j in sch["jobs"] if j.get("consecutive_failures")]
+    disc = discovery.health(conn)
+    return {"scheduler_alive": sch["alive"], "heartbeat": sch["heartbeat"], "jobs": sch["jobs"], "failing_jobs": failing,
+            "discovery": [{"platform_id": k, **v} for k, v in disc.items()], "email_discovery": email_discovery.health(conn),
+            "connections": cx.list_states(conn), "resources": control.resources(conn), "stopped": control.kill_state(conn),
+            "paused": control.settings(conn)["paused"], "database_version": db.user_version(conn),
+            "open_alerts": conn.execute("SELECT COUNT(*) FROM notifications WHERE read_at IS NULL").fetchone()[0]}
+
+
 # ------------------------------------------------------------------------------------------- routing
 def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[str, Any]:
     n = len(rest)
@@ -209,7 +247,21 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
         if head == "submissions":
             return {"ok": True, **submission.manager(conn)}
         if head == "ledger":
-            return {"ok": True, **ledger.view(conn)}
+            return {"ok": True, **ledger.view(conn), "overview": ledger.earnings_overview(conn)}
+        if head == "capabilities":
+            from microtask_monitor import capabilities as capmod, platform_adapters as pa
+            return {"ok": True, "platforms": pa.control_centre(conn), "capabilities": list(capmod.CAPABILITIES), "states": list(capmod.STATES),
+                    "outcomes": pa.OUTCOMES}
+        if head == "opportunities":
+            return {"ok": True, **opportunity_intelligence(conn)}
+        if head == "health":
+            return {"ok": True, **system_health(conn)}
+        if head == "earnings":
+            return {"ok": True, **ledger.earnings_overview(conn)}
+        if head == "tasks" and n == 3 and rest[2] == "submission":
+            from microtask_monitor import platform_adapters as pa
+            a = lifecycle.view(conn, _int(rest[1]))
+            return {"ok": True, "submission": pa.adapter(conn, a["platform_id"]).prepare_submission(a["id"])}
         if head == "control":
             return {"ok": True, **control.view(conn)}
         if head == "scheduler":
@@ -242,6 +294,9 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
             return {"ok": True, **shorts_service.view(conn, cfg, api.store), "config_error": err}
     if method == "PUT" and rest == ["settings"]:
         return {"ok": True, "settings": control.update_settings(conn, body)}
+    if method == "POST" and rest == ["email", "import"]:
+        from microtask_monitor import email_discovery as ed
+        return {"ok": True, "result": ed.import_messages(conn, ed.EmlFolder().fetch(), "eml_folder")}
     if method == "POST":
         if rest == ["stop"]:
             return {"ok": True, "kill_switch": control.engage_stop(conn, str(body.get("reason") or "Stopped by you from the dashboard"))}

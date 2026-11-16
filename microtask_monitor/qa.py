@@ -279,9 +279,28 @@ def automation_checks(job, paths) -> list[dict[str, Any]]:
     return res
 
 
+# ------------------------------------------------------------------------------------------- research
+def research_checks(job, paths) -> list[dict[str, Any]]:
+    """Writing checks, plus: sources are always required, listed in a Sources section, from at least two distinct sites."""
+    res = [r for r in writing_checks(job, paths) if r["name"] != "sources_listed"]
+    if res and res[0]["name"] == "document_present" and res[0]["status"] == "fail":
+        return res
+    body = "\n".join(_text(f) for f in _files(paths["output"]) if f.suffix.lower() in (".md", ".txt") and f.name != "NOTES.md")
+    urls = set(re.findall(r"https?://[^\s)>\]]+", body))
+    sites = {re.sub(r"^www\.", "", u.split("/")[2].lower()) for u in urls if u.count("/") >= 2}
+    has_section = bool(re.search(r"^#{1,4}\s*(sources|references|bibliography)\b", body, re.I | re.M))
+    res.append(_r("sources_section", "pass" if has_section else "fail", "A Sources/References section is present" if has_section else "No Sources or References section"))
+    res.append(_r("independent_sources", "pass" if len(sites) >= 2 else "fail", f"{len(urls)} source URL(s) from {len(sites)} distinct site(s)"))
+    insecure = sorted(u for u in urls if u.startswith("http://"))
+    if insecure:
+        res.append(_r("source_links_https", "manual", f"{len(insecure)} source link(s) are not https: check them yourself", executed=False))
+    res.append(_r("sources_support_claims", "manual", "This program cannot open the sources to confirm they say what the text claims: spot-check them before delivering.", executed=False))
+    return res
+
+
 CHECKS: dict[str, Callable[[dict[str, Any], dict[str, Path]], list[dict[str, Any]]]] = {
     "software": software_checks, "writing": writing_checks, "data": data_checks, "evaluation": evaluation_checks,
-    "content": content_checks, "automation": automation_checks,
+    "content": content_checks, "automation": automation_checks, "research": research_checks,
 }
 
 

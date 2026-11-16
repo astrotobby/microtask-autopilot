@@ -286,6 +286,58 @@ class RateLimitTests(Base):
         self.assertTrue(self.mailer.sent)
 
 
+NOCLIP = """
+## 3. First email (no clip)
+Subject: Your Shorts vs your episodes
+
+Hi {first_name_or_team}, episodes about {episodes_median}, Shorts about {shorts_median}. Reply "yes" and I'll cut 3 free from "{episode_title_short}". Trial: {trial_link}
+
+## 4. Follow-up (no clip)
+Subject: Re: Your Shorts vs your episodes
+
+Hi {first_name_or_team}, want those 3 free clips? Just reply "yes".
+"""
+
+
+class NoClipTests(Base):
+    def setUp(self):
+        super().setUp()
+        self.tpl.write_text(TEMPLATES + NOCLIP, encoding="utf-8")
+        ot.approve_templates(self.conn, TEMPLATES + NOCLIP, True)
+
+    def test_no_clip_section_rules(self):
+        with self.assertRaises(ot.OutreachError):
+            ot.parse_templates(TEMPLATES + NOCLIP.replace("## 4.", "## 9."))      # must come as a pair
+        with self.assertRaises(ot.OutreachError):
+            ot.parse_templates(TEMPLATES + NOCLIP.replace("{trial_link}", "{clip_link}"))
+        self.assertEqual(set(ot.parse_templates(TEMPLATES + NOCLIP)), {"first", "followup", "first_noclip", "followup_noclip"})
+        self.assertEqual(set(ot.parse_templates(TEMPLATES)), {"first", "followup"})
+
+    def test_when_youtube_blocks_samples_the_no_clip_email_goes_out_within_the_cap(self):
+        class Limited(FakeMedia):
+            def captions(self, url, work):
+                raise RuntimeError("HTTP Error 429: Too Many Requests")
+        self.media = Limited()
+        out = self.run_pass()
+        self.assertEqual(out["sent_noclip"], 2)                                  # daily cap 2
+        self.assertEqual(len(self.mailer.sent), 2)
+        body = self.mailer.sent[0].get_content()
+        self.assertIn('reply "yes"', body.lower())
+        self.assertNotIn("assets.whop.com", body)
+        self.assertIn("P.O. Box 123-00100", body)
+        self.assertEqual(self.run_pass()["sent_noclip"], 0)                     # cap holds across both kinds
+        later = datetime.now(timezone.utc) + timedelta(days=5)
+        self.yt._channels = {}
+        self.run_pass(now=later)
+        follow = [m for m in self.mailer.sent if m["Subject"].startswith("Re: Your Shorts")]
+        self.assertEqual(len(follow), 2)
+        self.assertIn("3 free clips", follow[0].get_content())
+
+    def test_without_approval_of_the_new_sections_nothing_is_sent(self):
+        ot.approve_templates(self.conn, TEMPLATES, True)                          # approval was for the old text only
+        self.assertIn("not approved", self.run_pass()["skipped"])
+
+
 class ConnectTests(unittest.TestCase):
     def test_gmail_and_youtube_secrets_go_to_the_secret_store(self):
         store = ss.MemoryStore()

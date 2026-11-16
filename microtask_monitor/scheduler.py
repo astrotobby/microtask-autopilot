@@ -103,7 +103,8 @@ class Scheduler:
                 Job("payment_monitor", 3600, _payment_monitor),
                 Job("cleanup", 86400, lambda s, c, n: cleanup(c, n, s.exec_dir)),
                 Job("owner_shorts", 300, _owner_shorts),
-                Job("owner_outreach", 1800, _owner_outreach)]
+                Job("owner_outreach", 1800, _owner_outreach),
+                Job("email_discovery", 1800, _email_discovery)]
 
     # ---------------------------------------------------------------- leases and state
     def _state(self, conn, name: str) -> dict[str, Any]:
@@ -295,6 +296,25 @@ def _owner_outreach(s: Scheduler, conn, now: datetime) -> Any:
     except (outreach.OutreachError, youtube_leads.YouTubeError, shorts_service.ServiceError, seller.NotConfigured, clip_worker.ClipError) as exc:
         notify.create(conn, "task_attention", "Outreach needs setup", str(exc)[:900], severity="important", key=f"outreach-setup:{str(exc)[:60]}:{now.date().isoformat()}")
         return f"setup needed: {exc}"
+
+
+def _email_discovery(s: Scheduler, conn, now: datetime) -> Any:
+    """Platform notification emails: the local .eml folder, and (only if you switched it on) your Gmail inbox, read-only."""
+    try:
+        from microtask_monitor import email_discovery as ed, outreach
+    except ImportError:  # pragma: no cover
+        import email_discovery as ed, outreach
+    st, out = control.settings(conn), {}
+    if st.get("email_import_enabled"):
+        out["eml_folder"] = ed.import_messages(conn, ed.EmlFolder().fetch(), "eml_folder")
+    if st.get("email_monitor_enabled"):
+        try:
+            cfg = outreach.load_config()
+            pw = outreach.Mailer(cfg["from_address"], s.store)._pw()
+            out["gmail_readonly"] = ed.import_messages(conn, ed.ImapInbox(cfg["from_address"], pw).fetch(), "gmail_readonly")
+        except (outreach.OutreachError, OSError, KeyError) as exc:
+            out["gmail_readonly"] = f"unavailable: {type(exc).__name__}: {str(exc)[:200]}"
+    return out or "switched off"
 
 
 def cleanup(conn, now: datetime | None = None, exec_dir: Path | None = None) -> dict[str, int]:

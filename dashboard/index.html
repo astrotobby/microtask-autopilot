@@ -66,6 +66,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <div class="banner bad hidden" id="stopBanner"></div>
  <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program reads listings only through official APIs you authorized, prepares and checks the work, and tracks it with evidence. Signing in, taking a task, submitting and withdrawing are done by you on the platform and recorded here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
  <nav class="nav" aria-label="Dashboard sections">
+  <button data-tab="access">Platform Access Engine</button>
   <button data-tab="control">Control Centre</button>
   <button data-tab="pmanager">Platform Manager</button>
   <button data-tab="pipeline">Task Pipeline</button>
@@ -271,6 +272,18 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <div class="section-head"><h2>Integration health</h2><span class="muted" id="healthNote">Eligibility and integration health are independent.</span></div>
   <div id="healthTable" class="table-wrap"></div>
   <div id="platformGrid" style="margin-top:16px"></div>
+ </section>
+
+ <section id="access" class="panel">
+  <div class="section-head"><h1>Platform Access &amp; Execution Engine</h1><button class="btn" onclick="importEmails()">Import notification emails now</button></div>
+  <p class="muted">Every capability is <b>allowed</b>, <b>prohibited</b> or <b>unverified</b>; unverified is treated as prohibited. A task runs only when four checks pass: the platform permits it, the task's own rules permit it, you pre-authorized that kind of task, and it is within your limits. Automatic submission stays human-required on every platform until both the platform and the assignment are verified to allow it.</p>
+  <div class="section-head"><h2>A &middot; Platform Control Centre</h2></div><div id="accCapabilities"></div>
+  <div class="section-head"><h2>B &middot; Opportunity Intelligence</h2><span class="muted">Eight categories, ranked by permission, feasibility and value.</span></div>
+  <div class="grid" id="accCategories"></div><div id="accOpportunities" style="margin-top:12px"></div>
+  <div class="section-head"><h2>C &middot; Autonomous Execution</h2></div><div class="grid" id="accExecution"></div>
+  <div class="section-head"><h2>D &middot; Submission Centre</h2><span class="muted">A = automatic delivery authorised &middot; B = package ready, you submit &middot; C = execution prohibited or impossible.</span></div><div id="accSubmission"></div>
+  <div class="section-head"><h2>E &middot; Earnings</h2></div><div class="grid" id="accEarnings"></div><div class="notice" id="accEarningsNote"></div>
+  <div class="section-head"><h2>F &middot; System Health</h2></div><div class="card" id="accHealth"></div>
  </section>
 
  <section id="control" class="panel">
@@ -1243,7 +1256,50 @@ async function releaseLead(id) {
 }
 async function runOwner() { const r = await act(() => api("POST", "/api/engine/owner/run", {}), "Pass finished"); if (r) { if (r.skipped) toast(r.skipped, true); loadOwner(); } }
 
-Object.assign(loaders, {owner: loadOwner, control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
+// ---------------------------------------------------------------- milestone 1: platform access & execution engine
+const CAP_CLS = {allowed: "ok", prohibited: "bad", unverified: "warn"};
+const CAP_SHORT = {public_discovery: "public disc.", email_notification_monitoring: "email notif.", authenticated_monitoring: "acct monitor", task_reading: "read tasks",
+  task_classification: "classify", task_preparation: "prepare", ai_execution: "AI execute", quality_assurance: "QA", proof_preparation: "proof", automatic_submission: "auto submission", earnings_monitoring: "earnings"};
+async function loadAccess() {
+  const [c, o, h, e] = await Promise.all([api("GET", "/api/engine/capabilities"), api("GET", "/api/engine/opportunities"), api("GET", "/api/engine/health"), api("GET", "/api/engine/earnings")].map(p => p.catch(err => { toast(err.message, true); return null; })));
+  if (c) E("accCapabilities").innerHTML = table(["Platform", "Connection", "Discovery", ...c.capabilities.map(k => CAP_SHORT[k] || k), "Submission"], c.platforms.map(p =>
+    "<tr><td><b>" + esc(p.name) + '</b><div class="muted">level ' + p.level + " · " + p.opportunities + " found</div></td><td>" + tag(p.connection, p.connection === "CONNECTED" ? "ok" : "") +
+    "</td><td>" + tag(p.discovery_channel) + '<div class="muted">' + esc(p.adapter_status) + "<br>" + when(p.last_scan) + "</div></td>" +
+    c.capabilities.map(k => '<td title="' + esc(p.reasons[k] || "") + '">' + tag(p.capabilities[k], CAP_CLS[p.capabilities[k]]) + "</td>").join("") +
+    "<td>" + tag(p.submission_mode.replace(/_/g, " "), p.submission_mode === "automatic" ? "ok" : "warn") + (p.permission_evidence.source_url ? "<div>" + link(p.permission_evidence.source_url, "evidence") + "</div>" : "") + "</td></tr>"), "No platforms");
+  if (o) {
+    E("accCategories").innerHTML = o.category_counts.map(k => card(k.category + " · " + k.label, k.count)).join("");
+    E("accOpportunities").innerHTML = table(["Opportunity", "Platform", "Reward", "Category", "Why", "Score", "State"], o.opportunities.map(r =>
+      "<tr><td>#" + r.assignment_id + " " + (r.url ? link(r.url, r.title) : esc(r.title)) + '<div class="muted">' + esc(r.deadline ? "deadline " + r.deadline : "") + "</div></td><td>" + esc(platformName(r.platform_id)) +
+      "</td><td>" + esc(r.currency || "") + " " + (r.reward ?? "—") + "</td><td>" + tag((r.category8 || "?") + " · " + (r.category8_label || "unclassified"), r.category8 && r.category8 <= 3 ? "ok" : r.category8 === 7 ? "warn" : "bad") +
+      '</td><td class="muted">' + esc(r.category8_reason || "") + "<br>" + esc((r.reasons || []).slice(0, 2).join(" · ")) + "</td><td>" + (r.score ?? "—") + "</td><td>" + tag(r.state) + "</td></tr>"), "No opportunities recorded yet. Discovery, email import or your own import adds them.");
+    const by = s => o.opportunities.filter(r => r.state === s).length;
+    E("accExecution").innerHTML = ["SELECTED", "PREPARING", "EXECUTING", "QA_PENDING", "QA_PASSED", "FAILED", "BLOCKED"].map(s => card(s.replace(/_/g, " ").toLowerCase(), by(s))).join("");
+    const ready = o.opportunities.filter(r => ["SUBMISSION_READY", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "PAID"].includes(r.state));
+    E("accSubmission").innerHTML = table(["Opportunity", "Platform", "State", "Outcome"], ready.map(r => "<tr><td>#" + r.assignment_id + " " + esc(r.title) + "</td><td>" + esc(platformName(r.platform_id)) + "</td><td>" + tag(r.state) +
+      '</td><td><button class="btn small" onclick="showOutcome(' + r.assignment_id + ')">Check A/B/C</button><div class="muted" id="outcome' + r.assignment_id + '"></div></td></tr>'), "Nothing is packaged for submission yet.");
+  }
+  if (e) {
+    E("accEarnings").innerHTML = [card("Received (all time)", sums(e.received_by_currency) || "0", "payments you recorded"), card("Received today", sums(e.received_today_by_currency) || "0"),
+      card("Estimated today", sums(e.estimated_today_by_currency) || "0", "estimate, not income"), card("Pending", sums(e.pending_by_currency) || "0"),
+      card("Approved tasks", e.approved.count), card("Paid tasks", e.paid_tasks), card("USD per hour of execution", e.usd_per_hour_of_execution ?? "—", "received ÷ measured time")].join("");
+    E("accEarningsNote").textContent = e.note;
+  }
+  if (h) E("accHealth").innerHTML = '<div class="tags">' + tag(h.scheduler_alive ? "scheduler running" : "scheduler not running", h.scheduler_alive ? "ok" : "bad") +
+    tag(h.stopped.engaged ? "global stop engaged" : "no global stop", h.stopped.engaged ? "bad" : "ok") + tag(h.paused ? "paused" : "not paused", h.paused ? "warn" : "ok") +
+    tag("database v" + h.database_version) + tag(h.open_alerts + " unread alert(s)", h.open_alerts ? "warn" : "") + tag(h.resources.ok ? "resources ok" : "resources low", h.resources.ok ? "ok" : "bad") + "</div>" +
+    (h.failing_jobs.length ? '<div class="banner bad">' + h.failing_jobs.map(f => esc(f.job + ": " + f.failures + " failure(s) — " + (f.error || ""))).join("<br>") + "</div>" : '<p class="muted">No scheduled job is failing.</p>') +
+    "<h3>Email discovery</h3>" + (Object.keys(h.email_discovery).length ? table(["Source", "Last run", "Messages", "Imported", "Duplicates", "Not a platform", "Skipped"], Object.entries(h.email_discovery).map(([k, v]) =>
+      "<tr><td>" + esc(k) + "</td><td>" + when(v.last_run) + "</td><td>" + v.messages + "</td><td>" + v.imported + "</td><td>" + v.duplicates + "</td><td>" + v.not_platform + "</td><td>" + v.skipped + "</td></tr>"), "") :
+      '<p class="muted">Not run yet. Put exported .eml files in data/email_inbox.</p>') +
+    "<h3>Discovery adapters</h3>" + table(["Platform", "Status", "Last run", "Error"], h.discovery.map(d => "<tr><td>" + esc(platformName(d.platform_id)) + "</td><td>" + tag(d.status || "?", (d.status || "").startsWith("ok") ? "ok" : "warn") + "</td><td>" + when(d.last_run) + "</td><td class='muted'>" + esc(d.error || "") + "</td></tr>"), "No discovery has run yet.");
+}
+async function showOutcome(id) {
+  const r = await act(() => api("GET", "/api/engine/tasks/" + id + "/submission")); if (!r) return;
+  const s = r.submission; E("outcome" + id).textContent = s.outcome + " · " + s.outcome_label + (s.reason ? " — " + s.reason : "");
+}
+async function importEmails() { const r = await act(() => api("POST", "/api/engine/email/import", {}), "Email import finished"); if (r) { toast(r.result.imported + " imported, " + r.result.duplicates + " already seen, " + r.result.not_platform + " not from a platform"); loadAccess(); } }
+Object.assign(loaders, {access: loadAccess, owner: loadOwner, control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
 document.addEventListener("DOMContentLoaded", () => { refreshStop(); setInterval(refreshStop, 30000); });
 if (document.readyState !== "loading") refreshStop();
 E("it_platform").innerHTML = '<option value="direct_client">Direct client work (my own client)</option>' + PLATFORMS.map(p => '<option value="' + p.id + '">' + esc(p.name) + "</option>").join("");

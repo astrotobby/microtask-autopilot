@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from pathlib import Path
 import re
 from datetime import date, datetime, timezone
 from typing import Any
@@ -28,6 +29,8 @@ try:
     from microtask_monitor import db, policy
 except ImportError:  # pragma: no cover
     import db, policy
+
+ROOT = Path(__file__).resolve().parents[1]
 
 LEVELS = {0: "Disabled for automation (manual use)", 1: "Read-only discovery", 2: "Authorized account monitoring", 3: "Task preparation",
           4: "Authorized task execution", 5: "Authorized automatic submission"}
@@ -132,6 +135,25 @@ def derive(record: dict[str, Any], today: date | None = None) -> dict[str, Any]:
     else:
         a["auto_submission"] = _entry("unverified", why="No clause permitting automated submission has been recorded")
 
+    # Explicit evidence recorded per capability (capability_evidence.json) can grant or remove a permission. Grants need a
+    # source, a clause, a verification date and an expiry date in the future; a recorded prohibition always applies.
+    evidence = _evidence_for(record.get("platform_id"), today)
+    for action in ("public_discovery", "account_monitoring", "task_execution", "auto_submission"):     # order matters: submission last
+        ev = evidence.get(action)
+        if not ev:
+            continue
+        if ev["state"] == "prohibited":
+            a[action] = _entry("prohibited", ev.get("source_url"), ev.get("notes") or "Recorded prohibition", ev.get("scope"), ev.get("verified_at"),
+                               why=ev.get("notes") or "A prohibition is recorded for this capability")
+        elif action == "auto_submission" and a["task_execution"]["result"] != "permitted":
+            a[action] = {**a[action], "why": "Submission evidence exists, but automated execution is not permitted, so nothing can be submitted automatically"}
+        else:
+            a[action] = _entry("permitted", ev.get("source_url"), ev.get("clause"), ev.get("scope"), ev.get("verified_at"))
+    if a["public_discovery"]["result"] == "permitted" or a["account_monitoring"]["result"] == "permitted":
+        a["task_preparation"] = _entry("permitted", url or a["public_discovery"]["evidence_url"] or a["account_monitoring"]["evidence_url"],
+                                       clause or a["public_discovery"]["clause"] or a["account_monitoring"]["clause"],
+                                       "Local classification and preparation of listings read through the permitted interface",
+                                       verified or a["public_discovery"]["verified_on"] or a["account_monitoring"]["verified_on"])
     # "If evidence is missing, block the action": a permitted result needs a source, a clause and a current review date.
     for name, e in a.items():
         if e["result"] != "permitted":
@@ -159,6 +181,63 @@ def derive(record: dict[str, Any], today: date | None = None) -> dict[str, Any]:
             "disabled_reason": disabled, "actions": a, "manual_import": True, "reviewed_on": verified,
             "ai_use": (execution.get("ai_assistance") or {}).get("status", "unverified"),
             "record_hash": record_hash(record)}
+
+
+EVIDENCE_PATH = ROOT / "microtask_monitor" / "capability_evidence.json"
+EVIDENCE_SOURCES = ("platform_terms", "api_documentation", "assignment_instructions", "written_permission")
+CAPABILITY_TO_ACTION = {"public_discovery": "public_discovery", "authenticated_monitoring": "account_monitoring",
+                        "ai_execution": "task_execution", "automatic_submission": "auto_submission"}
+
+
+def load_evidence(path: Path | None = None) -> list[dict[str, Any]]:
+    try:
+        data = json.loads(Path(path or EVIDENCE_PATH).read_text(encoding="utf-8"))
+        return [e for e in data.get("evidence", []) if isinstance(e, dict)]
+    except (OSError, ValueError, AttributeError):
+        return []
+
+
+def evidence_problems(e: dict[str, Any], today: date | None = None) -> list[str]:
+    """Why a recorded grant does not count. A prohibition needs no evidence to apply."""
+    today = today or date.today()
+    if e.get("state") == "prohibited":
+        return []
+    out = []
+    if e.get("state") != "allowed":
+        out.append("state must be allowed or prohibited")
+    if e.get("capability") not in CAPABILITY_TO_ACTION:
+        out.append(f"capability must be one of {', '.join(CAPABILITY_TO_ACTION)}")
+    if not _https(e.get("source_url")):
+        out.append("source_url must be an https link to the platform's own terms, docs or written permission")
+    if e.get("source_type") not in EVIDENCE_SOURCES:
+        out.append(f"source_type must be one of {', '.join(EVIDENCE_SOURCES)}")
+    if not str(e.get("clause") or "").strip():
+        out.append("the exact clause or wording is required")
+    try:
+        verified = date.fromisoformat(str(e.get("verified_at"))[:10])
+        if verified > today:
+            out.append("verified_at is in the future")
+    except ValueError:
+        out.append("verified_at must be a date")
+    try:
+        if date.fromisoformat(str(e.get("expires_at"))[:10]) < today:
+            out.append("the evidence has expired: re-verify")
+    except ValueError:
+        out.append("expires_at must be a date (evidence without an expiry is not accepted)")
+    return out
+
+
+def _evidence_for(platform_id: Any, today: date | None = None) -> dict[str, dict[str, Any]]:
+    out = {}
+    for e in load_evidence():
+        if e.get("platform_id") != platform_id or e.get("capability") not in CAPABILITY_TO_ACTION:
+            continue
+        if evidence_problems(e, today):
+            continue
+        action = CAPABILITY_TO_ACTION[e["capability"]]
+        if e.get("state") == "prohibited" or action not in out:
+            out[action] = {**e, "action": action}
+    return out
 
 
 def direct_profile() -> dict[str, Any]:

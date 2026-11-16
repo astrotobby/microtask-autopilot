@@ -76,7 +76,47 @@ def entries(conn, limit: int = 300) -> list[dict[str, Any]]:
                  accepted=adv if after("work_accepted", "payment_pending", "paid") else None,
                  pending=r["pending_amount"] if r["earning_status"] == "pending" else None, received=r["received_amount"])
         del r["pending_amount"], r["received_amount"]
+        r.update(_outcome(conn, r["assignment_id"]))
+        r["estimated_minutes"] = (intel or {}).get("economics", {}).get("estimated_minutes")
     return rows
+
+
+def _outcome(conn, aid: int) -> dict[str, Any]:
+    """Measured facts for one ledger line: real execution time, and when/why the platform approved or rejected it (from recorded events)."""
+    from datetime import datetime
+    mins = 0.0
+    for j in conn.execute("SELECT e.started_at, e.finished_at FROM execution_jobs e JOIN assignments a ON a.execution_job_id=e.id WHERE a.id=?", (aid,)):
+        try:
+            mins += max(0.0, (datetime.fromisoformat(j["finished_at"]) - datetime.fromisoformat(j["started_at"])).total_seconds() / 60)
+        except (TypeError, ValueError):
+            pass
+    ev = {r["to_stage"]: r for r in conn.execute("SELECT to_stage, at, detail FROM assignment_events WHERE assignment_id=? AND to_stage IN ('work_accepted','rejected') ORDER BY id", (aid,))}
+    ok, no = ev.get("work_accepted"), ev.get("rejected")
+    return {"actual_minutes": round(mins, 1) if mins else None, "approved_at": ok["at"] if ok else None,
+            "rejected_at": no["at"] if no else None, "rejection_reason": no["detail"] if no else None}
+
+
+def earnings_overview(conn, today: str | None = None) -> dict[str, Any]:
+    """Section E of the dashboard: received money only counts as earned; estimates are labelled as estimates."""
+    from datetime import date
+    today = today or date.today().isoformat()
+    received = {r["currency"]: round(r["s"], 2) for r in conn.execute("SELECT currency, SUM(amount) s FROM payments GROUP BY currency")}
+    received_today = {r["currency"]: round(r["s"], 2) for r in conn.execute("SELECT currency, SUM(amount) s FROM payments WHERE received_date=? GROUP BY currency", (today,))}
+    est_today: dict[str, float] = {}
+    import json
+    for r in conn.execute("""SELECT a.currency, t.economics_json FROM assignments a JOIN task_intel t ON t.assignment_id=a.id
+                             WHERE substr(a.updated_at,1,10)=? AND a.stage IN ('ready_for_delivery','submitted','awaiting_review','work_accepted','payment_pending')""", (today,)):
+        v = (json.loads(r["economics_json"]) or {}).get("risk_adjusted_value")
+        if v:
+            est_today[r["currency"] or "unstated"] = round(est_today.get(r["currency"] or "unstated", 0) + v, 2)
+    minutes = sum((x["actual_minutes"] or 0) for x in (_outcome(conn, r["id"]) for r in conn.execute("SELECT id FROM assignments WHERE stage='paid'")))
+    usd = received.get("USD")
+    t = totals(conn)
+    return {"received_by_currency": received, "received_today_by_currency": received_today, "estimated_today_by_currency": est_today,
+            "pending_by_currency": t["payment_pending"]["by_currency"], "approved": t["work_accepted"], "submitted": t["deliverables_submitted"],
+            "paid_tasks": conn.execute("SELECT COUNT(*) FROM assignments WHERE stage='paid'").fetchone()[0],
+            "usd_per_hour_of_execution": round(usd / (minutes / 60), 2) if usd and minutes else None,
+            "note": "Received = payments you recorded with a reference. 'Estimated today' is work packaged or submitted today, discounted by acceptance history: not income."}
 
 
 def by_platform(conn) -> list[dict[str, Any]]:

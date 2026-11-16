@@ -23,6 +23,10 @@ except ImportError:  # pragma: no cover
 AUTOMATION_CLASSES = ("FULLY_AUTOMATABLE_WITH_PERMISSION", "AI_ASSISTED_WITH_PERMISSION", "DETERMINISTIC_LOCAL_PROCESSING", "HUMAN_REQUIRED",
                       "PLATFORM_AUTOMATION_PROHIBITED", "AI_PROHIBITED", "ELIGIBILITY_UNVERIFIED", "NOT_FEASIBLE", "MANUAL_REVIEW_REQUIRED")
 EXECUTABLE = ("FULLY_AUTOMATABLE_WITH_PERMISSION", "AI_ASSISTED_WITH_PERMISSION", "DETERMINISTIC_LOCAL_PROCESSING")
+# The eight opportunity categories shown to you (the automation class above stays the engine's internal decision).
+CATEGORY8 = {1: "Fully automatable and permitted", 2: "AI-assisted and permitted", 3: "Preparation permitted, submission restricted",
+             4: "Human required", 5: "Platform prohibited", 6: "Country or account ineligible", 7: "Policy unclear",
+             8: "Not economically worthwhile"}
 
 # (category, pattern) in priority order: the first match wins, so the specific kinds come before the general ones.
 _CATEGORY_RULES: tuple[tuple[str, str], ...] = (
@@ -55,11 +59,11 @@ _CATEGORIES = tuple((c, re.compile(rx, re.I | re.S)) for c, rx in _CATEGORY_RULE
 # Which local specialist (execution.WORK_TYPES) can genuinely produce each category. None = no local specialist exists.
 WORKER_FOR = {"software_development": "software", "coding_debugging": "software", "data_processing": "data", "spreadsheet_processing": "data",
               "text_classification": "evaluation", "data_annotation": "evaluation", "ai_evaluation": "evaluation", "llm_evaluation": "evaluation",
-              "writing": "writing", "technical_writing": "writing", "prompt_engineering": "writing", "translation": "writing", "research": "writing",
+              "writing": "writing", "technical_writing": "writing", "prompt_engineering": "writing", "translation": "writing", "research": "research",
               "content_creation": "content", "administrative": "data", "image_labeling": None, "video_annotation": None, "transcription": None,
               "other": None, **{c: None for c in control.HUMAN_ONLY_CATEGORIES}}
 # Planning estimates only (minutes of local execution, prior chance of acceptance). They are replaced by measured history as it accumulates.
-_DEFAULT_MINUTES = {"software": 45, "data": 5, "evaluation": 30, "writing": 30, "content": 25, "automation": 45, None: 60}
+_DEFAULT_MINUTES = {"software": 45, "data": 5, "evaluation": 30, "writing": 30, "content": 25, "automation": 45, "research": 40, None: 60}
 _PRIOR_ACCEPT = {"DETERMINISTIC_LOCAL_PROCESSING": 0.85, "AI_ASSISTED_WITH_PERMISSION": 0.65, "FULLY_AUTOMATABLE_WITH_PERMISSION": 0.65}
 _PRIOR_WEIGHT = 4
 _DURATION = re.compile(r"(?:about|approx(?:imately)?|around|est(?:imated)?\.?(?: time)?:?|takes?|up to)?\s*(\d{1,3}(?:\.\d)?)\s*(?:-\s*\d{1,3}\s*)?(minutes?|mins?|hours?|hrs?)\b", re.I)
@@ -227,6 +231,34 @@ def score(a: dict[str, Any], x: dict[str, Any], automation_class: str, eco: dict
     return round(max(0.0, min(100.0, sum(parts.values()))), 2), parts
 
 
+def category8(a: dict[str, Any], cls: str, x: dict[str, Any], eco: dict[str, Any], settings: dict[str, Any],
+              caps: dict[str, dict[str, Any]] | None = None) -> tuple[int, str]:
+    """Map the automation decision onto the eight categories, with the one-line reason. Economics can only demote."""
+    prof = permissions.profile(a.get("platform_id") or "", caps) or {}
+    cr = x["country_restrictions"]
+    if cls == "NOT_FEASIBLE":
+        if prof.get("disabled_reason") or (isinstance(cr["allowed_countries"], list) and cr["allowed_countries"]) or cr["stated_in_task"]:
+            cat = 6
+        elif x["upfront_cost_flags"]:
+            cat = 8
+        elif any(h["class"] == "NOT_FEASIBLE" for h in x["hard_restrictions"]):
+            cat = 5
+        else:
+            cat = 4
+    else:
+        cat = {"HUMAN_REQUIRED": 4, "PLATFORM_AUTOMATION_PROHIBITED": 5, "AI_PROHIBITED": 5, "ELIGIBILITY_UNVERIFIED": 7, "MANUAL_REVIEW_REQUIRED": 7}.get(cls, 0)
+    if cls in EXECUTABLE:
+        auto_sub = (prof.get("actions") or {}).get("auto_submission", {}).get("result") == "permitted"
+        cat = (1 if cls != "AI_ASSISTED_WITH_PERMISSION" else 2) if auto_sub else 3
+    if cat in (1, 2, 3, 7):
+        value, hourly = eco.get("advertised"), eco.get("hourly_comparable_usd")
+        if eco.get("currency") == "USD" and value is not None and value < float(settings.get("min_reward_usd") or 0):
+            return 8, f"USD {value} is below your minimum reward (USD {settings['min_reward_usd']})"
+        if hourly is not None and float(settings.get("min_hourly_rate_usd") or 0) > 0 and hourly < settings["min_hourly_rate_usd"]:
+            return 8, f"About USD {hourly}/hour, below your minimum (USD {settings['min_hourly_rate_usd']})"
+    return cat, CATEGORY8.get(cat, "Unclassified")
+
+
 def analyse(conn, a: dict[str, Any], caps: dict[str, dict[str, Any]] | None = None, now: datetime | None = None) -> dict[str, Any]:
     """Classify, price and score one assignment. Pure with respect to the assignment row; ``store`` persists the result."""
     category = categorize(a.get("title") or "", a.get("instructions") or "")
@@ -236,6 +268,18 @@ def analyse(conn, a: dict[str, Any], caps: dict[str, dict[str, Any]] | None = No
     hist["similar"] = conn.execute("SELECT COUNT(*) FROM assignments WHERE platform_id=? AND title=? AND id<>?", (a.get("platform_id"), a.get("title"), a.get("id") or 0)).fetchone()[0]
     eco = economics(a, x, cls, category, hist)
     sc, parts = score(a, x, cls, eco, now)
+    st = control.settings(conn) if conn is not None else dict(control.DEFAULTS)
+    cat8, why8 = category8(a, cls, x, eco, st, caps)
+    if a.get("platform_id") in st.get("preferred_platforms", []):
+        parts["preferred_platform"] = 3.0
+    if category in st.get("preferred_categories", []):
+        parts["preferred_category"] = 3.0
+    if cat8 == 7:
+        parts["permission_unclear"] = -5.0
+    if cat8 == 8:
+        parts["not_worthwhile"] = -10.0
+    sc = round(max(0.0, min(100.0, sum(parts.values()))), 2)
+    x = {**x, "category8": cat8, "category8_label": CATEGORY8.get(cat8), "category8_reason": why8}
     return {"assignment_id": a.get("id"), "category": category, "worker": WORKER_FOR.get(category), "automation_class": cls, "reasons": reasons,
             "extracted": x, "economics": eco, "score": sc, "score_parts": parts}
 
