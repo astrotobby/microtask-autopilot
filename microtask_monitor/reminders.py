@@ -1,8 +1,9 @@
 """Persistent reminders: deadlines, assessments, follow-ups, interviews, stale drafts, tasks and profile gaps.
 
-Reminders are generated from your own records (opportunity deadlines, application status and dates). They are
-stored in SQLite with a unique fingerprint, so a reminder is created once, survives restarts, and a reminder you
-marked done or dismissed never comes back. Notifications for due reminders go through the deduplicated notify layer.
+Reminders are generated from your own records (opportunity deadlines, application status and dates, and the state of
+business proposals). They are stored in SQLite with a unique fingerprint, so a reminder is created once, survives
+restarts, and a reminder you marked done or dismissed never comes back. Notifications for due reminders go through the
+deduplicated notify layer. A reminder never changes a record: only you can mark something sent, accepted or paid.
 """
 from __future__ import annotations
 
@@ -18,8 +19,11 @@ except ImportError:  # pragma: no cover
 
 DEADLINE_MILESTONES = (7, 3, 1)         # days before the deadline
 DRAFT_REVIEW_AFTER_DAYS = 2
+PROPOSAL_FOLLOWUP_DAYS = (3, 10)        # after you record a proposal as sent
 MAX_NOTIFIED_PER_CYCLE = 5
 ASSESSMENT_LABELS = {"assessment", "interview", "skills test", "background check", "identity verification", "KYC/identity check"}
+# Which reminder kinds are still valid for a business proposal in each status; anything else is stale.
+PROPOSAL_REMINDERS = {"prepared": {"draft_review"}, "sent": {"followup"}, "replied": {"task"}, "accepted": {"decision"}}
 
 
 def _fp(*parts: Any) -> str:
@@ -92,6 +96,30 @@ def generate(conn, now: datetime | None = None) -> dict[str, int]:
                 made["followup"] += _add(conn, now, "followup", str(a["next_followup_at"])[:10], f"Follow up after interview: {a['title']}", "Check for a decision and record it.", _dt(a["next_followup_at"]), "application", a["id"], link)
         if a["status"] == "accepted":
             made["decision"] += _add(conn, now, "decision", "start", f"Accepted: start the work for {a['title']}", "Open the platform's project instructions and create a task workspace here.", now, "application", a["id"], link)
+    for p in conn.execute("""SELECT p.id, p.status, p.created_at, p.sent_at, l.title, l.url
+                             FROM biz_proposals p JOIN biz_leads l ON l.id=p.lead_id
+                             WHERE p.status IN ('prepared','sent','replied','accepted')"""):
+        link = p["url"]
+        if p["status"] == "prepared":
+            created = _dt(p["created_at"]) or now
+            due = created + timedelta(days=DRAFT_REVIEW_AFTER_DAYS)
+            if now >= due:
+                made["draft_review"] += _add(conn, now, "draft_review", "proposal", f"Review and send the application: {p['title']}",
+                                             "Prepared and still unsent. Correct anything that is not true, submit it yourself, then record where you sent it.",
+                                             due, "proposal", p["id"], link)
+        elif p["status"] == "sent":
+            sent = _dt(p["sent_at"]) or _dt(p["created_at"]) or now
+            for days in PROPOSAL_FOLLOWUP_DAYS:
+                made["followup"] += _add(conn, now, "followup", f"{days}d", f"Follow up: {p['title']}",
+                                         f"Sent {sent.date().isoformat()} with no reply recorded. Check the platform and your email, then record what you find. "
+                                         "A reminder never marks anything sent, accepted or paid on its own.", sent + timedelta(days=days), "proposal", p["id"], link)
+        elif p["status"] == "replied":
+            made["task"] += _add(conn, now, "task", "answer", f"Reply to the client: {p['title']}",
+                                 "They answered. Read it and reply yourself, then record the outcome.", now, "proposal", p["id"], link)
+        else:  # accepted
+            made["decision"] += _add(conn, now, "decision", "start", f"Accepted: start the work for {p['title']}",
+                                     "Record the award and its evidence before any execution job. AI help still needs the client's written permission, with its source.",
+                                     now, "proposal", p["id"], link)
     for t in conn.execute("SELECT * FROM tasks WHERE status IN ('accepted','in_progress','completed') AND due_at IS NOT NULL"):
         due = _dt(t["due_at"])
         if due:
@@ -114,6 +142,11 @@ def resolve_stale(conn, now: datetime) -> int:
                  or (r["kind"] == "followup" and status not in ("submitted", "interview"))
                  or (r["kind"] == "interview" and status != "interview"))
         if stale:
+            conn.execute("UPDATE reminders SET status='dismissed', done_at=? WHERE id=?", (now.isoformat(), r["id"]))
+            n += 1
+    for r in conn.execute("SELECT id,kind,ref_id FROM reminders WHERE status='pending' AND ref_type='proposal'").fetchall():
+        status = (conn.execute("SELECT status FROM biz_proposals WHERE id=?", (r["ref_id"],)).fetchone() or [None])[0]
+        if r["kind"] not in PROPOSAL_REMINDERS.get(status or "", set()):
             conn.execute("UPDATE reminders SET status='dismissed', done_at=? WHERE id=?", (now.isoformat(), r["id"]))
             n += 1
     for r in conn.execute("SELECT id FROM reminders WHERE status='pending' AND kind='profile'").fetchall():
