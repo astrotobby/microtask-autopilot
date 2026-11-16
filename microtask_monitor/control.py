@@ -40,9 +40,16 @@ DEFAULTS: dict[str, Any] = {
     "paused": False,
     "owner_shorts_enabled": False,         # owner lane: your own Shorts service fulfils its Whop orders by itself
     "owner_outreach_enabled": False,       # owner lane: find podcast buyers and email them a free sample (approved templates only)
+    "email_import_enabled": True,          # read exported .eml notification files from data/email_inbox (local only)
+    "email_monitor_enabled": False,        # read your own Gmail inbox READ-ONLY for platform notifications (uses the stored app password)
+    "min_reward_usd": 0.0,                 # opportunities paying less are "not economically worthwhile"
+    "max_daily_tasks": 20,                 # cap on new executions started per day
+    "preferred_platforms": [],             # ranked higher when everything else is equal
+    "preferred_categories": [],
 }
 _LIMITS = {"max_concurrency": (1, 4), "max_task_value_usd": (0, 100000), "min_hourly_rate_usd": (0, 10000), "max_daily_execution_minutes": (0, 1440),
-           "min_free_disk_mb": (100, 1_000_000), "min_free_memory_mb": (64, 1_000_000), "job_timeout_seconds": (60, 14400), "retention_days": (1, 3650)}
+           "min_free_disk_mb": (100, 1_000_000), "min_free_memory_mb": (64, 1_000_000), "job_timeout_seconds": (60, 14400), "retention_days": (1, 3650),
+           "min_reward_usd": (0, 100000), "max_daily_tasks": (0, 500)}
 
 
 class ControlError(ValueError):
@@ -72,6 +79,19 @@ def update_settings(conn, changes: dict[str, Any]) -> dict[str, Any]:
             if not lo <= value <= hi:
                 raise ControlError(f"'{key}' must be between {lo} and {hi}")
             value = int(value) if isinstance(DEFAULTS[key], int) else float(value)
+        elif key == "preferred_categories":
+            if not isinstance(value, list) or any(v not in CATEGORIES for v in value):
+                raise ControlError("'preferred_categories' must be a list of known task categories")
+            value = sorted(set(value))
+        elif key == "preferred_platforms":
+            try:
+                from microtask_monitor import policy as _policy
+            except ImportError:  # pragma: no cover
+                import policy as _policy
+            known = set(_policy.load_capabilities())
+            if not isinstance(value, list) or any(v not in known for v in value):
+                raise ControlError("'preferred_platforms' must be a list of registered platform ids")
+            value = sorted(set(value))
         elif key in ("permitted_categories", "excluded_task_types"):
             if not isinstance(value, list) or any(v not in CATEGORIES for v in value):
                 raise ControlError(f"'{key}' must be a list of known task categories")

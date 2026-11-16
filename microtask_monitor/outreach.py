@@ -54,10 +54,13 @@ class SamplesPaused(OutreachError):
 
 # ------------------------------------------------------------------------------------------- templates and approval
 def parse_templates(text: str) -> dict[str, dict[str, str]]:
-    """Read '## 1. First email' and '## 2. Follow-up' sections: a 'Subject:' line, then the body."""
+    """Read '## 1. First email' and '## 2. Follow-up' (with a sample clip) and, optionally, '## 3.' and '## 4.' (the same pair
+    without a clip, offering free clips on reply). Each has a 'Subject:' line, then the body."""
     out = {}
-    for kind, rx in (("first", r"^##\s*1\..*?$"), ("followup", r"^##\s*2\..*?$")):
+    for kind, rx in (("first", r"^##\s*1\..*?$"), ("followup", r"^##\s*2\..*?$"), ("first_noclip", r"^##\s*3\..*?$"), ("followup_noclip", r"^##\s*4\..*?$")):
         m = re.search(rx, text, re.M)
+        if not m and kind.endswith("_noclip"):
+            continue
         if not m:
             raise OutreachError(f"Template section for the {kind} email is missing")
         rest = text[m.end():]
@@ -70,7 +73,11 @@ def parse_templates(text: str) -> dict[str, dict[str, str]]:
         unknown = set(re.findall(r"\{(\w+)\}", sm.group(1) + body)) - set(FIELDS)
         if unknown:
             raise OutreachError(f"Unknown fields in the {kind} email: {', '.join(sorted(unknown))}")
+        if kind.endswith("_noclip") and re.search(r"\{clip_(link|seconds)\}", sm.group(1) + body):
+            raise OutreachError(f"The {kind} email has no clip, so it cannot use {{clip_link}} or {{clip_seconds}}")
         out[kind] = {"subject": sm.group(1).strip(), "body": body.strip()}
+    if ("first_noclip" in out) != ("followup_noclip" in out):
+        raise OutreachError("The no-clip emails come as a pair: sections 3 and 4")
     return out
 
 
@@ -351,10 +358,14 @@ def _send(conn, mailer: Any, lead: dict[str, Any], kind: str, subject: str, body
     return True
 
 
-def send_firsts(conn, mailer: Any, cfg: dict[str, Any], tpls: dict, sha: str, now: datetime) -> int:
+def send_firsts(conn, mailer: Any, cfg: dict[str, Any], tpls: dict, sha: str, now: datetime, noclip: bool = False) -> int:
+    """With a ready sample: the clip email. With ``noclip``: qualified leads get the no-clip email (offering free clips on reply)."""
     n = 0
     room = cfg.get("daily_cap", 15) - sent_today(conn, now)
-    for r in conn.execute("SELECT id FROM outreach_leads WHERE status='sample_ready' ORDER BY gap DESC, id LIMIT ?", (max(0, room),)).fetchall():
+    if noclip and "first_noclip" not in tpls:
+        return 0
+    where = "status='qualified' AND episode_id IS NOT NULL AND episodes_median IS NOT NULL" if noclip else "status='sample_ready'"
+    for r in conn.execute(f"SELECT id FROM outreach_leads WHERE {where} ORDER BY gap DESC, id LIMIT ?", (max(0, room),)).fetchall():
         lead = _lead(conn, r["id"])
         if suppressed(conn, lead["email"]):
             with db.tx(conn):
@@ -364,10 +375,11 @@ def send_firsts(conn, mailer: Any, cfg: dict[str, Any], tpls: dict, sha: str, no
             with db.tx(conn):
                 _set(conn, lead["id"], status="manual_hold", status_reason="Your Gmail Sent folder already has an email to this address")
             continue
-        subject, body = render(tpls["first"], lead, cfg)
+        subject, body = render(tpls["first_noclip" if noclip else "first"], lead, cfg)
         if _send(conn, mailer, lead, "first", subject, body, cfg, sha):
             with db.tx(conn):
-                _set(conn, lead["id"], status="sent", first_sent_at=db.now_iso(), status_reason="First email sent")
+                _set(conn, lead["id"], status="sent", first_sent_at=db.now_iso(),
+                     status_reason="First email sent (no clip: offered 3 free clips on reply)" if noclip else "First email sent")
             n += 1
     return n
 
@@ -409,7 +421,8 @@ def send_followups(conn, mailer: Any, cfg: dict[str, Any], tpls: dict, sha: str,
         if now - datetime.fromisoformat(lead["first_sent_at"]) < FOLLOWUP_AFTER or suppressed(conn, lead["email"]):
             continue
         first = conn.execute("SELECT message_id FROM outreach_messages WHERE lead_id=? AND kind='first'", (lead["id"],)).fetchone()
-        subject, body = render(tpls["followup"], lead, cfg)
+        variant = "followup" if lead.get("clip_url") or "followup_noclip" not in tpls else "followup_noclip"
+        subject, body = render(tpls[variant], lead, cfg)
         if _send(conn, mailer, lead, "followup", subject, body, cfg, sha, first["message_id"] if first else None):
             with db.tx(conn):
                 _set(conn, lead["id"], status="followed_up", followup_sent_at=db.now_iso(), status_reason="Follow-up sent; no more emails")
@@ -483,6 +496,9 @@ def run(conn, cfg: dict[str, Any], mailer: Any, yt: Any = None, media: Any = Non
                 break
     out["samples"] = made
     out["sent"] = send_firsts(conn, mailer, cfg, tpls, sha, now)
+    samples_blocked = bool(out.get("samples_paused") or out.get("samples_paused_until"))
+    if (samples_blocked or cfg.get("always_noclip")) and "first_noclip" in tpls:   # YouTube refuses downloads: start conversations anyway
+        out["sent_noclip"] = send_firsts(conn, mailer, cfg, tpls, sha, now, noclip=True)
     return out
 
 

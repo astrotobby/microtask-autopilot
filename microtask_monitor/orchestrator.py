@@ -101,6 +101,11 @@ def minutes_used_today(conn, now: datetime | None = None) -> float:
     return total
 
 
+def started_today(conn) -> int:
+    day = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+    return conn.execute("SELECT COUNT(*) FROM execution_jobs WHERE started_at >= ?", (day,)).fetchone()[0]
+
+
 def running_count(conn) -> int:
     return conn.execute("SELECT COUNT(*) FROM execution_jobs WHERE status='running'").fetchone()[0]
 
@@ -132,6 +137,10 @@ def authorize(conn, a: dict[str, Any], settings: dict[str, Any] | None = None, p
     hourly = eco.get("hourly_comparable_usd")
     if s["min_hourly_rate_usd"] > 0 and (hourly is None or hourly < s["min_hourly_rate_usd"]):
         reasons.append(f"The expected hourly rate ({'unknown' if hourly is None else hourly}) is below your minimum (USD {s['min_hourly_rate_usd']})")
+    if s.get("min_reward_usd", 0) > 0 and currency == "USD" and value is not None and value < s["min_reward_usd"]:
+        reasons.append(f"The reward (USD {value}) is below your minimum reward (USD {s['min_reward_usd']})")
+    if started_today(conn) >= s.get("max_daily_tasks", 10**6):
+        reasons.append(f"{s['max_daily_tasks']} task(s) already started today (your daily task limit)")
     if minutes_used_today(conn) + float(eco.get("estimated_minutes") or 0) > s["max_daily_execution_minutes"]:
         reasons.append("Today's execution time limit would be exceeded")
     if running_count(conn) >= s["max_concurrency"]:

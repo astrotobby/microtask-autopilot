@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXEC_DIR = ROOT / "data" / "executions"
 MAX_INPUT_BYTES = 10 * 1024 * 1024
 MAX_PREVIEW_BYTES = 200 * 1024
-WORK_TYPES = ("software", "writing", "data", "evaluation", "content", "automation", "unknown")
+WORK_TYPES = ("software", "writing", "data", "evaluation", "content", "automation", "research", "unknown")
 ACTIVE = ("running",)
 TERMINAL = ("submitted", "accepted", "rejected", "cancelled")
 
@@ -49,6 +49,7 @@ _SIGNALS = {
     "evaluation": r"\b(evaluate|evaluation|rank|compare|rate|rating|rubric|grade|model responses?|chatbot|llm|preference)\b",
     "content": r"\b(video script|script|caption|subtitle|thumbnail|social media|reel|tiktok|voice-?over|storyboard|youtube)\b",
     "automation": r"\b(n8n|make\.com|zapier|workflow|webhook|integration|automation|automate)\b",
+    "research": r"\b(research|sources?|citations?|cite|references?|literature review|fact[- ]check|market analysis|competitor analysis)\b",
 }
 _AI_PROHIBITED = re.compile(
     r"(do not|don't|must not|never|no|without|not (?:allowed|permitted) to|prohibited from|forbidden to)\W+(?:\w+\W+){0,4}?"

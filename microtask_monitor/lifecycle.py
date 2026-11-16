@@ -54,6 +54,28 @@ def state(a: dict[str, Any], classified: bool | None = None) -> str:
     return _STAGE_STATE[stage]
 
 
+# The milestone's seventeen public states, derived from the engine state (one source of truth, no second state column).
+SPEC_STATES = ("DISCOVERED", "ELIGIBILITY_CHECKED", "POLICY_CHECKED", "RANKED", "SELECTED", "PREPARING", "EXECUTING", "QA_PENDING", "QA_PASSED",
+               "SUBMISSION_READY", "SUBMITTED", "UNDER_REVIEW", "APPROVED", "REJECTED", "PAID", "FAILED", "BLOCKED")
+_SPEC_FOR = {"DISCOVERED": "DISCOVERED", "ELIGIBILITY_CHECKED": "ELIGIBILITY_CHECKED", "QUALIFIED": "POLICY_CHECKED", "AUTOMATION_CLASSIFIED": "RANKED",
+             "READY_FOR_EXECUTION": "SELECTED", "EXECUTING": "EXECUTING", "QUALITY_ASSURANCE": "QA_PENDING", "READY_FOR_SUBMISSION": "SUBMISSION_READY",
+             "SUBMITTED": "SUBMITTED", "AWAITING_REVIEW": "UNDER_REVIEW", "ACCEPTED": "APPROVED", "PAYMENT_PENDING": "APPROVED", "REJECTED": "REJECTED",
+             "PAID": "PAID", "FAILED": "FAILED", "EXPIRED": "FAILED", "CANCELLED": "FAILED", "INTERRUPTED": "FAILED",
+             "HUMAN_REQUIRED": "BLOCKED", "POLICY_BLOCKED": "BLOCKED", "PAUSED": "BLOCKED"}
+
+
+def spec_state(a: dict[str, Any], job_status: str | None = None) -> str:
+    """The public state of an assignment view. ``job_status`` (its execution job) separates PREPARING from EXECUTING and QA_PASSED from QA_PENDING."""
+    st = a.get("state") or state(a, bool(a.get("intel")))
+    if st == "DISCOVERED" and a.get("intel"):
+        return "POLICY_CHECKED"
+    if st == "EXECUTING" and job_status not in ("running",):
+        return "PREPARING"
+    if st == "QUALITY_ASSURANCE" and job_status in ("awaiting_review", "approved", "ready_for_submission"):
+        return "QA_PASSED"
+    return _SPEC_FOR.get(st, "BLOCKED")
+
+
 def can_transition(frm: str, to: str) -> bool:
     if to in ("CANCELLED", "HUMAN_REQUIRED", "POLICY_BLOCKED", "EXPIRED", "FAILED", "PAUSED", "INTERRUPTED"):
         return frm not in ("PAID", "REJECTED", "CANCELLED")

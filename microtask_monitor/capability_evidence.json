@@ -1,0 +1,4 @@
+{
+  "about": "Explicit, dated evidence that a platform permits (or prohibits) one capability. A grant needs: https source_url to the platform's own terms/docs/written permission, source_type, the exact clause, verified_at and expires_at. Expired or incomplete grants are ignored (fail closed). Never add a grant without reading the source yourself.",
+  "evidence": []
+}

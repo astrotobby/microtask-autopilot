@@ -125,6 +125,7 @@ GUIDE = {
     "evaluation": "Evaluate each item against the stated rubric. Output a JSON or CSV file with one row per item (id, scores per criterion, short rationale). Be consistent and justify each judgement from the item itself.",
     "content": "Produce the requested scripts/captions/asset lists as plain text or Markdown files that respect every stated limit (length, format, language). List required visual assets explicitly.",
     "automation": "Produce the workflow as an importable file (n8n/Make JSON). Use placeholders for credentials (never real secrets). Describe a safe way to test it in NOTES.md.",
+    "research": "Research the question using real, reachable public sources. Write the findings in Markdown with a '## Sources' section listing every source's full https URL (at least two independent sites). Attribute each factual claim to its source; say plainly where sources disagree or where you found nothing reliable. Never invent a source, quote or figure.",
     "data": "Process the supplied data exactly as the instructions describe and write the result files to output/. Record row counts before and after in NOTES.md.",
 }
 
@@ -285,6 +286,7 @@ WORKERS: list[Worker] = [
     AgentWorker("AI evaluation specialist", "evaluation"),
     AgentWorker("content creation specialist", "content"),
     AgentWorker("workflow automation specialist", "automation"),
+    AgentWorker("research specialist", "research"),
 ]
 _UNKNOWN = AgentWorker("unassigned", "unknown")
 
