@@ -34,6 +34,8 @@ except ImportError:  # pragma: no cover
 
 PLATFORM = "whop_workforce"
 API_BASE = "https://api.whop.com/api/v1"
+# Pinned as documented (header Api-Version-Date). Without it the API rejects the documented status/country filters (seen 2026-11-16).
+API_VERSION = "2026-11-14-1"
 AUTHORIZE_URL = "https://api.whop.com/oauth/authorize"
 TOKEN_URL = "https://api.whop.com/oauth/token"
 COMMUNITY_URL = "https://whop.com/whop-workforce/"
@@ -206,10 +208,10 @@ def oauth_status(conn, store, port: int = 8765) -> dict[str, Any]:
 def _get(conn, store, path: str, params: dict[str, Any], http: Http) -> dict:
     url = f"{API_BASE}{path}?{urllib.parse.urlencode({k: v for k, v in params.items() if v not in (None, '')})}"
     token = access_token(conn, store, http)
-    status, body = http("GET", url, {"Authorization": f"Bearer {token}"}, None)
+    status, body = http("GET", url, {"Authorization": f"Bearer {token}", "Api-Version-Date": API_VERSION}, None)
     if status == 401:                                                   # expired early: refresh once
         token = access_token(conn, store, http, force_refresh=True)
-        status, body = http("GET", url, {"Authorization": f"Bearer {token}"}, None)
+        status, body = http("GET", url, {"Authorization": f"Bearer {token}", "Api-Version-Date": API_VERSION}, None)
     if status == 403:
         raise NotAuthorized("Whop refused the request: this authorization lacks the scope bounty:basic:read. Enable it on your app and authorize again.")
     if status == 429:

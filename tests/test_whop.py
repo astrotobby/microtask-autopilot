@@ -132,6 +132,16 @@ class OAuthTests(Base):
         self.assertGreaterEqual(len(q["state"]), 20)
         self.assertGreaterEqual(len(q["code_challenge"]), 40)
 
+    def test_every_api_read_pins_the_documented_api_version(self):
+        # Without Api-Version-Date the live API answered 400 to the documented status filter (2026-11-16).
+        http = FakeWhop([bounty(1)])
+        self.authorize(http)
+        whop.sync(self.conn, self.store, http)
+        reads = [c for c in http.calls if c[0] == "GET"]
+        self.assertTrue(reads)
+        for _, url, headers, _ in reads:
+            self.assertEqual(headers.get("Api-Version-Date"), whop.API_VERSION, url)
+
     def test_tokens_go_to_the_secret_store_and_nowhere_else(self):
         http = FakeWhop([bounty(1)])
         st = self.authorize(http)
