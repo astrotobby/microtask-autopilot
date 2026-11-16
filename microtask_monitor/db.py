@@ -343,9 +343,76 @@ def _m11_owner_outreach(conn: sqlite3.Connection) -> None:
         email TEXT PRIMARY KEY, reason TEXT NOT NULL, at TEXT NOT NULL)""")
 
 
+def _m12_freelance_business(conn: sqlite3.Connection) -> None:
+    """The freelance business channel: sources, clients, leads, estimates, proposals, projects, milestones, scope changes,
+    communications, invoices, costs, retainers and a separate audit trail. Purely additive: reversed by dropping the biz_* tables.
+    Money received is still recorded in ``payments`` (one unified earnings ledger); invoices only point to it."""
+    for stmt in _M12_SQL.split(";"):                      # one statement at a time: executescript would commit mid-migration
+        if stmt.strip():
+            conn.execute(stmt)
+
+
+_M12_SQL = ("""
+    CREATE TABLE IF NOT EXISTS biz_sources (
+        id TEXT PRIMARY KEY, last_run TEXT, last_status TEXT, last_error TEXT, leads_found INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_clients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT, channel TEXT, country TEXT, source_id TEXT,
+        notes TEXT, prefs_json TEXT, do_not_contact INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_biz_client_key ON biz_clients(lower(name), lower(COALESCE(email,'')));
+    CREATE TABLE IF NOT EXISTS biz_leads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, dedupe_key TEXT NOT NULL UNIQUE, source_id TEXT NOT NULL, client_id INTEGER REFERENCES biz_clients(id),
+        client_name TEXT, contact TEXT, title TEXT NOT NULL, description TEXT, requirements_json TEXT, technologies_json TEXT,
+        budget_min REAL, budget_max REAL, currency TEXT, budget_type TEXT, deadline TEXT, workload TEXT, payment_terms TEXT, client_history TEXT,
+        competition TEXT, country_restrictions TEXT, platform_rules TEXT, url TEXT, discovered_at TEXT NOT NULL, service_line TEXT,
+        score REAL, score_parts_json TEXT, status TEXT NOT NULL DEFAULT 'new', status_reason TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE INDEX IF NOT EXISTS idx_biz_leads_status ON biz_leads(status, score DESC);
+    CREATE TABLE IF NOT EXISTS biz_estimates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER NOT NULL REFERENCES biz_leads(id) ON DELETE CASCADE, tasks_json TEXT NOT NULL,
+        risks_json TEXT, missing_json TEXT, flags_json TEXT, hours REAL NOT NULL, price REAL NOT NULL, currency TEXT NOT NULL, delivery_days INTEGER NOT NULL,
+        revisions INTEGER NOT NULL, effective_hourly REAL, feasible INTEGER NOT NULL, created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_proposals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER NOT NULL REFERENCES biz_leads(id) ON DELETE CASCADE, estimate_id INTEGER REFERENCES biz_estimates(id),
+        mode TEXT NOT NULL, body TEXT NOT NULL, price REAL NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'prepared', idem_key TEXT NOT NULL UNIQUE,
+        sent_at TEXT, sent_evidence TEXT, reply_at TEXT, reply_text TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER REFERENCES biz_clients(id), lead_id INTEGER REFERENCES biz_leads(id),
+        proposal_id INTEGER REFERENCES biz_proposals(id), title TEXT NOT NULL, service_line TEXT, scope_json TEXT NOT NULL, acceptance_json TEXT NOT NULL,
+        price REAL NOT NULL, currency TEXT NOT NULL, pricing TEXT NOT NULL DEFAULT 'fixed', deadline TEXT, status TEXT NOT NULL DEFAULT 'awarded',
+        award_evidence TEXT NOT NULL, channel TEXT, delivery_channel TEXT, handover_path TEXT, delivered_at TEXT, delivery_evidence TEXT,
+        accepted_at TEXT, hours_logged REAL NOT NULL DEFAULT 0, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_biz_project_lead ON biz_projects(lead_id) WHERE lead_id IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS biz_milestones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER NOT NULL REFERENCES biz_projects(id) ON DELETE CASCADE, seq INTEGER NOT NULL,
+        title TEXT NOT NULL, detail TEXT, worker TEXT NOT NULL, depends_on INTEGER, status TEXT NOT NULL DEFAULT 'planned', assignment_id INTEGER REFERENCES assignments(id),
+        hours_est REAL, due TEXT, idem_key TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_scope_changes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER NOT NULL REFERENCES biz_projects(id) ON DELETE CASCADE, description TEXT NOT NULL,
+        extra_price REAL NOT NULL, extra_days INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'proposed', decided_evidence TEXT, created_at TEXT NOT NULL, decided_at TEXT);
+    CREATE TABLE IF NOT EXISTS biz_communications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER REFERENCES biz_clients(id), project_id INTEGER REFERENCES biz_projects(id),
+        lead_id INTEGER REFERENCES biz_leads(id), direction TEXT NOT NULL, kind TEXT NOT NULL, channel TEXT NOT NULL, subject TEXT, body TEXT,
+        status TEXT NOT NULL, idem_key TEXT NOT NULL UNIQUE, at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_invoices (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER REFERENCES biz_projects(id), client_id INTEGER REFERENCES biz_clients(id),
+        number TEXT NOT NULL UNIQUE, amount REAL NOT NULL CHECK (amount > 0), currency TEXT NOT NULL, kind TEXT NOT NULL DEFAULT 'one_time',
+        status TEXT NOT NULL DEFAULT 'draft', issued_at TEXT, due_at TEXT, paid_at TEXT, payment_id INTEGER REFERENCES payments(id), created_at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_costs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, project_id INTEGER REFERENCES biz_projects(id), kind TEXT NOT NULL, amount REAL NOT NULL CHECK (amount >= 0),
+        currency TEXT NOT NULL, note TEXT, at TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS biz_retainers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, client_id INTEGER NOT NULL REFERENCES biz_clients(id), project_id INTEGER REFERENCES biz_projects(id),
+        service TEXT NOT NULL, monthly_amount REAL NOT NULL, currency TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'suggested', reason TEXT,
+        started_at TEXT, ended_at TEXT, created_at TEXT NOT NULL);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_biz_retainer_project ON biz_retainers(project_id, service);
+    CREATE TABLE IF NOT EXISTS biz_audit (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor TEXT NOT NULL, action TEXT NOT NULL, entity TEXT, entity_id TEXT,
+        permission TEXT, detail_json TEXT);
+    """)
+
+
 MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections),
               (7, _m7_assignments_and_whop), (8, _m8_converge_risk_and_assignments), (9, _m9_autonomy_engine),
-              (10, _m10_owner_shorts), (11, _m11_owner_outreach)]
+              (10, _m10_owner_shorts), (11, _m11_owner_outreach), (12, _m12_freelance_business)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

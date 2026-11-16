@@ -92,7 +92,8 @@ def software_checks(job, paths) -> list[dict[str, Any]]:
     if not py and not js and not any(f.suffix == ".ts" for f in _files(out)):
         return [_r("code_present", "fail", "No Python or JavaScript source files were delivered", executed=True)]
     for f in py:
-        code, msg = _run([sys.executable, "-m", "py_compile", str(f)], out)
+        # compile in memory: py_compile always writes a .pyc, which would change the deliverables after their hashes are recorded
+        code, msg = _run([sys.executable, "-c", "import sys; compile(open(sys.argv[1], encoding='utf-8').read(), sys.argv[1], 'exec')", str(f)], out)
         res.append(_r(f"compile:{f.name}", "pass" if code == 0 else "fail", "Compiles" if code == 0 else msg))
     node = shutil.which("node")
     for f in js:

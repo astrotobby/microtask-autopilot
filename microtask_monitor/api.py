@@ -91,6 +91,10 @@ class Api:
         except (wf.WorkflowError, ex.ExecutionError, cx.ConnectionError_, asg.AssignmentError, whop.WhopError, control.ControlError,
                 lifecycle.LifecycleError, submission.SubmissionError, ledger.LedgerError) as exc:
             return 400, {"ok": False, "error": str(exc)}
+        except ValueError as exc:                 # business-engine rules (biz_config.BizError)
+            if type(exc).__name__ != "BizError":
+                raise
+            return 400, {"ok": False, "error": str(exc)}
 
     def _route(self, conn, method: str, path: str, q: dict, body: dict) -> Any:
         parts = [p for p in path.split("/") if p][1:]            # drop "api"
@@ -108,6 +112,12 @@ class Api:
             return self.platforms(conn)
         if parts[:1] == ["engine"]:
             return engine_api.route(self, conn, method, parts[1:], q, body)
+        if parts[:1] == ["business"]:
+            try:
+                from microtask_monitor import biz_api
+            except ImportError:  # pragma: no cover
+                import biz_api
+            return biz_api.route(self, conn, method, parts[1:], q, body)
         if key == ("GET", "autonomy"):
             return self.autonomy_status()
         if parts[:1] == ["applications"]:

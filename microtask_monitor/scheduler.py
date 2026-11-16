@@ -104,7 +104,8 @@ class Scheduler:
                 Job("cleanup", 86400, lambda s, c, n: cleanup(c, n, s.exec_dir)),
                 Job("owner_shorts", 300, _owner_shorts),
                 Job("owner_outreach", 1800, _owner_outreach),
-                Job("email_discovery", 1800, _email_discovery)]
+                Job("email_discovery", 1800, _email_discovery),
+                Job("freelance_business", 1800, _freelance_business)]
 
     # ---------------------------------------------------------------- leases and state
     def _state(self, conn, name: str) -> dict[str, Any]:
@@ -315,6 +316,28 @@ def _email_discovery(s: Scheduler, conn, now: datetime) -> Any:
         except (outreach.OutreachError, OSError, KeyError) as exc:
             out["gmail_readonly"] = f"unavailable: {type(exc).__name__}: {str(exc)[:200]}"
     return out or "switched off"
+
+
+def _freelance_business(s: Scheduler, conn, now: datetime) -> Any:
+    """The freelance business channel: permitted discovery, inbound enquiries, proposals, awarded-project delivery, recurring revenue."""
+    try:
+        from microtask_monitor import biz_engine, reliability
+    except ImportError:  # pragma: no cover
+        import biz_engine, reliability
+    imap = None
+    if control.settings(conn).get("email_monitor_enabled"):
+        try:
+            from microtask_monitor import outreach
+        except ImportError:  # pragma: no cover
+            import outreach
+        try:
+            cfg = outreach.load_config()
+            imap = biz_engine.enquiry_reader(cfg["from_address"], outreach.Mailer(cfg["from_address"], s.store)._pw())
+        except (outreach.OutreachError, KeyError) as exc:
+            imap = None
+            notify.create(conn, "task_attention", "Enquiry inbox not readable", str(exc)[:500], key=f"biz-imap:{now.date().isoformat()}")
+    summary = biz_engine.tick(conn, online=reliability.online(), runner=s.runner, db_path=s.db_path, exec_dir=s.exec_dir, imap=imap)
+    return {k: (len(v) if isinstance(v, (list, dict)) else v) for k, v in summary.items()}
 
 
 def cleanup(conn, now: datetime | None = None, exec_dir: Path | None = None) -> dict[str, int]:

@@ -66,6 +66,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <div class="banner bad hidden" id="stopBanner"></div>
  <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program reads listings only through official APIs you authorized, prepares and checks the work, and tracks it with evidence. Signing in, taking a task, submitting and withdrawing are done by you on the platform and recorded here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
  <nav class="nav" aria-label="Dashboard sections">
+  <button data-tab="business">Freelance Business</button>
   <button data-tab="access">Platform Access Engine</button>
   <button data-tab="control">Control Centre</button>
   <button data-tab="pmanager">Platform Manager</button>
@@ -272,6 +273,20 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <div class="section-head"><h2>Integration health</h2><span class="muted" id="healthNote">Eligibility and integration health are independent.</span></div>
   <div id="healthTable" class="table-wrap"></div>
   <div id="platformGrid" style="margin-top:16px"></div>
+ </section>
+
+ <section id="business" class="panel">
+  <div class="section-head"><h1>Freelance Business</h1><span><button class="btn" onclick="bizTick()">Run one business cycle now</button> <button class="btn" onclick="bizDiscover()">Discover leads now</button></span></div>
+  <p class="muted">Two channels, one ledger: microtask platforms and professional freelance projects. <b>Pipeline</b> is potential work, <b>contracted</b> is accepted but not invoiced, <b>invoiced</b> is requested, and only <b>collected</b> (payments you recorded with a reference) is income.</p>
+  <div class="section-head"><h2>Business overview</h2></div><div class="grid" id="bizCards"></div><div class="card" id="bizTarget" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Lead acquisition</h2><span><button class="btn small" onclick="bizInbox()">Import enquiry emails</button> <button class="btn small" onclick="bizEnquiry()">Add an enquiry</button></span></div>
+  <div class="grid" id="bizFunnel"></div><div id="bizLeads" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Proposals</h2><span class="muted">Mode A automatic (only where terms permit) · B prepared for you to submit · C reply to a client who contacted you</span></div><div id="bizProposals"></div>
+  <div class="card hidden" id="bizProposalView" style="margin-top:12px;white-space:pre-wrap"></div>
+  <div class="section-head"><h2>Projects</h2></div><div id="bizProjects"></div>
+  <div class="section-head"><h2>Financial management</h2></div><div id="bizInvoices"></div><div class="grid" id="bizSplit" style="margin-top:12px"></div><div id="bizRetainers" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Portfolio</h2><button class="btn small" onclick="bizBuildSite()">Build the business website</button></div><div id="bizPortfolio"></div>
+  <div class="section-head"><h2>Automation health</h2></div><div class="card" id="bizHealth"></div>
  </section>
 
  <section id="access" class="panel">
@@ -1299,7 +1314,80 @@ async function showOutcome(id) {
   const s = r.submission; E("outcome" + id).textContent = s.outcome + " · " + s.outcome_label + (s.reason ? " — " + s.reason : "");
 }
 async function importEmails() { const r = await act(() => api("POST", "/api/engine/email/import", {}), "Email import finished"); if (r) { toast(r.result.imported + " imported, " + r.result.duplicates + " already seen, " + r.result.not_platform + " not from a platform"); loadAccess(); } }
-Object.assign(loaders, {access: loadAccess, owner: loadOwner, control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
+// ---------------------------------------------------------------- freelance business engine
+const usd = v => "USD " + Number(v || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
+async function loadBusiness() {
+  const d = await act(() => api("GET", "/api/business")); if (!d) return;
+  const o = d.overview, f = o.funnel, g = d.gap;
+  E("bizCards").innerHTML = [card("Collected this month", usd(o.collected_usd), "freelance " + usd(o.collected_freelance_usd) + " · microtask " + usd(o.collected_microtask_usd)),
+    card("Net operating income", usd(o.net_operating_income_usd), "after fees " + usd(o.platform_and_payment_fees_usd) + " and costs " + usd(o.operating_costs_usd)),
+    card("Active clients", f.active_clients), card("Active contracts", f.active, usd(o.contracted_not_invoiced_usd) + " contracted, not yet invoiced"),
+    card("Outstanding invoices", usd(o.invoiced_unpaid_usd), "requested, not received"), card("Recurring monthly revenue", usd(o.recurring_monthly_usd)),
+    card("Pipeline", usd(o.pipeline_usd), "open proposals: not revenue"), card("Effective hourly", o.effective_hourly_usd == null ? "—" : usd(o.effective_hourly_usd), "collected ÷ hours you logged")].join("");
+  const tp = o.target_progress;
+  E("bizTarget").innerHTML = "<b>Monthly targets (" + esc(o.month) + ")</b>" + ["initial", "next", "primary", "growth"].map(k => tp[k] ? '<div style="margin:6px 0"><div class="muted">' + esc(k) + " · " + usd(tp[k].target) + " · " + tp[k].percent + '%</div><div style="background:#e6ebf2;border-radius:6px;height:10px"><div style="background:' + (tp[k].percent >= 100 ? "#2e7d4f" : "#1c5caa") + ';height:10px;border-radius:6px;width:' + Math.min(100, tp[k].percent) + '%"></div></div></div>' : "").join("") +
+    "<p><b>Gap to USD " + g.target + ":</b> " + usd(g.gap) + (g.gap ? " — " + esc(g.options.join(" · ")) : " — target met") + '</p><p class="muted">Win rate: ' + esc(g.win_rate_basis) + ".</p>";
+  E("bizFunnel").innerHTML = [card("Leads discovered", f.leads), card("Qualified", f.qualified), card("Proposals prepared", f.proposals_prepared), card("Proposals sent", f.proposals_sent),
+    card("Client responses", f.responses), card("Projects won", f.won, f.win_rate == null ? "" : "win rate " + Math.round(f.win_rate * 100) + "%"), card("Delivered", f.delivered), card("Rejected or cancelled", f.cancelled)].join("");
+  E("bizLeads").innerHTML = table(["Score", "Lead", "Source", "Service", "Budget", "Status", ""], d.leads.map(l =>
+    "<tr><td><b>" + l.score + "</b></td><td>" + (l.url ? link(l.url, l.title) : esc(l.title)) + '<div class="muted">' + esc(l.client_name || "") + (l.contact ? " · " + esc(l.contact) : "") + (l.deadline ? " · deadline " + esc(l.deadline) : "") + "</div></td><td>" + esc(l.source_id) +
+    "</td><td>" + esc(l.service_line || "—") + "</td><td>" + (l.budget_max ? esc((l.currency || "") + " " + l.budget_max + (l.budget_type === "hourly" ? "/h" : "")) : "—") + "</td><td>" + tag(l.status, l.status === "qualified" ? "ok" : l.status === "rejected" ? "bad" : "") +
+    '<div class="muted">' + esc((l.status_reason || "").slice(0, 160)) + "</div></td><td>" + (l.status === "qualified" ? '<button class="btn small" onclick="bizPropose(' + l.id + ')">Prepare proposal</button>' : "") + "</td></tr>"), "No leads yet: run discovery, import enquiry emails or add an enquiry.");
+  E("bizProposals").innerHTML = table(["#", "Lead", "Mode", "Price", "Status", ""], d.proposals.map(p =>
+    "<tr><td>" + p.id + "</td><td>" + esc(p.title) + '<div class="muted">' + esc(p.source_id) + (p.contact ? " · " + esc(p.contact) : "") + "</div></td><td>" + tag(p.mode) + "</td><td>" + usd(p.price) + "</td><td>" + tag(p.status) +
+    '</td><td><button class="btn small" onclick="bizShowProposal(' + p.id + ')">View</button> ' + (p.status === "prepared" ? '<button class="btn small" onclick="bizSent(' + p.id + ')">I submitted it</button> ' : "") +
+    (["sent", "replied", "prepared"].includes(p.status) ? '<button class="btn small" onclick="bizReply(' + p.id + ')">Record reply</button> ' : "") + (p.status === "accepted" ? '<button class="btn small primary" onclick="bizAward(' + p.id + ')">Start project</button>' : "") + "</td></tr>"), "No proposals yet.");
+  E("bizProjects").innerHTML = table(["#", "Project", "Client", "Price", "Deadline", "Status", ""], d.projects.map(p => {
+    const b = (label, fn) => '<button class="btn small" onclick="' + fn + "(" + p.id + ')">' + label + "</button> ";
+    return "<tr><td>" + p.id + "</td><td>" + esc(p.title) + '<div class="muted">' + esc(p.service_line || "") + "</div></td><td>" + esc(p.client || "—") + "</td><td>" + usd(p.price) + "</td><td>" + esc(p.deadline || "") + "</td><td>" + tag(p.status, ["accepted", "delivered"].includes(p.status) ? "ok" : "") + "</td><td>" +
+      (p.status === "awarded" ? b("Start", "bizStart") : "") + (["awarded", "in_progress"].includes(p.status) ? b("Execute", "bizExecute") : "") + (["in_progress", "qa"].includes(p.status) ? b("Check QA", "bizRefresh") : "") +
+      (p.status === "ready_to_deliver" ? b("Handover", "bizHandover") + b("Deliver", "bizDeliver") : "") + (p.status === "delivered" ? b("Client accepted", "bizAccept") : "") +
+      (!["cancelled"].includes(p.status) ? b("Scope change", "bizChange") + b("Invoice", "bizInvoice") : "") + "</td></tr>"; }), "No projects yet. A project starts when a client accepts a proposal and you record it.");
+  E("bizInvoices").innerHTML = table(["Invoice", "Project", "Amount", "Kind", "Status", "Due", ""], d.invoices.map(i =>
+    "<tr><td>" + esc(i.number) + "</td><td>" + esc(i.title || "") + "</td><td>" + usd(i.amount) + "</td><td>" + esc(i.kind) + "</td><td>" + tag(i.status, i.status === "paid" ? "ok" : i.status === "overdue" ? "bad" : "") + "</td><td>" + esc(i.due_at || "") + "</td><td>" +
+    (i.status === "draft" ? '<button class="btn small" onclick="bizInvSent(' + i.id + ')">Mark sent</button> ' : "") + (["sent", "part_paid", "overdue", "draft"].includes(i.status) ? '<button class="btn small" onclick="bizPayment(' + i.id + ')">Record payment</button>' : "") + "</td></tr>"), "No invoices yet.");
+  E("bizSplit").innerHTML = card("By service line", (o.by_service_line.map(x => esc(x.service_line) + " " + usd(x.collected)).join("<br>")) || "—") + card("By acquisition channel", (o.by_channel.map(x => esc(x.channel) + " " + usd(x.collected)).join("<br>")) || "—") +
+    card("Costs recorded", d.costs.length, '<button class="btn small" onclick="bizCost()">Add a cost or fee</button>');
+  E("bizRetainers").innerHTML = table(["Client", "Service", "Monthly", "Status", "Why", ""], d.retainers.map(r => "<tr><td>" + esc(r.client || "") + "</td><td>" + esc(r.service) + "</td><td>" + usd(r.monthly_amount) + "</td><td>" + tag(r.status) + '</td><td class="muted">' + esc(r.reason || "") + "</td><td>" +
+    (r.status === "suggested" ? '<button class="btn small" onclick="bizRetainer(' + r.id + ')">Client agreed</button>' : "") + "</td></tr>"), "Retainers are suggested after a delivery is accepted.");
+  E("bizPortfolio").innerHTML = d.catalogue.map(c => '<div class="card" style="margin-bottom:8px"><b>' + esc(c.label) + "</b><div>" + c.packages.map(p => tag(p.name + " · from " + usd(p.from_usd))).join("") + '</div><div class="muted">Case studies: ' + (c.case_studies.map(x => esc(x.title) + " (" + esc(x.kind) + ")").join(", ") || "none yet") + "</div></div>").join("") +
+    '<p class="muted">Testimonials are shown only when you record them with evidence. None are ever generated.</p>';
+  const h = d.health;
+  E("bizHealth").innerHTML = '<p class="muted">Last business cycle: ' + when((h.last_tick || {}).at) + "</p>" + table(["Source", "Kind", "Discovery", "Automated proposals", "Kenya", "Fees", "Last run", "Status"], h.sources.map(s =>
+    "<tr><td>" + esc(s.name) + "</td><td>" + esc(s.kind) + "</td><td>" + tag(s.policy.discovery, s.policy.discovery === "allowed" ? "ok" : "warn") + "</td><td>" + tag(s.policy.automated_proposals, s.policy.automated_proposals === "prohibited" ? "bad" : "") +
+    "</td><td>" + esc(s.kenya || "") + "</td><td>" + esc(s.fees || "") + "</td><td>" + when(s.last_run) + "</td><td>" + tag(s.last_status || "never run", s.last_status === "error" ? "bad" : s.last_status === "ok" ? "ok" : "") + '<div class="muted">' + esc(s.last_error || s.policy.note || "") + "</div></td></tr>"), "") +
+    (h.security_events.length ? "<h3>Refused or blocked actions</h3>" + table(["When", "Action", "Entity"], h.security_events.map(e => "<tr><td>" + when(e.at) + "</td><td>" + esc(e.action) + "</td><td>" + esc(e.entity + " " + e.entity_id) + "</td></tr>"), "") : "");
+}
+const bizDo = async (fn, ok) => { const r = await act(fn, ok); if (r) loadBusiness(); return r; };
+async function bizTick() { await bizDo(() => api("POST", "/api/business/tick", {}), "Business cycle finished"); }
+async function bizDiscover() { await bizDo(() => api("POST", "/api/business/discover", {force: true}), "Discovery finished"); }
+async function bizInbox() { await bizDo(() => api("POST", "/api/business/inbox/import", {}), "Inbox imported"); }
+async function bizEnquiry() { const name = prompt("Client name"); if (!name) return; const email = prompt("Client email"); if (!email) return; const message = prompt("What do they need? (paste their message)"); if (!message) return;
+  await bizDo(() => api("POST", "/api/business/enquiry", {name, email, message, subject: prompt("Project title (optional)") || "", budget: prompt("Budget in USD (optional)") || ""}), "Enquiry recorded"); }
+async function bizPropose(id) { const r = await bizDo(() => api("POST", "/api/business/leads/" + id + "/propose", {}), "Proposal step finished"); if (r && !r.created) toast(r.reason || "Not created", true); else if (r) bizShowProposal(r.proposal_id); }
+async function bizShowProposal(id) { const r = await act(() => api("GET", "/api/business/proposals/" + id)); if (!r) return; const v = E("bizProposalView"); v.classList.remove("hidden"); v.textContent = "Proposal #" + id + " (mode " + r.proposal.mode + ")\n\n" + r.proposal.body; v.scrollIntoView({behavior: "smooth"}); }
+async function bizSent(id) { const evidence = prompt("Where did you submit it? (e.g. 'Freelancer.com bid on project 123', 'replied by email')"); if (evidence) await bizDo(() => api("POST", "/api/business/proposals/" + id + "/sent", {evidence}), "Recorded as sent"); }
+async function bizReply(id) { const text = prompt("Paste the client's reply"); if (!text) return; const outcome = prompt("Outcome: replied, accepted or declined", "replied"); if (outcome) await bizDo(() => api("POST", "/api/business/proposals/" + id + "/reply", {text, outcome: outcome.trim().toLowerCase()}), "Reply recorded"); }
+async function bizAward(id) { const evidence = prompt("Evidence of the award (the client's acceptance, contract or deposit)"); if (!evidence) return;
+  const ai = confirm("Does the client or platform permit AI-assisted work? OK = yes (you will say where), Cancel = no"); const ai_source = ai ? prompt("Where do they say so?") : "";
+  const ch = prompt("Delivery channel: platform, email, repository or other", "platform");
+  await bizDo(() => api("POST", "/api/business/proposals/" + id + "/award", {evidence, ai_permitted: ai && !!ai_source, ai_source, delivery_channel: (ch || "platform").trim()}), "Project created"); }
+const bizP = (path, body, ok) => bizDo(() => api("POST", "/api/business/projects/" + path, body || {}), ok);
+async function bizStart(id) { await bizP(id + "/start", {}, "Project started"); }
+async function bizExecute(id) { const r = await bizP(id + "/execute", {}, "Execution finished"); if (r && !r.started) toast((r.reasons || []).join(" · "), true); }
+async function bizRefresh(id) { const r = await bizP(id + "/refresh", {}, "Checked"); if (r) toast("QA: " + (r.qa || "not run") + " " + (r.qa_summary || "")); }
+async function bizHandover(id) { const r = await bizP(id + "/handover", {}, "Handover package ready"); if (r) toast(r.zip); }
+async function bizDeliver(id) { const evidence = prompt("How did you deliver it? Leave empty to email it (only if email delivery is on for this project)") || ""; const r = await bizP(id + "/deliver", {evidence}, "Delivery step finished"); if (r && !r.delivered) toast(r.reason, true); }
+async function bizAccept(id) { const evidence = prompt("Where did the client accept the work?"); if (!evidence) return; const h = prompt("Hours you actually spent (for real profitability)"); await bizP(id + "/accept", {evidence, hours_logged: h ? Number(h) : null}, "Recorded"); }
+async function bizChange(id) { const description = prompt("What extra did the client ask for?"); if (!description) return; const r = await bizP(id + "/change", {description}, "Change estimated"); if (r) alert(r.message + "\n\nSend this to the client; record their answer when they reply."); }
+async function bizInvoice(id) { const amount = prompt("Amount in USD (leave empty for the remaining balance)"); await bizP(id + "/invoice", {amount: amount ? Number(amount) : null}, "Draft invoice created"); }
+async function bizInvSent(id) { const evidence = prompt("How was it sent? (PayPal invoice, platform, email)"); if (evidence) await bizDo(() => api("POST", "/api/business/invoices/" + id + "/sent", {evidence}), "Marked sent"); }
+async function bizPayment(id) { const amount = Number(prompt("Amount received (USD)")); if (!amount) return; const received_date = prompt("Date received (YYYY-MM-DD)", new Date().toISOString().slice(0, 10)); const method = prompt("Method (paypal, payoneer, mpesa, stripe, bank_transfer, crypto, other)"); const reference = prompt("Transaction reference");
+  if (reference) await bizDo(() => api("POST", "/api/business/invoices/" + id + "/payment", {amount, received_date, method, reference}), "Payment recorded"); }
+async function bizCost() { const kind = prompt("Kind: platform_fee, payment_fee, tool, operating, refund"); if (!kind) return; const amount = Number(prompt("Amount (USD)")); const note = prompt("Note") || ""; await bizDo(() => api("POST", "/api/business/costs", {kind, amount, note}), "Cost recorded"); }
+async function bizRetainer(id) { const evidence = prompt("Where did the client agree to the retainer?"); if (evidence) await bizDo(() => api("POST", "/api/business/retainers/" + id + "/activate", {evidence}), "Retainer active"); }
+async function bizBuildSite() { const r = await bizDo(() => api("POST", "/api/business/portfolio/build", {}), "Website built"); if (r) toast(r.path + (r.contact_email ? "" : " — add a contact email before publishing")); }
+Object.assign(loaders, {business: loadBusiness, access: loadAccess, owner: loadOwner, control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
 document.addEventListener("DOMContentLoaded", () => { refreshStop(); setInterval(refreshStop, 30000); });
 if (document.readyState !== "loading") refreshStop();
 E("it_platform").innerHTML = '<option value="direct_client">Direct client work (my own client)</option>' + PLATFORMS.map(p => '<option value="' + p.id + '">' + esc(p.name) + "</option>").join("");
