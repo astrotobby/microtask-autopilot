@@ -115,6 +115,51 @@ def check_action(platform_id: str, action: str, *, caps: dict[str, dict[str, Any
     return Decision(False, f"'{needed}' is not permitted for {platform_id}")
 
 
+PERMISSION_CLASSES = {1: "Official API automation permitted", 2: "Browser automation expressly permitted", 3: "Human-assisted execution only",
+                      4: "Automation prohibited", 5: "Not verified"}
+
+
+def permission_class(record: dict[str, Any]) -> dict[str, Any]:
+    """The five-way classification, derived from the reviewed capability record (never from a platform's name)."""
+    access, levels = record.get("access_class"), set(record.get("levels", []))
+    if (record.get("country_eligibility") or {}).get("kenya") == "unsupported":
+        n = 4
+    elif access == "official_api_permitted":
+        n = 1
+    elif access == "browser_automation_permitted":
+        n = 2
+    elif "AUTOMATION_PROHIBITED" in levels:
+        n = 4
+    elif access == "human_assisted_only":
+        n = 3
+    else:
+        n = 5
+    return {"class": n, "label": PERMISSION_CLASSES[n]}
+
+
+def registry(caps: dict[str, dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+    """One evidence row per platform: classification, what must stay manual, sources and the date they were read."""
+    caps = load_capabilities() if caps is None else caps
+    out = []
+    for pid, r in caps.items():
+        execution, review = r.get("execution") or {}, r.get("review") or {}
+        permitted = set(r.get("permitted_automation", []))
+        out.append({"platform_id": pid, "name": r.get("name", pid), **permission_class(r),
+                    "automated_discovery": bool({"public_discovery", "api_read"} & permitted) or "PUBLIC_DISCOVERY_ALLOWED" in r.get("levels", []),
+                    "worker_api": bool((r.get("documented_api") or {}).get("available")), "api_scope": (r.get("documented_api") or {}).get("scope"),
+                    "browser_automation": r.get("access_class") == "browser_automation_permitted",
+                    "ai_assistance": (execution.get("ai_assistance") or {}).get("status", "unverified"),
+                    "ai_note": (execution.get("ai_assistance") or {}).get("note"),
+                    "auto_acceptance": False, "auto_submission": bool(execution.get("automated_submission")),
+                    "kenya": (r.get("country_eligibility") or {}).get("kenya", "unverified"), "kenya_note": (r.get("country_eligibility") or {}).get("note"),
+                    "payment": (r.get("payment_verification") or {}).get("status", "unverified"), "payment_note": (r.get("payment_verification") or {}).get("note"),
+                    "manual_operations": execution.get("manual_steps") or ["Everything in your account: sign-in, taking tasks, doing the work, submitting, withdrawing."],
+                    "sources": list(dict.fromkeys((r.get("policy_urls") or []) + (review.get("terms_read") or []) + (execution.get("sources") or []))),
+                    "not_read": review.get("not_read_or_unavailable") or [], "checked_on": r.get("last_policy_verified"),
+                    "automation_clause": review.get("automation_clause")})
+    return out
+
+
 def require(platform_id: str, action: str, **kw: Any) -> None:
     decision = check_action(platform_id, action, **kw)
     if not decision.allowed:

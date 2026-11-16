@@ -42,7 +42,8 @@ class ClassificationTests(unittest.TestCase):
 
     def test_only_documented_read_only_automation_is_permitted(self):
         automated = {pid for pid, m in INTEGRATIONS.items() if m["automation_permitted"] != "none"}
-        self.assertEqual(automated, {"opentrain_ai", "mindrift"})
+        self.assertEqual(automated, {"opentrain_ai", "mindrift", "whop_workforce"})
+        self.assertEqual(INTEGRATIONS["whop_workforce"]["automation_permitted"], "read_only_official_api_with_user_oauth")
         self.assertEqual(INTEGRATIONS["opentrain_ai"]["automation_permitted"], "read_only_public_job_listing")
         self.assertEqual(INTEGRATIONS["mindrift"]["automation_permitted"], "read_only_public_policy_monitor")
 

@@ -55,20 +55,31 @@ footer{padding:22px 0;color:#778398;font-size:12px}
 <header class="top">
  <div><div class="brand">⚙ Microtask Autopilot</div><div class="sub">Kenya-focused work, application, task and earnings manager · Free local dashboard</div><div class="sub" id="agentStatus">Connecting to local agent…</div></div>
  <div class="row" style="flex:0 0 auto">
+  <button class="btn danger" id="stopAll" onclick="stopAll()" title="Emergency stop: nothing automated starts, running jobs pause">&#9632; STOP ALL AUTOMATION</button>
+  <button class="btn primary hidden" id="resumeAll" onclick="resumeAll()">&#9654; Release stop</button>
   <button class="btn" id="syncNow">Sync now</button>
   <button class="btn" id="exportBackup">Export data</button>
   <label class="btn" style="margin:0;cursor:pointer">Import old backup <input id="importBackup" type="file" accept=".json,application/json" hidden></label>
  </div>
 </header>
 <main>
- <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program never logs in to work platforms, applies, accepts or submits tasks, or handles payments for you: you do those steps yourself and record them here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
+ <div class="banner bad hidden" id="stopBanner"></div>
+ <div class="notice">Your records are stored by the local agent on this PC (SQLite). This program reads listings only through official APIs you authorized, prepares and checks the work, and tracks it with evidence. Signing in, taking a task, submitting and withdrawing are done by you on the platform and recorded here. Never enter passwords, cookies, OTPs, identity documents or payment credentials anywhere in this dashboard.</div>
  <nav class="nav" aria-label="Dashboard sections">
+  <button data-tab="control">Control Centre</button>
+  <button data-tab="pmanager">Platform Manager</button>
+  <button data-tab="pipeline">Task Pipeline</button>
+  <button data-tab="autopilot">Autopilot Queue</button>
+  <button data-tab="submissions">Submissions</button>
+  <button data-tab="ledger">Earnings Ledger</button>
+  <button data-tab="automation">Automation Settings</button>
+  <button data-tab="execution">Execution Centre</button>
   <button class="active" data-tab="overview">Overview</button>
   <button data-tab="daily">Daily Earning Opportunities</button>
   <button data-tab="opportunities">Opportunities</button>
   <button data-tab="applications">Applications</button>
   <button data-tab="tasks">Tasks</button>
-  <button data-tab="execution">Execution Centre</button>
+  <button data-tab="whop">Whop Workforce</button>
   <button data-tab="earnings">Earnings</button>
   <button data-tab="earning-proof">Earning Proof</button>
   <button data-tab="platforms">Platforms (25)</button>
@@ -170,8 +181,18 @@ footer{padding:22px 0;color:#778398;font-size:12px}
  <section id="execution" class="panel">
   <h1>Execution Centre</h1>
   <p class="muted">Turn REAL task instructions from your own account into checked deliverables. Paste the instructions (and upload any input files); the right specialist does the work in an isolated folder, independent quality checks run, and you review, approve and submit yourself. AI tools only run when the platform/client rules allow it and you approve each run. Nothing here logs in, accepts work, submits or handles money.</p>
+  <div class="section-head"><h2>Real work, counted separately</h2><span class="muted">Each number counts a different real record. Quoted rewards are never income.</span></div>
+  <div class="grid" id="centreFunnel" style="margin:12px 0"></div>
+  <div class="split" style="margin:12px 0">
+   <div class="card"><h3>Waiting for you</h3><div id="centreWaiting"></div></div>
+   <div class="card"><h3>Connected accounts and permitted mode</h3><div id="centreConns"></div></div>
+  </div>
+  <div class="section-head"><h2>Assignments</h2><span class="muted">Stages move only with evidence: a platform record, a real engine job, or your confirmation with a reference.</span></div>
+  <div id="centreAssignments" class="table-wrap"></div>
+  <div id="centreAssignment"></div>
+  <div class="section-head" style="margin-top:16px"><h2>Execution jobs</h2></div>
   <div class="grid" id="execCards" style="margin:12px 0"></div>
-  <div class="section-head"><h2>Qualified assignments (accepted applications)</h2></div>
+  <div class="section-head"><h2>Accepted applications without a job yet</h2></div>
   <div id="execQualified" class="table-wrap"></div>
   <div class="split" style="margin-top:12px">
    <div>
@@ -191,11 +212,23 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   </div>
  </section>
 
+ <section id="whop" class="panel">
+  <h1>Whop Workforce</h1>
+  <p class="muted">Bounties are read through Whop's documented API with your own OAuth authorization (read-only scope <code>bounty:basic:read</code>). This program never opens or scrapes whop.com, never likes, follows, comments or posts for you, never starts or submits an attempt, and never withdraws money. You do those on Whop; the result is followed here from the API.</p>
+  <div id="whopStatus"></div>
+  <div class="grid" id="whopCards" style="margin:12px 0"></div>
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:8px"><label for="whopFilter" style="margin:0">Show</label><select id="whopFilter"><option value="work">Bounties you can work on</option><option value="executable">Engine can help prepare</option><option value="human_only">Done personally by you</option><option value="review">Needs your review</option><option value="excluded">Excluded (with reason)</option><option value="">All</option></select></div>
+  <div id="whopTable" class="table-wrap"></div>
+  <div id="whopDetail"></div>
+ </section>
+
  <section id="connections" class="panel">
   <h1>Platform connections</h1>
-  <p class="muted">Sign in yourself in a dedicated browser window per platform. Your passwords and sessions stay in that browser's own encrypted store; this program never sees, stores or sends them, and never bypasses CAPTCHA, MFA, identity checks or KYC. "Connected" means you confirmed it; it is not verified automatically. What the program may do in an account depends on the platform's verified terms (the "permitted automation level" column).</p>
+  <p class="muted">Sign in yourself in a dedicated browser window per platform. Your passwords and sessions stay in that browser's own encrypted store; this program never sees, stores or sends them, and never bypasses CAPTCHA, MFA, identity checks or KYC. "Verified" means the platform's documented API answered your authorization. "Confirmed by you" means you said you are signed in; that cannot be checked automatically where a platform's terms do not allow automated access. What the program may do in an account depends on the platform's verified terms (the "permitted automation level" column).</p>
   <div class="banner ok" id="connNote"></div>
   <div id="connTable" class="table-wrap"></div>
+  <div class="section-head" style="margin-top:16px"><h2>Platform permission registry</h2><span class="muted">From each platform's own terms and documentation, with the date read. "Not verified" means exactly that.</span></div>
+  <div id="registryTable" class="table-wrap"></div>
   <p class="muted">API keys (only for platforms that issue one for a documented API) are stored with <code>py -3 microtask_monitor/connect.py set-key &lt;platform&gt; &lt;name&gt;</code> in Windows Credential Manager, never in this page.</p>
  </section>
 
@@ -239,6 +272,101 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <div id="platformGrid" style="margin-top:16px"></div>
  </section>
 
+ <section id="control" class="panel">
+  <h1>Control Centre</h1><p class="muted">Live figures from the local database. Registered platforms are not automated integrations: each platform's real capability is shown in the Platform Manager. Where a platform does not permit automation, you do those steps yourself and record them here.</p>
+  <div class="grid" id="controlCards"></div>
+  <div class="card" style="margin-top:12px" id="controlStatus"></div>
+  <div class="section-head"><h2>Scheduler</h2><span class="muted">One scheduler runs every periodic job; the cloud scan's GitHub schedule is best-effort.</span></div>
+  <div id="schedulerTable"></div>
+ </section>
+
+ <section id="pmanager" class="panel">
+  <div class="section-head"><h1>Platform Manager</h1><button class="btn" onclick="runDiscovery()">Run permitted discovery now</button></div>
+  <p class="muted">Automation levels: 0 disabled or manual &middot; 1 read-only discovery &middot; 2 authorized account monitoring &middot; 3 task preparation &middot; 4 authorized execution &middot; 5 authorized automatic submission. A level is granted only by recorded evidence from the platform's own terms or API documentation. Being signed in is never permission.</p>
+  <div id="pmanagerTable"></div>
+ </section>
+
+ <section id="pipeline" class="panel">
+  <h1>Task Pipeline</h1><p class="muted">Every task with its state, automation class, expected value and score. Advertised rewards are never income.</p>
+  <div class="card"><div class="form-grid">
+   <div><label>Platform</label><select id="pf_platform" onchange="loadPipeline()"><option value="">Any platform</option></select></div>
+   <div><label>Automation feasibility</label><select id="pf_automation" onchange="loadPipeline()"><option value="">Any</option></select></div>
+   <div><label>State</label><select id="pf_state" onchange="loadPipeline()"><option value="">Any</option></select></div>
+   <div><label>Skill category</label><select id="pf_category" onchange="loadPipeline()"><option value="">Any</option></select></div>
+   <div><label>Country eligibility</label><select id="pf_eligibility" onchange="loadPipeline()"><option value="">Any</option><option value="eligible">Eligible (proven)</option><option value="unverified">Unverified</option><option value="ineligible">Not eligible</option></select></div>
+   <div><label>Minimum compensation</label><input id="pf_min_compensation" type="number" min="0" step="0.01" onchange="loadPipeline()"></div>
+   <div><label>Deadline on or before</label><input id="pf_deadline_before" type="date" onchange="loadPipeline()"></div>
+   <div><label>Maximum risk flags</label><input id="pf_max_risks" type="number" min="0" step="1" onchange="loadPipeline()"></div>
+   <div><label>Minimum score</label><input id="pf_min_score" type="number" min="0" max="100" onchange="loadPipeline()"></div>
+  </div></div>
+  <div id="pipelineTable" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Import a task</h2><span class="muted">Copy the real details from your own account, or add your own client's work. Nothing is fetched from the platform.</span></div>
+  <form class="card" id="importForm" onsubmit="event.preventDefault();importTask()"><div class="form-grid">
+   <div><label>Platform</label><select id="it_platform" required></select></div>
+   <div><label>Title</label><input id="it_title" required maxlength="200"></div>
+   <div><label>Task link (https, optional)</label><input id="it_url" type="url"></div>
+   <div><label>Reward (as stated)</label><input id="it_reward" type="number" min="0" step="0.01"></div>
+   <div><label>Currency</label><input id="it_currency" maxlength="3" placeholder="USD"></div>
+   <div><label>Deadline</label><input id="it_deadline" type="date"></div>
+   <div><label>AI-use rule of this task</label><select id="it_ai"><option value="unknown">Not established</option><option value="allowed">Allowed (state the source)</option><option value="prohibited">Prohibited</option><option value="human_only">Must be done by me personally</option></select></div>
+   <div><label>Where the rule says so</label><input id="it_ai_source" maxlength="300"></div>
+   <div><label>Input files (a spec.json makes data work deterministic)</label><input id="it_files" type="file" multiple></div>
+  </div><label>Instructions (the real text)</label><textarea id="it_instructions" required minlength="20"></textarea>
+  <div class="right" style="margin-top:8px"><button class="btn primary">Record and classify</button></div></form>
+ </section>
+
+ <section id="autopilot" class="panel">
+  <div class="section-head"><h1>Autopilot Queue</h1><button class="btn" onclick="runTick()">Run one orchestrator pass now</button></div>
+  <p class="muted">The orchestrator starts only work that passes the global stop, your Automation Settings, local resource limits and the platform permission check. It does not take tasks on a platform, sign in or send anything.</p>
+  <div class="grid" id="apCards"></div>
+  <div class="section-head"><h2>Ready jobs</h2></div><div id="apQueue"></div>
+  <div class="section-head"><h2>Independent QA results</h2><span class="muted">PASS is not platform acceptance.</span></div><div id="apQa"></div>
+  <div class="section-head"><h2>Execution log</h2></div><div id="apLogs"></div>
+ </section>
+
+ <section id="submissions" class="panel">
+  <h1>Submission Manager</h1><div class="notice" id="subNote"></div>
+  <div class="section-head"><h2>Ready for submission</h2></div><div id="subReady"></div>
+  <div class="section-head"><h2>Submitted automatically where authorized</h2></div><div id="subAuto"></div>
+  <div class="section-head"><h2>Outcome unknown (never sent twice)</h2></div><div id="subUnknown"></div>
+  <div class="section-head"><h2>Awaiting review</h2></div><div id="subReview"></div>
+  <div class="section-head"><h2>Accepted</h2></div><div id="subAccepted"></div>
+  <div class="section-head"><h2>Rejected</h2></div><div id="subRejected"></div>
+ </section>
+
+ <section id="ledger" class="panel">
+  <h1>Earnings Ledger</h1><div class="notice" id="ledgerNote"></div>
+  <div class="grid" id="ledgerCards" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Per assignment</h2></div><div id="ledgerEntries"></div>
+  <div class="section-head"><h2>Confirmed earnings by platform</h2></div><div id="ledgerPlatforms"></div>
+  <div class="section-head"><h2>Historical trend (received)</h2></div><div id="ledgerTrend"></div>
+  <div class="section-head"><h2>Payout compatibility for Kenya</h2><span class="muted">What a platform offers in general is not what your account offers: record what you see in your own account.</span></div><div id="ledgerPayout"></div>
+ </section>
+
+ <section id="automation" class="panel">
+  <h1>Automation Settings</h1><p class="muted">Your standing instructions, saved in the local database. They can only narrow what a platform is verified to permit; no setting can switch on an action a platform has not been verified to allow.</p>
+  <div class="card">
+   <label class="check"><input type="checkbox" id="as_paused"><span><b>Pause automation</b> (discovery of new work and execution stop; read-only upkeep continues)</span></label>
+   <label class="check"><input type="checkbox" id="as_auto_execute"><span><b>Run permitted tasks without asking each time</b></span></label>
+   <label class="check"><input type="checkbox" id="as_ai_runs_preauthorized"><span>Allow AI-based specialists to start under that authorization (uses your existing Claude Code / Codex sign-in; no paid API)</span></label>
+   <label class="check"><input type="checkbox" id="as_auto_approve_clean_qa"><span>Package work whose every QA check passed with nothing left for manual review</span></label>
+   <div class="form-grid" style="margin-top:8px">
+    <div><label>Maximum concurrency</label><input id="as_max_concurrency" type="number" min="1" max="4"></div>
+    <div><label>Maximum task value (USD)</label><input id="as_max_task_value_usd" type="number" min="0" step="0.01"></div>
+    <div><label>Minimum expected hourly rate (USD)</label><input id="as_min_hourly_rate_usd" type="number" min="0" step="0.01"></div>
+    <div><label>Maximum execution per day (minutes)</label><input id="as_max_daily_execution_minutes" type="number" min="0"></div>
+    <div><label>Keep free disk (MB)</label><input id="as_min_free_disk_mb" type="number" min="100"></div>
+    <div><label>Keep free memory (MB)</label><input id="as_min_free_memory_mb" type="number" min="64"></div>
+    <div><label>Job time limit (seconds)</label><input id="as_job_timeout_seconds" type="number" min="60"></div>
+    <div><label>Keep temporary files (days)</label><input id="as_retention_days" type="number" min="1"></div>
+   </div>
+  </div>
+  <div class="split" style="margin-top:12px"><div class="card"><h3>Permitted task categories</h3><div id="as_categories"></div></div>
+   <div><div class="card"><h3>Excluded task types</h3><div id="as_excluded"></div></div>
+   <div class="card" style="margin-top:12px"><h3>Permitted submission actions</h3><p class="muted">Automatic submission can be ticked only for a platform verified to permit it.</p><div id="as_submit"></div></div></div></div>
+  <div class="right" style="margin-top:12px"><button class="btn primary" onclick="saveAutomation()">Save settings</button></div>
+ </section>
+
  <section id="notifications" class="panel">
   <div class="section-head"><h1>Notifications</h1><button class="btn small" id="markAllRead">Mark all read</button></div>
   <div id="notificationList" class="table-wrap"></div>
@@ -256,6 +384,7 @@ const PLATFORMS = [
  {id:"microworkers",type:"microtask",health:"manual_only",name:"Microworkers",url:"https://www.microworkers.com/",eligibility:"Verify country eligibility, task rules and withdrawal options.",automation:"Automation prohibited; manual-only."},
  {id:"rapidworkers",type:"microtask",health:"manual_only",name:"RapidWorkers",url:"https://rapidworkers.io/",eligibility:"Domain is rapidworkers.io (not .net); operator, terms and payout route need verification.",automation:"Manual-only pending verification."},
  {id:"sproutgigs",type:"microtask",health:"manual_only",name:"SproutGigs",url:"https://sproutgigs.com/",eligibility:"Verify country availability and withdrawal methods in the official account.",automation:"No bots or AI agents for logged-in data or tasks."},
+ {id:"whop_workforce",type:"microtask",health:"local_api",name:"Whop Workforce",url:"https://whop.com/whop-workforce/",eligibility:"Each bounty lists allowed countries; Kenya must be listed or the list must be empty (documented as worldwide). Data-capture bounties need an iPhone and are excluded for your Samsung A05. Payout methods for Kenya must be confirmed in your own account.",automation:"Official API with your OAuth authorization, read-only. No website automation; engagement, posting, recording, submitting and withdrawing are done by you."},
  {id:"gainworkers",type:"microtask",health:"manual_review_required",name:"GainWorkers",url:"https://www.gainworkers.com/",eligibility:"Task geo rules are visible only after login. Terms forbid VPN/proxy use to bypass geo rules.",automation:"No automated discovery: task lists need login, robots.txt disallows them, Terms prohibit scraping/bots; the API is for employers/resellers."},
  {id:"afterquery",type:"ai_training",health:"manual_only",name:"AfterQuery Experts",url:"https://experts.afterquery.com/home",eligibility:"Eligibility and payout are role-specific; review each live role.",automation:"Public links only; applications and assessments are human-reviewed."},
  {id:"handshake_ai",type:"ai_training",health:"disabled_pending_identity",name:"Handshake AI",url:"https://joinhandshake.com/ai/opportunities/",eligibility:"Check exact role, work authorization and country restrictions.",automation:"Manual review and applications."},
@@ -278,7 +407,7 @@ const PLATFORMS = [
  {id:"blend",type:"professional_marketplace",health:"manual_review_required",name:"BLEND (Tasq.ai)",url:"https://www.getblend.com/",eligibility:"Translation, voice and language projects depend on language pair and client requirements. Confirm Kenya payment availability; not a general microtask site.",automation:"Manual-only project selection, acceptance, work and delivery."}
 ];
 const GROUPS=[["microtask","Microtask platforms"],["ai_training","AI training and evaluation platforms"],["professional_marketplace","Professional freelance and expert marketplaces"],["user_research","User research and survey panels"],["bounty_marketplace","Creator bounties and task marketplaces"]];
-const HEALTH_TEXT={automated:"Automated public discovery",manual_only:"Manual review only",manual_review_required:"Manual review required (automated discovery unavailable)",policy_monitor:"Eligibility policy monitor only",disabled_pending_identity:"Disabled pending identity check",disabled_country_restricted:"Disabled — Kenya not supported",country_waitlist:"Unsupported country — waitlist only",ok:"Healthy",ok_cached:"Healthy (cached)",partial:"Partial scan",degraded_using_cache:"Degraded — using cached data",error:"Error",error_using_baseline:"Error — using reviewed baseline",DOCUMENTED_API_ALLOWED:"Documented API",MANUAL_ONLY:"Manual only",AUTOMATION_PROHIBITED:"Automation prohibited",UNVERIFIED:"Unverified",HUMAN_APPROVAL_REQUIRED:"Human approval required",PUBLIC_DISCOVERY_ALLOWED:"Public discovery"};
+const HEALTH_TEXT={local_api:"Official API on this PC (needs your authorization)",automated:"Automated public discovery",manual_only:"Manual review only",manual_review_required:"Manual review required (automated discovery unavailable)",policy_monitor:"Eligibility policy monitor only",disabled_pending_identity:"Disabled pending identity check",disabled_country_restricted:"Disabled — Kenya not supported",country_waitlist:"Unsupported country — waitlist only",ok:"Healthy",ok_cached:"Healthy (cached)",partial:"Partial scan",degraded_using_cache:"Degraded — using cached data",error:"Error",error_using_baseline:"Error — using reviewed baseline",DOCUMENTED_API_ALLOWED:"Documented API",MANUAL_ONLY:"Manual only",AUTOMATION_PROHIBITED:"Automation prohibited",UNVERIFIED:"Unverified",HUMAN_APPROVAL_REQUIRED:"Human approval required",PUBLIC_DISCOVERY_ALLOWED:"Public discovery"};
 const UI_KEY="microtask_autopilot_local_v1";   // browser-only conveniences (platform notes) and the legacy records imported once
 const $=id=>document.getElementById(id);
 function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
@@ -305,7 +434,7 @@ function platformOptions(first){return '<option value="">'+(first||"Select platf
 function classTag(o){const c=o.eligibility_class||"";const cls=c==="KENYA_CONFIRMED"?"ok":c==="WORLDWIDE_CONFIRMED"?"info":c==="KENYA_UNSUPPORTED"||c==="EXPIRED"?"bad":"warn";return '<span class="tag '+cls+'" title="'+esc(o.eligibility_reason||"")+'">'+esc(c||"UNCLASSIFIED")+'</span><div class="muted">'+esc(o.eligibility_confidence||"")+' confidence</div>'}
 
 // ---------------------------------------------------------------- navigation
-const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,connections:loadConnections,earnings:loadEarnings,"earning-proof":loadEarningProof,platforms:loadPlatforms,notifications:loadNotifications};
+const loaders={overview:loadOverview,daily:loadDaily,opportunities:loadOpportunities,applications:loadApplications,tasks:loadTasks,execution:loadExecutions,whop:loadWhop,connections:loadConnections,earnings:loadEarnings,"earning-proof":loadEarningProof,platforms:loadPlatforms,notifications:loadNotifications};
 function setTab(id){document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===id));document.querySelectorAll(".nav button").forEach(x=>x.classList.toggle("active",x.dataset.tab===id));ui.tab=id;saveUi(ui);if(loaders[id])loaders[id]()}
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach(b=>b.addEventListener("click",()=>setTab(b.dataset.goto)));
@@ -582,7 +711,100 @@ $("taskForm").addEventListener("submit",async e=>{
 const EXEC_GROUPS=[["Waiting for you",["blocked","ready","awaiting_review","ready_for_submission","qa_failed","paused","interrupted"]],["Running",["running"]],["Submitted",["submitted"]],["Accepted / rejected",["accepted","rejected"]],["Failed / cancelled",["failed","cancelled"]],["Other",["created","approved"]]];
 let execData=null;
 function execTag(s){const c=["awaiting_review","ready_for_submission","accepted"].includes(s)?"ok":["qa_failed","failed","rejected","blocked"].includes(s)?"bad":["running","submitted"].includes(s)?"info":"warn";return '<span class="tag '+c+'">'+esc(s.replace(/_/g," "))+'</span>'}
+const STAGE_CLASS={paid:"ok",work_accepted:"ok",payment_pending:"ok",rejected:"bad",cancelled:"",qa:"info",executing:"info",submitted:"info",awaiting_review:"info"};
+function stageTag(a,labels){return '<span class="tag '+(STAGE_CLASS[a.stage]||"warn")+'">'+esc((labels&&labels[a.stage])||a.stage_label||a.stage)+'</span>'}
+function rewardText(a){return a.reward_net!=null&&a.currency?esc(a.currency)+" "+esc(a.reward_net)+" net (quoted)":"not stated"}
+async function loadCentre(){
+ const r=await act(()=>api("GET","/api/centre"));if(!r)return;const f=r.funnel;
+ const money=Object.keys(f.money.by_currency||{}).map(c=>esc(c)+": pending "+money_(f.money.by_currency[c].pending,c)+" · received "+money_(f.money.by_currency[c].received,c)).join("<br>")||"None recorded.";
+ $("centreFunnel").innerHTML=[["Discovered opportunities",f.discovered_opportunities],["Applications submitted",f.applications_submitted],["Assignments qualified",f.assignments_qualified],["Assignments accepted",f.assignments_accepted],["Work actually performed",f.work_performed],["Deliverables completed",f.deliverables_completed],["Submissions confirmed",f.submissions_confirmed],["Work accepted",f.work_accepted],["Payments confirmed",f.payments_confirmed]].map(c=>'<div class="card"><div class="muted">'+esc(c[0])+'</div><div class="metric">'+esc(c[1])+'</div></div>').join("")
+  +'<div class="card" style="grid-column:1/-1"><div class="muted">Money (verified records only)</div><div>'+money+'</div><div class="muted">'+esc(f.note)+'</div></div>';
+ $("centreWaiting").innerHTML=r.awaiting_you.length?'<ul>'+r.awaiting_you.map(w=>'<li><strong>'+esc(w.title)+'</strong>'+(w.platform_id?' <span class="muted">('+esc(platformName(w.platform_id))+')</span>':"")+': '+esc(w.action||"")+(w.assignment_id?' <a href="#" data-asg="'+w.assignment_id+'">open</a>':' <a href="#" data-goto-tab="connections">connections</a>')+'</li>').join("")+'</ul>':'<div class="empty">Nothing is waiting for you.</div>';
+ const live=r.connections.filter(c=>["connected_verified","connected_user_confirmed","check_due","needs_user_action","login_in_progress"].includes(c.status));
+ $("centreConns").innerHTML='<p><strong>'+r.connected.api_verified+'</strong> verified by API · <strong>'+r.connected.confirmed_by_you+'</strong> confirmed by you · '+(r.connections.length-live.length)+' not connected</p>'+(live.length?'<ul>'+live.map(c=>'<li><strong>'+esc(c.name)+'</strong> <span class="tag '+(CONN_STATUS[c.status]||"")+'">'+esc(connText(c.status))+'</span><div class="muted">'+esc(c.permission_class.label)+': '+esc(c.automation_level)+'</div></li>').join("")+'</ul>':'<div class="empty">No account is connected yet. Open Connections, or authorize Whop in the Whop Workforce tab.</div>');
+ const items=r.assignments;
+ $("centreAssignments").innerHTML=items.length?'<table><thead><tr><th>Assignment</th><th>Platform · task id</th><th>Stage</th><th>Reward</th><th>AI use</th><th>Deadline</th><th>Your next step</th></tr></thead><tbody>'+items.map(a=>'<tr><td><a href="#" data-asg="'+a.id+'"><strong>'+esc(a.title)+'</strong></a></td><td>'+esc(platformName(a.platform_id))+'<div class="muted">'+esc(a.external_id)+'</div></td><td>'+stageTag(a,r.stage_labels)+'</td><td>'+rewardText(a)+'</td><td>'+esc(a.ai_use.replace("_"," "))+'</td><td>'+esc(day(a.deadline))+'</td><td>'+esc(a.next_action)+'</td></tr>').join("")+'</tbody></table>':'<div class="empty">No real assignment yet. They appear here when a bounty or accepted application qualifies. Sample or invented tasks are never listed.</div>';
+ document.querySelectorAll("#execution [data-asg]").forEach(el=>el.onclick=ev=>{ev.preventDefault();ui.selAsg=Number(el.dataset.asg);saveUi(ui);showAssignment(ui.selAsg)});
+ document.querySelectorAll("[data-goto-tab]").forEach(el=>el.onclick=ev=>{ev.preventDefault();setTab(el.dataset.gotoTab)});
+ if(ui.selAsg&&items.some(a=>a.id===ui.selAsg))showAssignment(ui.selAsg);else $("centreAssignment").innerHTML="";
+}
+function money_(n,c){return money(n,c)}
+async function showAssignment(id){
+ const r=await act(()=>api("GET","/api/assignments/"+id));if(!r)return;const a=r.assignment,q=a.requirements||{};
+ const is=(...s)=>s.includes(a.stage);
+ const btn=(k,label,on,primary)=>'<button class="btn small'+(primary?" primary":"")+'" data-aact="'+k+'" '+(on?"":"disabled")+'>'+esc(label)+'</button>';
+ $("centreAssignment").innerHTML='<div class="card" style="margin-top:10px"><h2>'+esc(a.title)+'</h2><div class="tags">'+stageTag(a)+'<span class="tag">'+esc(platformName(a.platform_id))+' · '+esc(a.external_id)+'</span><span class="tag '+(a.ai_use==="allowed"?"ok":a.ai_use==="unknown"?"warn":"")+'">AI use: '+esc(a.ai_use.replace("_"," "))+'</span><span class="tag">'+rewardText(a)+'</span><span class="tag">deadline: '+esc(day(a.deadline))+'</span></div>'
+  +'<div class="banner ok"><strong>Next:</strong> '+esc(a.next_action)+'</div>'
+  +'<p>'+link(a.source_url,"Open the original on the platform")+(a.submission_reference?' · submission reference: <code>'+esc(a.submission_reference)+'</code>':"")+(a.execution_job_id?' · <a href="#" id="asgJob">execution job #'+a.execution_job_id+'</a>':"")+'</p>'
+  +(q.mode?'<p class="muted">Routing: '+esc(q.goal||"")+' → '+esc(q.worker||"no engine worker")+' ('+esc(q.mode)+')'+((q.human_parts||[]).length?' · done by you: '+esc(q.human_parts.join(", ")):"")+' · device: '+esc(q.hardware||"")+' · Kenya: '+esc(q.kenya||"")+'</p>':"")
+  +'<details><summary>Instructions (from the platform)</summary><pre class="draft">'+esc(a.instructions||"Not on file yet.")+'</pre></details>'
+  +'<div class="row" style="gap:6px;flex-wrap:wrap;margin:10px 0">'
+  +btn("ai","Set AI-use rule",is("discovered","qualified","ready","accepted"))+btn("ready","Mark ready",is("qualified"))+btn("accepted","I took this task on the platform",is("ready"),true)
+  +btn("start","Create execution job",is("accepted")&&!a.execution_job_id&&a.ai_use!=="human_only",true)+btn("submitted","I submitted it (reference)",is("accepted","executing","qa","ready_for_delivery"),true)
+  +btn("review","Platform shows it under review",is("submitted"))+btn("accept","Platform accepted it",is("awaiting_review"))+btn("reject","Platform rejected it",is("submitted","awaiting_review"))
+  +btn("pending","Record reward owed",is("work_accepted"))+btn("paid","Record payment received",is("payment_pending"),true)+btn("cancel","Cancel",!is("paid","rejected","cancelled"))+'</div>'
+  +'<h3>History and evidence</h3><table><thead><tr><th>When</th><th>Stage</th><th>Evidence</th><th>Reference</th><th>Detail</th><th>By</th></tr></thead><tbody>'+a.history.map(h=>'<tr><td>'+esc(when(h.at))+'</td><td>'+esc(h.to_stage.replace(/_/g," "))+'</td><td>'+esc(h.evidence_kind.replace(/_/g," "))+'</td><td><code>'+esc(h.evidence_ref)+'</code></td><td>'+esc(h.detail||"")+'</td><td>'+esc(h.actor)+'</td></tr>').join("")+'</tbody></table></div>';
+ const post=(action,body,msg)=>act(()=>api("POST","/api/assignments/"+id+"/"+action,body||{}),msg).then(x=>{if(x)loadExecutions()});
+ const ask=(text,def)=>{const v=prompt(text,def||"");return v&&v.trim()?v.trim():null};
+ const acts={
+  ai:()=>{const v=ask("AI use for this task: allowed, prohibited or human_only?","prohibited");if(!v)return;const src=v==="allowed"?ask("Where do the platform or task rules permit AI help? (page or quote)"):"";if(v==="allowed"&&!src)return;post("ai-use",{ai_use:v,source:src||""},"AI-use rule saved")},
+  ready:()=>post("ready",{},"Ready"),
+  accepted:()=>{const ref=ask("Reference showing you took it on the platform (attempt id, offer email date, contract number):");if(ref)post("accepted",{reference:ref,confirmed_by_user:true},"Recorded as taken by you")},
+  start:()=>post("start-execution",{},"Execution job created: review it below and press Start"),
+  submitted:()=>{const ref=ask("Submission confirmation from the platform (submission id, receipt number or link):");if(ref&&confirm("Confirm that YOU submitted this on the platform."))post("submitted",{reference:ref,confirmed_by_user:true,submitted_at:todayStr()},"Submission recorded")},
+  review:()=>{const ref=ask("Where does the platform show it as received / in review?");if(ref)post("under-review",{reference:ref,confirmed_by_user:true},"Recorded")},
+  accept:()=>{const ref=ask("Evidence of acceptance (approval message, status page, date):");if(ref)post("outcome",{outcome:"accepted",reference:ref,confirmed_by_user:true},"Acceptance recorded")},
+  reject:()=>{const ref=ask("Evidence of rejection (message or status):");if(!ref)return;const why=prompt("Reviewer's reason (optional):","")||"";post("outcome",{outcome:"rejected",reference:ref,detail:why,confirmed_by_user:true},"Rejection recorded")},
+  pending:()=>{const amt=ask("Exact amount the platform shows as credited or owed (not an estimate):");if(!amt)return;const cur=ask("Currency (3 letters):",a.currency||"USD");if(cur)post("payment-pending",{amount:Number(amt),currency:cur},"Reward recorded as pending")},
+  paid:()=>{const amt=ask("Amount that actually arrived:");if(!amt)return;const cur=ask("Currency (3 letters):",a.currency||"USD");const ref=cur&&ask("Payout reference / transaction id:");const how=ref&&(prompt("Method (e.g. bank, M-Pesa, PayPal):","")||"");if(ref&&confirm("Confirm this money has ARRIVED in your account."))post("paid",{amount:Number(amt),currency:cur,received_date:todayStr(),method:how,reference:ref,confirmed_by_user:true},"Payment recorded")},
+  cancel:()=>{if(confirm("Cancel this assignment? Its history is kept."))post("cancel",{reference:"cancelled "+todayStr(),confirmed_by_user:true},"Cancelled")}
+ };
+ $("centreAssignment").querySelectorAll("[data-aact]").forEach(b=>b.onclick=()=>acts[b.dataset.aact]());
+ const j=$("asgJob");if(j)j.onclick=ev=>{ev.preventDefault();ui.selExec=a.execution_job_id;saveUi(ui);loadExecutions()};
+}
+// ---------------------------------------------------------------- whop workforce
+let whopData=null;
+async function loadWhop(){
+ const r=await act(()=>api("GET","/api/whop"));if(!r)return;whopData=r;const o=r.oauth,c=r.connection,ls=r.last_sync;
+ const verified=c.status==="connected_verified";
+ $("whopStatus").innerHTML='<div class="banner '+(verified?"ok":"bad")+'"><strong>Connection:</strong> '+esc(connText(c.status))+(c.verified_detail?' ('+esc(c.verified_detail)+', '+esc(when(c.verified_at))+')':"")
+  +'<br><strong>API authorization:</strong> '+(o.authorized?"authorized · scopes: "+esc((o.scopes||[]).join(", ")):"not authorized")+' · required: '+esc(o.required_scopes.join(", "))+' · tokens kept in '+esc(o.token_storage)
+  +(o.missing_prerequisite?'<br><strong>Missing:</strong> '+esc(o.missing_prerequisite)+'<br>Redirect URL to register: <code>'+esc(o.redirect_uri)+'</code> · '+link(o.developer_dashboard,"Whop Developer Dashboard"):"")
+  +(ls?'<br><strong>Last data:</strong> '+esc(when(ls.at))+' via '+esc(ls.source==="oauth_api"?"this program's own authorization":"an official Whop connector you authorized (import)")+(ls.complete?"":" · partial listing"):"")+'</div>'
+  +'<div class="row" style="gap:6px;flex-wrap:wrap"><input id="whopClient" placeholder="app_xxxxxxxx (your OAuth app\'s client id; not a secret)" style="max-width:340px"><button class="btn small" id="whopSaveClient">Save client id</button><button class="btn small primary" id="whopAuth" '+(o.client_id_saved?"":"disabled")+'>Authorize on Whop</button><button class="btn small primary" id="whopSync" '+(o.authorized?"":"disabled")+'>Sync from Whop</button><button class="btn small" id="whopDisc" '+(o.authorized?"":"disabled")+'>Disconnect</button>'+link(r.community_url,"Open Whop Workforce")+'</div>'
+  +'<p class="muted"><strong>Your device:</strong> '+esc((r.device||{}).phone||"not stated")+' · iPhone available: '+((r.device||{}).ios_available?"yes":"no")+'. <strong>Payout ('+esc(r.payout.status)+'):</strong> '+esc(r.payout.note)+' '+r.payout.sources.map(u=>link(u,"terms")).join(" ")+'</p>';
+ const n=r.counts||{};
+ $("whopCards").innerHTML=[["Bounties stored",r.bounties.length],["Engine can help prepare",n.executable||0],["Done personally by you",n.human_only||0],["Need your review",n.review||0],["Excluded",n.excluded||0]].map(x=>'<div class="card"><div class="muted">'+esc(x[0])+'</div><div class="metric">'+esc(x[1])+'</div></div>').join("");
+ $("whopSaveClient").onclick=async()=>{if(await act(()=>api("POST","/api/whop/client",{client_id:$("whopClient").value.trim()}),"Client id saved"))loadWhop()};
+ $("whopAuth").onclick=async()=>{const x=await act(()=>api("POST","/api/whop/authorize",{}));if(x){const u=safeUrl(x.authorize_url);if(u)window.location.href=u}};
+ $("whopSync").onclick=async()=>{const x=await act(()=>api("POST","/api/whop/sync",{}));if(x){toast("Whop: "+x.bounties.received+" bounties read, "+x.bounties.executable+" you can prepare with the engine, "+x.submissions.received+" of your submissions checked");loadWhop()}};
+ $("whopDisc").onclick=async()=>{if(confirm("Remove this program's Whop authorization from this PC?")&&await act(()=>api("POST","/api/whop/disconnect",{}),"Disconnected"))loadWhop()};
+ renderWhop();
+}
+function renderWhop(){
+ const r=whopData;if(!r)return;const f=$("whopFilter").value;
+ const rows=r.bounties.filter(b=>f===""?true:f==="work"?["executable","human_only"].includes(b.decision):b.decision===f);
+ const dcls={executable:"ok",human_only:"info",review:"warn",excluded:"bad"},dtx={executable:"engine can help prepare",human_only:"done personally by you",review:"needs your review",excluded:"excluded"};
+ $("whopTable").innerHTML=rows.length?'<table><thead><tr><th>Bounty</th><th>Category · evidence</th><th>Reward (net quoted)</th><th>Slots</th><th>Kenya</th><th>Device</th><th>Status for you</th><th>Execution · submission · review</th><th></th></tr></thead><tbody>'+rows.map(b=>{const ro=b.routing||{},sub=b.submission,a=b.assignment;
+  return '<tr><td><a href="#" data-whop="'+esc(b.id)+'"><strong>'+esc(b.title)+'</strong></a><div class="muted">'+esc(b.hosting_title||"")+' · '+esc(b.id)+'</div></td>'
+  +'<td>'+esc((b.business_goal_type||"unspecified").replace(/_/g," "))+'<div class="muted">'+esc((b.deliverable_types||[]).join(", ").replace(/_/g," "))+'</div></td>'
+  +'<td>'+(b.net_reward!=null?esc(b.currency)+" "+esc(b.net_reward)+'<div class="muted">gross '+esc(b.gross_reward)+'</div>':"not stated")+((b.flags||[]).includes("low_value")?'<div class="muted">low value</div>':"")+'</td>'
+  +'<td>'+esc(b.spots_remaining)+' of '+esc(b.accepted_limit)+'</td>'
+  +'<td><span class="tag '+(ro.kenya==="not_listed"?"bad":"ok")+'">'+esc(ro.kenya==="worldwide"?"worldwide":ro.kenya==="listed"?"KE listed":"KE not listed")+'</span></td>'
+  +'<td><span class="tag '+(b.hardware_ok?"ok":"bad")+'">'+(b.hardware_ok?"compatible":"not compatible")+'</span><div class="muted">'+esc(ro.hardware_note||"")+'</div></td>'
+  +'<td><span class="tag '+dcls[b.decision]+'">'+esc(dtx[b.decision])+'</span><div class="muted">'+esc((b.reasons||[])[0]||"")+'</div></td>'
+  +'<td>'+(a?esc(a.stage.replace(/_/g," ")):"not tracked")+(sub?'<div class="muted">Whop: '+esc(sub.status||"")+(sub.denial_reason?' · '+esc(sub.denial_reason):"")+'</div>':'<div class="muted">no attempt on Whop</div>')+'</td>'
+  +'<td style="white-space:nowrap">'+link(b.url,"Open on Whop")+(b.decision!=="excluded"&&!a?'<br><button class="btn small" data-wtrack="'+esc(b.id)+'">Track as assignment</button>':"")+(a?'<br><button class="btn small" data-wasg="'+a.id+'">Open assignment</button>':"")+(b.can_retry?'<br><button class="btn small" data-wretry="'+esc(b.id)+'">Prepare a new attempt</button>':"")+'</td></tr>'}).join("")+'</tbody></table>':'<div class="empty">'+(r.bounties.length?"No bounty matches this filter.":"No bounties stored yet. Authorize and press Sync from Whop.")+'</div>';
+ $("whopTable").querySelectorAll("[data-wtrack]").forEach(b=>b.onclick=async()=>{if(await act(()=>api("POST","/api/whop/bounties/"+b.dataset.wtrack+"/track",{}),"Tracked as an assignment"))loadWhop()});
+ $("whopTable").querySelectorAll("[data-wretry]").forEach(b=>b.onclick=async()=>{if(await act(()=>api("POST","/api/whop/bounties/"+b.dataset.wretry+"/track",{new_attempt:true}),"New attempt tracked as its own assignment"))loadWhop()});
+ $("whopTable").querySelectorAll("[data-wasg]").forEach(b=>b.onclick=()=>{ui.selAsg=Number(b.dataset.wasg);saveUi(ui);setTab("execution")});
+ $("whopTable").querySelectorAll("[data-whop]").forEach(el=>el.onclick=ev=>{ev.preventDefault();const b=r.bounties.find(x=>x.id===el.dataset.whop);const ro=b.routing||{};
+  $("whopDetail").innerHTML='<div class="card" style="margin-top:10px"><h2>'+esc(b.title)+'</h2><p class="muted">Posted by '+esc(b.poster_username||"")+' · first seen '+esc(when(b.first_seen_at))+' · last verified '+esc(when(b.last_verified_at))+' · allowed countries: '+esc((b.allowed_countries||[]).join(", ")||"none listed (worldwide)")+'</p><p><strong>How it is handled:</strong> '+esc(ro.note||"")+((ro.human_parts||[]).length?' <strong>Done by you:</strong> '+esc(ro.human_parts.join(", "))+'.':"")+' <strong>AI rule in the text:</strong> '+esc((ro.ai_rule||"").replace("_"," "))+(ro.ai_rule_evidence?' (“'+esc(ro.ai_rule_evidence)+'”)':"")+'</p>'+((b.reasons||[]).length?'<ul>'+b.reasons.map(x=>'<li>'+esc(x)+'</li>').join("")+'</ul>':"")+'<h3>Required evidence</h3><p>'+esc((b.deliverable_types||[]).map(t=>({content_url:"link(s) to the posted work",media:"uploaded file(s)",data_capture:"clips recorded in the Whop app"}[t]||t)).join("; "))+'. One person can win '+esc(b.per_user_limit)+' slot(s).</p><h3>Task instructions (from the Whop API)</h3><pre class="draft">'+esc(b.description||"")+'</pre></div>'});
+}
+$("whopFilter").addEventListener("change",renderWhop);
+function connText(s){return ({connected_verified:"verified (API answered your authorization)",connected_user_confirmed:"signed in (confirmed by you)",check_due:"check due",needs_user_action:"needs you",login_in_progress:"login in progress",not_connected:"not connected",blocked:"blocked"})[s]||s}
 async function loadExecutions(){
+ loadCentre();
  const r=await act(()=>api("GET","/api/executions"));if(!r)return;execData=r;
  if($("execPlatform").options.length<2)$("execPlatform").innerHTML=platformOptions("(choose platform)");
  if($("execType").options.length<2)$("execType").innerHTML='<option value="">Detect from instructions</option>'+r.work_types.filter(w=>w!=="unknown").map(w=>'<option>'+w+'</option>').join("");
@@ -637,12 +859,12 @@ $("execForm").addEventListener("submit",async e=>{
 
 // ---------------------------------------------------------------- connections
 const CONN_CLASS={official_api_permitted:"ok",browser_automation_permitted:"ok",human_assisted_only:"info",prohibited_or_unverified:"warn"};
-const CONN_STATUS={connected_user_confirmed:"ok",check_due:"warn",needs_user_action:"bad",login_in_progress:"info",not_connected:"",blocked:"bad"};
+const CONN_STATUS={connected_verified:"ok",connected_user_confirmed:"ok",check_due:"warn",needs_user_action:"bad",login_in_progress:"info",not_connected:"",blocked:"bad"};
 async function loadConnections(){
  const r=await act(()=>api("GET","/api/connections"));if(!r)return;
  $("connNote").textContent=(r.browser_found?"":"Microsoft Edge or Google Chrome was not found. ")+"Connections are confirmed by you and need re-confirming every "+r.session_check_days+" days.";
  $("connTable").innerHTML='<table><thead><tr><th>Platform</th><th>Connection</th><th>Last successful check</th><th>Permitted automation level</th><th>Your next action</th><th></th></tr></thead><tbody>'+r.connections.map(c=>{
-  const st=c.status.replace(/_/g," ").replace("user confirmed","(confirmed by you)");
+  const st=connText(c.status);
   const blocked=c.status==="blocked";
   return '<tr><td><strong>'+esc(c.name)+'</strong><div class="muted">'+link(c.login_url,"official site")+'</div></td>'
    +'<td><span class="tag '+(CONN_STATUS[c.status]||"")+'">'+esc(st)+'</span>'+(c.human_step?'<div class="muted">human step: '+esc(c.human_step)+'</div>':"")+'</td>'
@@ -656,6 +878,8 @@ async function loadConnections(){
  root.querySelectorAll("[data-chuman]").forEach(s=>s.onchange=()=>{if(s.value)post(s.dataset.chuman,"human-step",{kind:s.value},"Paused for your human step")});
  root.querySelectorAll("[data-cexpired]").forEach(b=>b.onclick=()=>post(b.dataset.cexpired,"expired",{},"Marked: sign in again"));
  root.querySelectorAll("[data-cdisc]").forEach(b=>b.onclick=()=>{if(confirm("Mark this platform disconnected?"))post(b.dataset.cdisc,"disconnect",{},"Disconnected")});
+ const g=await act(()=>api("GET","/api/registry"));if(!g)return;const yn=v=>v?"yes":"no";
+ $("registryTable").innerHTML='<table><thead><tr><th>Platform</th><th>Classification</th><th>Automated discovery</th><th>Worker API</th><th>Browser automation</th><th>AI-assisted work</th><th>Auto accept / submit</th><th>Kenya</th><th>Payout for Kenya</th><th>Must stay manual</th><th>Sources · date read</th></tr></thead><tbody>'+g.registry.map(x=>'<tr><td><strong>'+esc(x.name)+'</strong></td><td><span class="tag '+(x.class===1?"ok":x.class===4?"bad":x.class===5?"warn":"info")+'">'+x.class+'. '+esc(x.label)+'</span></td><td>'+yn(x.automated_discovery)+'</td><td>'+yn(x.worker_api)+(x.api_scope?'<div class="muted">'+esc(x.api_scope)+'</div>':"")+'</td><td>'+yn(x.browser_automation)+'</td><td>'+esc(String(x.ai_assistance).replace(/_/g," "))+(x.ai_note?'<div class="muted">'+esc(x.ai_note)+'</div>':"")+'</td><td>no / '+yn(x.auto_submission)+'</td><td>'+esc(String(x.kenya).replace(/_/g," "))+'<div class="muted">'+esc(x.kenya_note||"")+'</div></td><td>'+esc(x.payment)+'<div class="muted">'+esc(x.payment_note||"")+'</div></td><td><ul>'+x.manual_operations.map(m=>'<li>'+esc(m)+'</li>').join("")+'</ul></td><td>'+x.sources.map(u=>link(u,new URL(u).hostname)).join("<br>")+'<div class="muted">read: '+esc(x.checked_on||"not dated: treat as not verified")+'</div>'+(x.not_read.length?'<div class="muted">not read: '+esc(x.not_read.join("; "))+'</div>':"")+'</td></tr>').join("")+'</tbody></table>';
 }
 
 // ---------------------------------------------------------------- earnings
@@ -732,13 +956,237 @@ async function refreshFromLocalAgent(){
  try{
   const s=await api("GET","/api/status");
   $("agentStatus").textContent="Agent connected · "+(s.opportunity_count||0)+" stored opportunities · last sync "+when(s.last_sync_success_utc||s.synced_at_utc);
-  const t=currentTab();if(t==="overview")loadOverview();if(t==="daily")loadDaily();
+  const t=currentTab();if(t==="overview")loadOverview();if(t==="daily")loadDaily();if(t==="execution")loadCentre();
   const n=await api("GET","/api/notifications?unread=1&limit=100");setBadge(n.notifications.length);
  }catch(err){$("agentStatus").textContent="Local agent not reachable · start open-dashboard.bat"}
 }
 setInterval(refreshFromLocalAgent,60000);
 $("platformFilter").innerHTML=platformOptions("All platforms")+'<option value="_feeds">Supplementary job feeds</option>';
-migrateLegacyBrowserRecords().finally(()=>{setTab(ui.tab&&loaders[ui.tab]?ui.tab:"overview");refreshFromLocalAgent()});
+migrateLegacyBrowserRecords().finally(()=>{const back=new URLSearchParams(location.search).get("whop");if(back){history.replaceState(null,"","/");setTab("whop");toast(back==="connected"?"Whop authorized and verified":"Whop authorization did not complete: see the Whop tab",back!=="connected")}else setTab(ui.tab&&loaders[ui.tab]?ui.tab:"execution");refreshFromLocalAgent()});
+</script>
+<script>
+// Autonomous engine views. Uses the helpers defined in index.html (api, act, esc, link, when, toast, loaders, platformName).
+// Every number comes from /api/engine/*; nothing is computed or stored in the browser.
+"use strict";
+const E = id => document.getElementById(id);
+const tag = (text, cls) => '<span class="tag ' + (cls || "") + '">' + esc(String(text ?? "").replace(/_/g, " ")) + "</span>";
+const RESULT_CLS = {permitted: "ok", prohibited: "bad", human_required: "warn", unverified: "warn"};
+const STATE_CLS = {PAID: "ok", ACCEPTED: "ok", READY_FOR_EXECUTION: "info", EXECUTING: "info", HUMAN_REQUIRED: "warn", POLICY_BLOCKED: "bad", FAILED: "bad", EXPIRED: "bad", REJECTED: "bad"};
+const AUTO_CLS = {FULLY_AUTOMATABLE_WITH_PERMISSION: "ok", AI_ASSISTED_WITH_PERMISSION: "ok", DETERMINISTIC_LOCAL_PROCESSING: "ok", HUMAN_REQUIRED: "warn", MANUAL_REVIEW_REQUIRED: "warn", ELIGIBILITY_UNVERIFIED: "warn"};
+function sums(o) { const k = Object.keys(o || {}); return k.length ? k.map(c => esc(c) + " " + Number(o[c]).toFixed(2)).join(" · ") : "0"; }
+function card(label, value, note) { return '<div class="card"><div class="muted">' + esc(label) + '</div><div class="metric">' + value + "</div>" + (note ? '<div class="muted">' + esc(note) + "</div>" : "") + "</div>"; }
+function table(head, rows, empty) { return rows.length ? '<div class="table-wrap"><table><thead><tr>' + head.map(h => "<th>" + esc(h) + "</th>").join("") + "</tr></thead><tbody>" + rows.join("") + "</tbody></table></div>" : '<div class="empty">' + esc(empty) + "</div>"; }
+
+// ---------------------------------------------------------------- global stop (header)
+async function refreshStop() {
+  try {
+    const c = await api("GET", "/api/engine/control");
+    const on = c.kill_switch && c.kill_switch.engaged;
+    E("stopAll").classList.toggle("hidden", !!on); E("resumeAll").classList.toggle("hidden", !on);
+    E("stopBanner").classList.toggle("hidden", !on);
+    if (on) E("stopBanner").textContent = "EMERGENCY STOP IS ENGAGED — nothing automated will start. " + (c.kill_switch.reason || "");
+  } catch (e) { /* the agent status line already reports connection problems */ }
+}
+async function stopAll() {
+  if (!confirm("Stop all automation now? Running jobs are asked to pause; nothing is deleted.")) return;
+  await act(() => api("POST", "/api/engine/stop", {reason: "Stopped by you from the dashboard"}), "All automation stopped"); refreshStop();
+}
+async function resumeAll() {
+  if (!confirm("Release the emergency stop and let automation continue?")) return;
+  await act(() => api("POST", "/api/engine/resume", {confirmed_by_user: true}), "Automation may run again"); refreshStop();
+}
+
+// ---------------------------------------------------------------- 1. executive overview
+async function loadControl() {
+  const d = await act(() => api("GET", "/api/engine")); if (!d) return;
+  const lv = d.automation_levels;
+  E("controlCards").innerHTML = [
+    card("Registered platforms", d.registered_platforms, "registered ≠ automated"),
+    card("Connected accounts", d.connected_accounts, d.connected_api_verified + " verified by an official API"),
+    card("Active integrations", d.active_integrations, (d.active_integration_ids || []).map(platformName).join(", ") || "none"),
+    card("Opportunities found (24 h)", d.opportunities_found_today),
+    card("Kenya-eligible opportunities", d.kenya_eligible_opportunities, "explicit proof only"),
+    card("Qualified tasks", d.qualified_opportunities),
+    card("Tasks executing", d.tasks_executing),
+    card("Awaiting QA / review", d.tasks_awaiting_qa),
+    card("Submissions awaiting review", d.submissions_awaiting_review),
+    card("Accepted assignments", d.accepted_assignments),
+    card("Pending payments", d.pending_payments.count, sums(d.pending_payments.by_currency)),
+    card("Verified earnings (received)", sums(d.verified_earnings.by_currency), d.verified_earnings.count + " recorded payment(s)")].join("");
+  const r = d.control.resources;
+  E("controlStatus").innerHTML = '<div class="tags">' + tag(d.control.may_run ? "automation may run" : "automation blocked", d.control.may_run ? "ok" : "bad") +
+    tag(d.scheduler.alive ? "scheduler running" : "scheduler not running", d.scheduler.alive ? "ok" : "warn") +
+    tag("free disk " + (r.free_disk_mb ?? "?") + " MB", r.ok ? "" : "bad") + tag("free memory " + (r.free_memory_mb ?? "?") + " MB", r.ok ? "" : "bad") +
+    tag(d.human_required + " need you personally", "warn") + tag(d.policy_blocked + " blocked by policy", "bad") + "</div>" +
+    (d.control.blocked_reason ? '<div class="banner bad">' + esc(d.control.blocked_reason) + "</div>" : "") +
+    '<p class="muted">Platforms by automation level — 0 disabled/manual: <b>' + lv[0] + "</b> · 1 read-only: <b>" + lv[1] + "</b> · 2 account monitoring: <b>" + lv[2] +
+    "</b> · 3 preparation: <b>" + lv[3] + "</b> · 4 execution: <b>" + lv[4] + "</b> · 5 auto-submission: <b>" + lv[5] + "</b>. " + esc(d.note) + "</p>";
+  const s = await api("GET", "/api/engine/scheduler").catch(() => null);
+  if (s) E("schedulerTable").innerHTML = table(["Job", "Last run", "Result", "Next due", "Runs", ""], s.jobs.map(j =>
+    "<tr><td>" + esc(j.name) + "</td><td>" + when(j.last_finished) + "</td><td>" + tag(j.disabled_reason ? "stopped" : (j.last_status || "not yet run"), j.disabled_reason || j.last_status === "error" ? "bad" : "ok") +
+    '<div class="muted">' + esc(j.disabled_reason || j.last_error || "") + "</div></td><td>" + when(j.next_due) + "</td><td>" + j.runs + "</td><td>" +
+    (j.disabled_reason ? '<button class="btn small" onclick="enableJob(\'' + esc(j.name) + "')\">Re-enable</button>" : "") + "</td></tr>"), "The scheduler has not run yet. " + s.daily_target);
+}
+async function enableJob(name) { await act(() => api("POST", "/api/engine/scheduler/" + encodeURIComponent(name) + "/enable", {confirmed_by_user: true}), "Job re-enabled"); loadControl(); }
+
+// ---------------------------------------------------------------- 2. platform manager
+async function loadPManager() {
+  const d = await act(() => api("GET", "/api/engine/platforms")); if (!d) return;
+  E("pmanagerTable").innerHTML = table(["Platform", "Connection", "Kenya / payout", "Automation permission", "Discovery", "Found", "Needs you"], d.platforms.map(p => {
+    const a = p.automation, acts = Object.keys(a.actions).map(k => tag(k + ": " + a.actions[k].result, RESULT_CLS[a.actions[k].result])).join("");
+    return "<tr><td><b>" + esc(p.name) + "</b><div>" + (link(p.official_url, "official site") || tag("official URL not confirmed", "bad")) + '</div><div class="muted">' + esc(p.platform_type || "") + "</div></td>" +
+      "<td>" + tag(p.connection.state, p.connection.state === "CONNECTED" ? "ok" : "") + '<div class="muted">session: ' + esc(p.connection.session) + "<br>last confirmed: " + when(p.connection.last_success_at) + "</div></td>" +
+      "<td>" + tag("Kenya: " + p.eligibility.kenya, p.eligibility.kenya === "unsupported" ? "bad" : "warn") + tag("payout: " + p.payment.general, p.payment.general === "documented" ? "ok" : "warn") +
+      (p.payment.account_verified ? tag("verified in your account", "ok") : "") + '<div class="muted">' + esc((p.eligibility.note || "").slice(0, 140)) + "</div></td>" +
+      "<td>" + tag("Level " + a.level + " · " + a.label, a.level ? "ok" : "") + (a.official_api ? tag("official API", "info") : "") + "<div>" + acts + "</div>" +
+      (a.suspended_reason ? '<div class="banner bad">' + esc(a.suspended_reason) + ' <button class="btn small" onclick="reviewPlatform(\'' + esc(p.platform_id) + "')\">I re-read the terms</button></div>" : "") +
+      '<div class="muted">terms reviewed: ' + esc(a.reviewed_on || "not on record") + "</div></td>" +
+      "<td>" + tag(p.discovery.mode) + '<div class="muted">last scan: ' + when(p.discovery.last_scan) + "<br>" + esc(p.discovery.status) + (p.discovery.error ? "<br><span style='color:#8a1f1f'>" + esc(p.discovery.error) + "</span>" : "") + "</div></td>" +
+      "<td>" + p.opportunities + ' listings<div class="muted">' + p.tasks + " tasks</div></td><td>" + (p.required_manual_action.map(m => "<div>• " + esc(m) + "</div>").join("") || "—") + "</td></tr>";
+  }), "No platforms");
+}
+async function reviewPlatform(pid) {
+  if (!confirm("Confirm that you personally re-read this platform's current terms. Automation stays limited to what its record permits.")) return;
+  await act(() => api("POST", "/api/engine/permissions/" + encodeURIComponent(pid) + "/review", {reviewed_by_user: true}), "Suspension lifted"); loadPManager();
+}
+async function runDiscovery() { const r = await act(() => api("POST", "/api/engine/discovery/run", {}), "Discovery pass finished"); if (r) loadPManager(); }
+
+// ---------------------------------------------------------------- 3. task pipeline (opportunity explorer for tasks)
+async function loadPipeline() {
+  const qs = ["platform", "automation", "state", "category", "eligibility", "min_score", "min_compensation", "deadline_before", "max_risks"].map(k => {
+    const v = E("pf_" + k) ? E("pf_" + k).value : ""; return v ? k + "=" + encodeURIComponent(v) : ""; }).filter(Boolean).join("&");
+  const d = await act(() => api("GET", "/api/engine/pipeline" + (qs ? "?" + qs : ""))); if (!d) return;
+  for (const [id, list] of [["pf_automation", d.automation_classes], ["pf_state", d.states], ["pf_category", d.categories]]) {
+    const el = E(id); if (el && el.options.length <= 1) el.innerHTML = '<option value="">Any</option>' + list.map(x => "<option>" + esc(x) + "</option>").join("");
+  }
+  if (E("pf_platform").options.length <= 1) E("pf_platform").innerHTML = platformOptions("Any platform") + '<option value="direct_client">Direct client work</option>';
+  E("pipelineTable").innerHTML = table(["Task", "State", "Automation", "Value (advertised → expected)", "Risk", "Score", ""], d.items.map(a => {
+    const i = a.intel || {}, eco = i.economics || {}, x = i.extracted || {};
+    return "<tr><td><b>" + esc(a.title) + '</b><div class="muted">' + esc(a.platform_id === "direct_client" ? "Direct client work" : platformName(a.platform_id)) + " · " + esc((i.category || "").replace(/_/g, " ")) +
+      (a.deadline ? " · due " + esc(a.deadline) : "") + "</div></td><td>" + tag(a.state, STATE_CLS[a.state]) + '<div class="muted">' + esc(a.hold_reason || a.next_action || "") + "</div></td>" +
+      "<td>" + tag(i.automation_class || "not classified", AUTO_CLS[i.automation_class] || "bad") + '<div class="muted">' + esc((i.reasons || []).join(" · ").slice(0, 260)) + "</div></td>" +
+      "<td>" + (eco.advertised != null ? esc(eco.currency || "") + " " + eco.advertised + " → " + (eco.risk_adjusted_value ?? "?") : "not stated") + '<div class="muted">' +
+      (eco.effective_hourly != null ? "≈ " + eco.effective_hourly + "/h · " : "") + "accept " + Math.round((eco.acceptance_probability || 0) * 100) + "% · ~" + (eco.estimated_minutes || "?") + " min</div></td>" +
+      "<td>" + ((x.risks || []).map(r => tag(r, "warn")).join("") || tag("none found", "ok")) + "</td><td><b>" + (i.score ?? "—") + "</b></td><td>" +
+      (a.state === "ELIGIBILITY_CHECKED" || a.state === "DISCOVERED" ? '<button class="btn small" onclick="confirmEligibility(' + a.id + ')">I checked: Kenya accepted</button>' : "") +
+      ' <button class="btn small" onclick="reclassify(' + a.id + ')">Re-check</button></td></tr>';
+  }), "No tasks yet. Import task details you copied from your own account, or add your own client's work below.");
+}
+async function confirmEligibility(id) {
+  const ref = prompt("Where does the platform show that Kenya is accepted for this task? (page or wording you saw)"); if (!ref) return;
+  await act(() => api("POST", "/api/engine/tasks/" + id + "/confirm-eligibility", {confirmed_by_user: true, reference: ref}), "Eligibility recorded"); loadPipeline();
+}
+async function reclassify(id) { await act(() => api("POST", "/api/engine/tasks/" + id + "/classify", {}), "Re-checked"); loadPipeline(); }
+async function importTask() {
+  const body = {platform_id: E("it_platform").value, tasks: [{title: E("it_title").value, instructions: E("it_instructions").value, url: E("it_url").value || undefined,
+    reward: E("it_reward").value || undefined, currency: E("it_currency").value || undefined, deadline: E("it_deadline").value || undefined,
+    ai_use: E("it_ai").value, ai_source: E("it_ai_source").value || undefined}], inputs: []};
+  for (const f of E("it_files").files) {
+    if (f.size > 10 * 1024 * 1024) return toast(f.name + " is larger than 10 MB", true);
+    const buf = new Uint8Array(await f.arrayBuffer()); let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+    body.inputs.push({name: f.name, content_base64: btoa(bin)});
+  }
+  const r = await act(() => api("POST", "/api/engine/tasks", body), "Task recorded and classified");
+  if (r) { if ((r.skipped || []).length) toast(r.skipped.join("; "), true); E("importForm").reset(); loadPipeline(); }
+}
+
+// ---------------------------------------------------------------- 4. autopilot queue (execution centre additions)
+async function loadAutopilot() {
+  const d = await act(() => api("GET", "/api/engine/execution")); if (!d) return;
+  E("apCards").innerHTML = [card("Ready in queue", d.queue.length), card("Active workers", d.running + " / " + d.max_concurrency), card("Running jobs", d.running_jobs.length),
+    card("Completed jobs", d.completed_jobs.length), card("Failed jobs", d.failed_jobs.length), card("Paused / interrupted", d.paused_jobs.length),
+    card("Execution today", d.minutes_used_today + " min", "limit " + d.max_daily_execution_minutes + " min")].join("");
+  E("apQueue").innerHTML = (d.auto_execute ? "" : '<div class="notice">Automatic execution is switched off in Automation Settings. The queue below shows what would start and why not.</div>') +
+    table(["Ready task", "Class", "Score", "Will it start automatically?"], d.queue.map(q => "<tr><td><b>" + esc(q.title) + '</b><div class="muted">' + esc(q.platform_id) + "</div></td><td>" +
+      tag(q.automation_class, "ok") + "</td><td>" + q.score + "</td><td>" + (q.allowed ? tag("yes — fully authorized", "ok") : tag("no", "warn") + q.reasons.map(r => '<div class="muted">• ' + esc(r) + "</div>").join("")) + "</td></tr>"),
+      "Nothing is ready for the engine to execute.");
+  E("apQa").innerHTML = table(["Job", "QA verdict", "Checks"], d.qa_results.map(q => "<tr><td>#" + q.job_id + " " + esc(q.title) + "</td><td>" +
+    tag(q.status, q.status === "PASS" ? "ok" : q.status === "FAIL" ? "bad" : "warn") + '<div class="muted">' + esc(q.summary) + "</div></td><td>" +
+    q.checks.map(c => tag(c.name + (c.executed ? "" : " (not executed)"), c.status === "pass" ? "ok" : c.status === "fail" ? "bad" : "warn")).join("") + "</td></tr>"), "No QA results yet.");
+  E("apLogs").innerHTML = table(["When", "Job", "Event", "Message"], d.execution_logs.map(l => "<tr><td>" + when(l.at) + "</td><td>#" + l.job_id + "</td><td>" + esc(l.kind) + "</td><td>" + esc(l.message) + "</td></tr>"), "No execution log entries yet.");
+}
+async function runTick() { const r = await act(() => api("POST", "/api/engine/tick", {}), "Orchestrator pass finished"); if (r) { if (r.blocked) toast(r.blocked, true); loadAutopilot(); } }
+
+// ---------------------------------------------------------------- 5. submission manager
+async function loadSubmissions() {
+  const d = await act(() => api("GET", "/api/engine/submissions")); if (!d) return;
+  const simple = (rows, empty) => table(["Task", "Platform", "Reference", "Next"], rows.map(a => "<tr><td>" + esc(a.title) + "</td><td>" + esc(platformName(a.platform_id)) + "</td><td>" + esc(a.submission_reference || "—") +
+    '</td><td class="muted">' + esc(a.next_action || "") + "</td></tr>"), empty);
+  E("subNote").textContent = d.note;
+  E("subReady").innerHTML = table(["Ready for submission", "Route", "Pre-submission checks"], d.ready_for_submission.map(a => "<tr><td><b>" + esc(a.title) + '</b><div class="muted">' + esc(platformName(a.platform_id)) + "</div></td><td>" +
+    (a.auto_submit ? tag("automatic (authorized)", "ok") : tag("manual submission required", "warn") + '<div class="muted">' + esc(a.manual_route) + "</div>") + "</td><td>" +
+    a.checks.map(c => '<div class="muted">' + (c.ok ? "✔" : "✖") + " " + esc(c.name.replace(/_/g, " ")) + ": " + esc(c.detail) + "</div>").join("") + "</td></tr>"), "Nothing is packaged and waiting.");
+  E("subAuto").innerHTML = table(["Attempt", "Platform", "Reference", "When"], d.automatically_submitted.map(t => "<tr><td>#" + t.id + "</td><td>" + esc(t.platform_id) + "</td><td>" + esc(t.platform_reference) + "</td><td>" + when(t.updated_at) + "</td></tr>"),
+    "Nothing has been submitted automatically (no platform is verified for it).");
+  E("subUnknown").innerHTML = table(["Attempt", "Platform", "Problem", ""], d.needs_reconcile.map(t => "<tr><td>#" + t.id + "</td><td>" + esc(t.platform_id) + "</td><td>" + esc(t.error || "No confirmed outcome") +
+    '</td><td><button class="btn small" onclick="reconcile(' + t.id + ',true)">It was received</button> <button class="btn small" onclick="reconcile(' + t.id + ',false)">Nothing was recorded</button></td></tr>'), "No submission has an unknown outcome.");
+  E("subReview").innerHTML = simple(d.awaiting_review, "Nothing is awaiting review.");
+  E("subAccepted").innerHTML = simple(d.accepted, "No accepted work yet.");
+  E("subRejected").innerHTML = simple(d.rejected, "No rejected work.");
+}
+async function reconcile(id, received) {
+  const body = {confirmed_by_user: true};
+  if (received) { body.reference = prompt("The submission reference shown in your account:"); if (!body.reference) return; } else body.not_submitted = true;
+  await act(() => api("POST", "/api/engine/attempts/" + id + "/reconcile", body), "Recorded"); loadSubmissions();
+}
+
+// ---------------------------------------------------------------- 6. earnings ledger
+async function loadLedger() {
+  const d = await act(() => api("GET", "/api/engine/ledger")); if (!d) return;
+  const t = d.totals, row = (label, o) => card(label, o.count, sums(o.advertised_by_currency || o.by_currency));
+  E("ledgerCards").innerHTML = [row("1 · Potential opportunities (advertised)", t.potential_opportunities), row("2 · Tasks accepted", t.tasks_accepted), row("3 · Work completed", t.work_completed),
+    row("4 · Deliverables submitted", t.deliverables_submitted), row("5 · Work accepted", t.work_accepted), row("6 · Payment pending", t.payment_pending),
+    card("7 · Money actually received", sums(t.money_received.by_currency), t.money_received.count + " recorded payment(s)"),
+    card("Expected compensation (estimate)", sums(t.expected_compensation.by_currency), "ranking estimate, not income")].join("");
+  E("ledgerNote").textContent = t.note;
+  const m = v => v == null ? "—" : v;
+  E("ledgerEntries").innerHTML = table(["Assignment", "Platform", "Advertised", "Expected", "Submitted", "Accepted", "Pending", "Received", "Payment ref / date"], d.entries.map(e =>
+    "<tr><td>#" + e.assignment_id + " " + esc(e.title) + "</td><td>" + esc(e.platform_id) + "</td><td>" + esc(e.currency || "") + " " + m(e.advertised) + "</td><td>" + m(e.expected) + "</td><td>" + m(e.submitted) + "</td><td>" + m(e.accepted) +
+    "</td><td>" + m(e.pending) + "</td><td><b>" + m(e.received) + "</b></td><td>" + esc(e.payment_reference || "—") + " " + esc(e.payment_date || "") + "</td></tr>"), "No assignments yet.");
+  E("ledgerPlatforms").innerHTML = table(["Platform", "Currency", "Received", "Payments", "Last payment"], d.by_platform.map(p => "<tr><td>" + esc(platformName(p.platform_id)) + "</td><td>" + esc(p.currency) + "</td><td><b>" + p.received + "</b></td><td>" + p.payments + "</td><td>" + esc(p.last_payment) + "</td></tr>"), "No payment has been recorded yet.");
+  E("ledgerTrend").innerHTML = table(["Month", "Currency", "Received", "Payments"], d.trend.map(p => "<tr><td>" + esc(p.month) + "</td><td>" + esc(p.currency) + "</td><td>" + p.received + "</td><td>" + p.payments + "</td></tr>"), "No history yet.");
+  E("ledgerPayout").innerHTML = table(["Platform", "Platform in general", "Methods it mentions", "Verified in YOUR account"], d.payout_compatibility.map(p => "<tr><td>" + esc(p.name) + "</td><td>" + tag(p.general_availability, p.general_availability === "documented" ? "ok" : "warn") +
+    '<div class="muted">' + esc((p.general_note || "").slice(0, 160)) + "</div></td><td>" + (p.methods_mentioned.map(x => tag(x)).join("") || "—") + "</td><td>" +
+    (p.account_routes.map(r => tag(r.method + (r.account_verified ? " ✔" : " ✖"), r.account_verified ? "ok" : "bad")).join("") || '<span class="muted">not checked yet</span>') +
+    ' <button class="btn small" onclick="setRoute(\'' + esc(p.platform_id) + "')\">Record</button></td></tr>"), "No platforms");
+}
+async function setRoute(pid) {
+  const method = prompt("Payout method (paypal, payoneer, bank_transfer, mpesa, other):"); if (!method) return;
+  const ok = confirm("Does YOUR account offer this method for Kenya? OK = yes, Cancel = no");
+  const evidence = prompt("Where did you see this in your account? (page name)"); if (!evidence) return;
+  await act(() => api("POST", "/api/engine/payout-routes", {platform_id: pid, method: method.trim().toLowerCase(), account_verified: ok, evidence, confirmed_by_user: true}), "Payout route recorded"); loadLedger();
+}
+
+// ---------------------------------------------------------------- 7. automation settings
+async function loadAutomation() {
+  const d = await act(() => api("GET", "/api/engine/control")); if (!d) return;
+  const s = d.settings;
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused"]) E("as_" + k).checked = !!s[k];
+  for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) E("as_" + k).value = s[k];
+  const box = (cat, list, name) => '<label class="check"><input type="checkbox" name="' + name + '" value="' + cat + '"' + (list.includes(cat) ? " checked" : "") +
+    (name === "as_cat" && d.human_only_categories.includes(cat) ? " disabled" : "") + "><span>" + esc(cat.replace(/_/g, " ")) + (d.human_only_categories.includes(cat) ? " (always you)" : "") + "</span></label>";
+  E("as_categories").innerHTML = d.categories.map(c => box(c, s.permitted_categories, "as_cat")).join("");
+  E("as_excluded").innerHTML = d.categories.map(c => box(c, s.excluded_task_types, "as_exc")).join("");
+  const m = await api("GET", "/api/engine/permissions").catch(() => null);
+  if (m) E("as_submit").innerHTML = m.matrix.map(p => { const r = p.actions.auto_submission.result, can = r === "permitted";
+    return '<label class="check"><input type="checkbox" name="as_sub" value="' + esc(p.platform_id) + '"' + (s.auto_submit_platforms[p.platform_id] ? " checked" : "") + (can ? "" : " disabled") + "><span>" + esc(p.name) + " — " + esc(r.replace(/_/g, " ")) + "</span></label>"; }).join("") +
+    '<p class="muted">Never automated, whatever is ticked: ' + m.never_automated.map(n => esc(n.label)).join("; ") + ".</p>";
+}
+async function saveAutomation() {
+  const body = {}, picked = name => [...document.querySelectorAll('input[name="' + name + '"]:checked')].map(i => i.value);
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused"]) body[k] = E("as_" + k).checked;
+  for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) body[k] = Number(E("as_" + k).value);
+  body.permitted_categories = picked("as_cat"); body.excluded_task_types = picked("as_exc");
+  body.auto_submit_platforms = Object.fromEntries(picked("as_sub").map(p => [p, true]));
+  if (body.auto_execute && !confirm("Switch on automatic execution? Permitted tasks in your chosen categories will start without asking each time. Platform rules and the limits below still apply.")) return;
+  const r = await act(() => api("PUT", "/api/engine/settings", body), "Automation settings saved"); if (r) { loadAutomation(); refreshStop(); }
+}
+
+Object.assign(loaders, {control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
+document.addEventListener("DOMContentLoaded", () => { refreshStop(); setInterval(refreshStop, 30000); });
+if (document.readyState !== "loading") refreshStop();
+E("it_platform").innerHTML = '<option value="direct_client">Direct client work (my own client)</option>' + PLATFORMS.map(p => '<option value="' + p.id + '">' + esc(p.name) + "</option>").join("");
+if (["control", "pmanager", "pipeline", "autopilot", "submissions", "ledger", "automation"].includes(ui.tab)) setTimeout(() => setTab(ui.tab), 300);
 </script>
 </body>
 </html>

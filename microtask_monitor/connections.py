@@ -96,6 +96,8 @@ def blocked_reason(rec: dict[str, Any]) -> str | None:
 def automation_level(rec: dict[str, Any]) -> str:
     access = rec.get("access_class") or "prohibited_or_unverified"
     allowed = [a for a in sorted(policy.AUTHENTICATED) if a in rec.get("permitted_automation", [])] if access == "browser_automation_permitted" else []
+    if access == "official_api_permitted" and rec.get("api_account_access"):
+        return "Official API with your own authorization (" + ", ".join(rec["api_account_access"]) + "). Everything else is done by you."
     return {"official_api_permitted": "Official public API (read-only listings). Everything in your account is done by you.",
             "browser_automation_permitted": "Browser automation permitted for: " + (", ".join(allowed) or "nothing yet"),
             "human_assisted_only": "Human-assisted only: you act in your account; this program prepares and tracks.",
@@ -110,6 +112,8 @@ def status(conn, pid: str, caps: dict | None = None, now: datetime | None = None
     blocked = blocked_reason(rec)
     if blocked:
         shown, action = "blocked", blocked
+    elif shown == "connected_user_confirmed" and row.get("verified_by") == "api":
+        shown = "connected_verified"                 # the platform's documented API answered your authorization
     elif shown == "connected_user_confirmed":
         last = datetime.fromisoformat(row["last_success_at"]) if row["last_success_at"] else None
         if not last or now - last > timedelta(days=SESSION_CHECK_DAYS):
@@ -120,7 +124,60 @@ def status(conn, pid: str, caps: dict | None = None, now: datetime | None = None
             "human_step": row["human_step"], "last_checked_at": row["last_checked_at"], "last_success_at": row["last_success_at"],
             "access_class": rec.get("access_class"), "access_note": rec.get("access_note"), "automation_level": automation_level(rec),
             "login_url": login_url(pid), "profile_exists": bool(row["profile_dir"] and Path(row["profile_dir"]).exists()),
-            "verified_evidence": "user_confirmation" if row["status"] == "connected_user_confirmed" else None}
+            "verified_evidence": ("api_check" if row.get("verified_by") == "api" else "user_confirmation") if row["status"] == "connected_user_confirmed" else None,
+            "verified_by": row.get("verified_by"), "verified_at": row.get("verified_at"), "verified_detail": row.get("verified_detail"),
+            "scopes": json.loads(row.get("scopes") or "[]"), "permission_class": policy.permission_class(rec)}
+
+
+CONNECTION_STATES = ("NOT_CONNECTED", "LOGIN_REQUIRED", "USER_AUTHENTICATION_REQUIRED", "CONNECTED", "CONNECTION_EXPIRED",
+                     "REAUTHENTICATION_REQUIRED", "AUTOMATION_NOT_PERMITTED", "POLICY_UNVERIFIED", "DISABLED")
+
+
+def connection_state(conn, pid: str, caps: dict | None = None, now: datetime | None = None) -> dict[str, Any]:
+    """The connection in the engine's vocabulary. ``session`` says whether you are signed in; ``automation`` says, separately,
+    whether the program may act in the account. CONNECTED never implies that automation is permitted: ``state`` is the
+    combination a control screen should show."""
+    try:
+        from microtask_monitor import permissions
+    except ImportError:  # pragma: no cover
+        import permissions
+    st = status(conn, pid, caps, now)
+    row = _row(conn, pid)
+    shown = st["status"]
+    if shown == "blocked":
+        session = "DISABLED"
+    elif shown in ("connected_verified", "connected_user_confirmed"):
+        session = "CONNECTED"
+    elif shown == "check_due":
+        session = "REAUTHENTICATION_REQUIRED"
+    elif shown == "login_in_progress" or (shown == "needs_user_action" and row["human_step"]):
+        session = "USER_AUTHENTICATION_REQUIRED"
+    elif shown == "needs_user_action":
+        session = "CONNECTION_EXPIRED"
+    elif row["profile_dir"] or row["last_checked_at"]:
+        session = "LOGIN_REQUIRED"                   # you connected before and signed out / disconnected
+    else:
+        session = "NOT_CONNECTED"
+    prof = permissions.profile(pid, caps) or {"actions": {}, "level": 0}
+    account = (prof["actions"].get("account_monitoring") or {}).get("result", "unverified")
+    if permissions.suspension(conn, pid):
+        automation = "POLICY_UNVERIFIED"
+    elif account == "permitted":
+        automation = "AUTOMATION_PERMITTED"
+    elif account == "prohibited" or "AUTOMATION_PROHIBITED" in ((caps or policy.load_capabilities()).get(pid, {}).get("levels") or []):
+        automation = "AUTOMATION_NOT_PERMITTED"
+    elif st["access_class"] == "human_assisted_only":
+        automation = "AUTOMATION_NOT_PERMITTED"
+    else:
+        automation = "POLICY_UNVERIFIED"
+    state = session if session != "CONNECTED" or automation == "AUTOMATION_PERMITTED" else automation
+    return {**st, "session": session, "automation": automation, "state": state, "level": prof["level"],
+            "note": "Signed in is not permission: the program acts in an account only where the platform's terms were verified to allow it."}
+
+
+def list_states(conn, caps: dict | None = None) -> list[dict[str, Any]]:
+    caps = policy.load_capabilities() if caps is None else caps
+    return [connection_state(conn, pid, caps) for pid in caps]
 
 
 def list_status(conn, caps: dict | None = None) -> list[dict[str, Any]]:
@@ -157,7 +214,10 @@ def open_login(conn, pid: str, caps: dict | None = None, profiles_dir: Path | No
     if not browser:
         raise ConnectionError_("Microsoft Edge or Google Chrome was not found")
     profile = Path(profiles_dir or PROFILES_DIR) / pid
+    fresh = not profile.exists()
     profile.mkdir(parents=True, exist_ok=True)
+    if fresh and launcher is subprocess.Popen:
+        harden_profile_dir(profile)
     launcher(browser_command(browser, profile, url))
     with db.tx(conn):
         _save(conn, pid, status="login_in_progress", profile_dir=str(profile), last_checked_at=_now().isoformat(),
@@ -176,8 +236,50 @@ def confirm_signed_in(conn, pid: str, confirmed_by_user: bool, caps: dict | None
     with db.tx(conn):
         _save(conn, pid, status="connected_user_confirmed", last_success_at=stamp, last_checked_at=stamp, required_action=None, human_step=None,
               note="Confirmed by you; not verified automatically.")
+        conn.execute("UPDATE platform_connections SET verified_by='user', verified_at=?, verified_detail=NULL WHERE platform_id=?", (stamp, pid))
         db.audit(conn, "connection.confirmed", "platform", pid)
     return status(conn, pid, caps)
+
+
+def mark_api_verified(conn, pid: str, detail: str, scopes: list[str] | None = None, caps: dict | None = None) -> dict[str, Any]:
+    """Record a connection that was PROVEN by a successful call to the platform's documented API (never by a statement)."""
+    rec = _record(pid, caps)
+    if rec.get("access_class") != "official_api_permitted":
+        raise ConnectionError_(f"{pid} has no documented API for account access: it cannot be verified this way")
+    if blocked_reason(rec):
+        raise ConnectionError_(blocked_reason(rec))
+    stamp = _now().isoformat()
+    with db.tx(conn):
+        _save(conn, pid, status="connected_user_confirmed", last_success_at=stamp, last_checked_at=stamp, required_action=None, human_step=None,
+              note="Verified by an authorized call to the platform's documented API.")
+        conn.execute("UPDATE platform_connections SET verified_by='api', verified_at=?, verified_detail=?, scopes=? WHERE platform_id=?",
+                     (stamp, redact(detail)[:300], json.dumps(scopes or []), pid))
+        db.audit(conn, "connection.api_verified", "platform", pid, {"scopes": scopes or []}, actor="system")
+    return status(conn, pid, caps)
+
+
+def clear_verification(conn, pid: str, reason: str, caps: dict | None = None) -> dict[str, Any]:
+    """An API authorization expired or was revoked: the connection is no longer verified and needs you."""
+    _record(pid, caps)
+    with db.tx(conn):
+        _save(conn, pid, status="needs_user_action", human_step=None, last_checked_at=_now().isoformat(), required_action=redact(reason)[:300])
+        conn.execute("UPDATE platform_connections SET verified_by=NULL, verified_at=NULL, verified_detail=NULL, scopes=NULL WHERE platform_id=?", (pid,))
+        db.audit(conn, "connection.verification_cleared", "platform", pid, actor="system")
+    return status(conn, pid, caps)
+
+
+def harden_profile_dir(profile: Path) -> bool:
+    """Windows: restrict the dedicated browser profile folder to your own account (no inherited access for other users)."""
+    if os.name != "nt":
+        return False
+    user = os.environ.get("USERNAME")
+    if not user:
+        return False
+    try:
+        r = subprocess.run(["icacls", str(profile), "/inheritance:r", "/grant:r", f"{user}:(OI)(CI)F"], capture_output=True, timeout=20)
+        return r.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
 
 
 def report_human_step(conn, pid: str, kind: str, caps: dict | None = None) -> dict[str, Any]:
@@ -205,6 +307,7 @@ def disconnect(conn, pid: str, caps: dict | None = None) -> dict[str, Any]:
     with db.tx(conn):
         _save(conn, pid, status="not_connected", last_success_at=None, human_step=None,
               required_action="Disconnected. To remove the saved browser session too, sign out in the login window or delete the profile folder.")
+        conn.execute("UPDATE platform_connections SET verified_by=NULL, verified_at=NULL, verified_detail=NULL, scopes=NULL WHERE platform_id=?", (pid,))
         db.audit(conn, "connection.disconnect", "platform", pid)
     return status(conn, pid, caps)
 
@@ -216,6 +319,6 @@ def require_session(conn, pid: str, action: str, user_authorized: bool, caps: di
     if not decision.allowed:
         raise policy.PermissionDenied(f"Blocked: {decision.reason}")
     st = status(conn, pid, caps)
-    if st["status"] != "connected_user_confirmed":
+    if st["status"] not in ("connected_user_confirmed", "connected_verified"):
         raise SessionRequired(st["required_action"] or "Sign in first")
     return st

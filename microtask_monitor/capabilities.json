@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-12",
+  "updated_at": "2026-11-15",
   "levels": [
     "PUBLIC_DISCOVERY_ALLOWED",
     "DOCUMENTED_API_ALLOWED",
@@ -1669,73 +1669,109 @@
       "platform_id": "whop_workforce",
       "name": "Whop Workforce",
       "levels": [
-        "MANUAL_ONLY",
-        "HUMAN_APPROVAL_REQUIRED",
-        "UNVERIFIED"
+        "DOCUMENTED_API_ALLOWED",
+        "HUMAN_APPROVAL_REQUIRED"
       ],
       "public_discovery": "none",
       "documented_api": {
-        "available": false,
-        "url": null,
-        "scope": null
+        "available": true,
+        "url": "https://docs.whop.com/api-reference/bounties/list-bounties",
+        "scope": "GET /bounties and GET /bounty_submissions with YOUR user OAuth token (scope bounty:basic:read)"
       },
       "login_required": true,
       "manual_task_access": true,
-      "permitted_automation": [],
+      "permitted_automation": [
+        "api_read"
+      ],
       "prohibited_automation": [
         "automated_application_submission",
+        "website_scraping_or_page_monitoring",
+        "automated_likes_follows_comments_views",
         "automated_task_acceptance",
         "automated_task_completion",
         "automated_evidence_submission",
-        "automated_screener_answers",
-        "automated_survey_answers",
-        "automated_test_completion",
+        "automated_withdrawal",
         "captcha_mfa_kyc_bypass",
         "vpn_or_proxy_location_spoofing",
-        "fabricated_evidence_or_identity",
-        "scrape_logged_in",
-        "probe_private_endpoints"
+        "fabricated_evidence_or_identity"
       ],
       "application_submission": "human_only",
       "evidence_submission": "human_only",
       "country_eligibility": {
-        "kenya": "unverified",
-        "note": "workforce_campaign_and_payout_country_unverified"
+        "kenya": "task_specific",
+        "note": "Every bounty carries allowed_country_codes. KE must be listed, or the list must be empty (documented as worldwide). Opening a listing proves nothing."
       },
       "payment_verification": {
         "status": "unverified",
-        "note": "Bounty reward is routed through Whop payment partners after seller approval; actual withdrawal route, KYC and Kenya availability must be checked in the account."
+        "note": "Payout terms name ACH, push-to-card, wire and cheque 'subject to jurisdiction' and list no countries. Confirm the payout methods your own Whop account offers in Kenya, and finish any identity check, before relying on a reward."
       },
       "equipment": {
-        "requirements": null,
+        "requirements": "Data-capture bounties are recorded in the Whop iOS app (iPhone); some also need a head mount. Other bounty types state their own needs.",
         "user_device_compatible": null,
-        "note": null
+        "note": "Samsung Galaxy A05 (Android): iPhone/data-capture bounties are excluded automatically; other bounties are checked one by one."
       },
-      "last_policy_verified": "2026-11-12",
+      "last_policy_verified": "2026-11-10",
       "policy_urls": [
-        "https://whop.com/workforce/",
-        "https://whop.com/tos",
+        "https://whop.com/whop-workforce/",
+        "https://docs.whop.com/api-reference/bounties/bounty",
+        "https://docs.whop.com/api-reference/bounties/list-bounties",
         "https://whop.com/earnings-terms/",
-        "https://whop.com/payout-terms"
+        "https://whop.com/payout-terms/"
       ],
-      "notes": "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual.",
+      "notes": "Bounties are read through the documented API with your own OAuth authorization. Doing the task, posting, recording, submitting proof and withdrawing are done by you on Whop.",
       "review": {
-        "reviewed_on": "2026-11-12",
-        "public_listing_interface": "Workforce page is public but bounty/task listings are account/community-facing",
-        "automation_clause": "Whop Terms prohibit automated access/monitoring by robots, spiders and scrapers without written consent.",
+        "reviewed_on": "2026-11-10",
+        "public_listing_interface": "documented API: GET https://api.whop.com/api/v1/bounties (user OAuth token; 403 without the bounty-read scope)",
+        "automation_clause": "documented_api_with_user_oauth_permitted__website_automation_prohibited",
         "terms_read": [
-          "https://whop.com/workforce/",
-          "https://whop.com/tos",
+          "https://docs.whop.com/api-reference/bounties/bounty",
+          "https://docs.whop.com/api-reference/bounties/list-bounties",
+          "https://docs.whop.com/api-reference/bounty-submissions/bounty-submission",
+          "https://docs.whop.com/developer/guides/oauth",
           "https://whop.com/earnings-terms/",
-          "https://whop.com/payout-terms"
+          "https://whop.com/payout-terms/"
         ],
-        "not_read_or_unavailable": [],
+        "not_read_or_unavailable": [
+          "https://whop.com/terms-of-service/ returned 404 on 2026-11-10: the clause against robots, spiders and scrapers is recorded from the owner's reading and was not re-read here",
+          "A separate Whop Developer Terms page was not located"
+        ],
         "findings": [
-          "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual."
+          "List Bounties: 'for a user token, the bounties the user can see and work'. allowed_country_codes: 'Empty means worldwide'.",
+          "A submission is authored with a user credential (POST /bounty_submissions, scope bounty:submission:create). This program does not request that scope: submitting stays manual.",
+          "Bounty Program terms: participants must be 18+ with an account in good standing; the seller approves the proof, then the reward is sent to the participant's account. Fraudulent activity can end participation.",
+          "data_capture bounties: proof is clips recorded in the Whop app; they are never workable from an Android phone here."
         ]
       },
-      "access_class": "prohibited_or_unverified",
-      "access_note": "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual."
+      "execution": {
+        "verified_on": "2026-11-10",
+        "discovery": "Open bounties and your own submissions, via the documented API with your OAuth token.",
+        "instructions_retrieval": "official_api: the bounty's description field is the task instruction.",
+        "ai_assistance": {
+          "status": "task_specific",
+          "note": "No platform-wide AI rule was found in the pages read. Each bounty's own instructions govern (several demand raw, unedited, personally recorded material). AI is never used to imitate a real person, review, recording or engagement."
+        },
+        "automated_discovery_of_task_instructions": true,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Open the bounty on Whop from your own account and start the attempt yourself.",
+          "Do the real-world part yourself (post from your own account, record your own footage). Nothing is simulated.",
+          "Submit the proof (links or files) in Whop yourself.",
+          "After approval, check the credited amount in your Whop balance and record it here.",
+          "Withdraw yourself; record the payout reference only when the money has arrived."
+        ],
+        "sources": [
+          "https://docs.whop.com/api-reference/bounty-submissions/create-bounty-submission",
+          "https://whop.com/earnings-terms/",
+          "https://whop.com/payout-terms/"
+        ]
+      },
+      "access_class": "official_api_permitted",
+      "api_account_access": [
+        "read open bounties",
+        "read your own submissions and their review status"
+      ],
+      "access_note": "Documented API with your own OAuth authorization, read-only (bounty:basic:read). No website automation of any kind."
     }
   ]
 }

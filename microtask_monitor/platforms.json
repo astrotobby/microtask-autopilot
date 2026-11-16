@@ -561,29 +561,25 @@
     {
       "id": "whop_workforce",
       "name": "Whop Workforce",
-      "official_url": "https://whop.com/workforce/",
-      "identity_status": "official_workforce_page_and_whop_terms_reviewed",
-      "kenya_eligibility": "workforce_campaign_and_payout_country_unverified",
-      "automation_status": "manual_bounty_review_and_submission_only",
+      "platform_type": "bounty_marketplace",
+      "official_url": "https://whop.com/whop-workforce/",
+      "identity_status": "official_url_and_documentation_verified",
+      "kenya_eligibility": "bounty_specific_country_codes_checked_each_bounty",
+      "automation_status": "official_api_read_only_with_user_oauth_manual_submission",
       "allowed_actions": [
         "track_status",
-        "public_information_review",
-        "manual_bounty_record_import",
-        "open_official_workforce_page"
+        "bounty_discovery_via_documented_api",
+        "open_official_bounty_page"
       ],
       "blocked_actions": [
-        "automated_bounty_discovery",
-        "automated_logged_in_browsing",
-        "automated_bounty_acceptance",
-        "automated_bounty_completion",
-        "automated_proof_submission",
-        "scraping",
-        "robots_or_spiders",
-        "captcha_or_identity_bypass",
-        "vpn_or_proxy_geo_bypass"
+        "website_scraping_or_monitoring",
+        "automated_engagement",
+        "automated_task_acceptance",
+        "automated_proof_upload",
+        "automated_withdrawal",
+        "captcha_or_identity_bypass"
       ],
-      "notes": "Whop Workforce is a Whop community/bounty destination, not a verified public worker-task API. Whop's current Terms prohibit automated access/monitoring such as robots, spiders and scrapers without written consent. Whop Earnings Terms describe seller-created bounties, participant proof submission and payment after seller approval; participants must be 18+ and in good standing. Kenya campaign eligibility and the user's available payout route must be checked in the actual account before relying on any bounty. Keep all review, task acceptance and submissions manual.",
-      "platform_type": "bounty_marketplace"
+      "notes": "Bounties come from GET https://api.whop.com/api/v1/bounties with the owner's OAuth token (scope bounty:basic:read). https://whop.com/workforce/ redirects to the homepage; the community is https://whop.com/whop-workforce/. Kenya must be in a bounty's allowed_country_codes, or the list must be empty (documented as worldwide). Data-capture bounties need an iPhone and are excluded for the Samsung Galaxy A05."
     }
   ]
 }

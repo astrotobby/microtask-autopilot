@@ -266,12 +266,14 @@ class ReminderTests(Base):
         self.assertEqual(self.generate(NOW + timedelta(hours=5))["deadline"], 0)
 
     def test_deadline_reminders_stop_when_the_application_is_submitted(self):
-        app = self.application(deadline=(NOW + timedelta(days=5)).isoformat())
-        self.generate()
+        # Submitting checks the deadline against the real clock, so this test is anchored to today (it used a fixed date and expired).
+        real_now = datetime.now(timezone.utc)
+        app = self.application(deadline=(real_now + timedelta(days=5)).isoformat())
+        self.generate(real_now)
         self.fill_profile()
         self.approve(app)
-        self.submit(app)
-        self.generate(NOW + timedelta(days=1))
+        self.submit(app, real_now.date().isoformat())
+        self.generate(real_now + timedelta(days=1))
         self.assertTrue(all(r["status"] == "dismissed" for r in self.reminders_for("deadline")))
 
     def test_assessment_reminder_comes_from_the_listing(self):

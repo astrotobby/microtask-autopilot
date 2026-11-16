@@ -148,3 +148,37 @@ class MemoryStore:
 
 def default_store():
     return WindowsCredentialStore()
+
+
+# ------------------------------------------------------------------------------------------- long secrets (OAuth tokens)
+CHUNK = 1000          # Credential Manager caps one blob at 2560 bytes (1280 UTF-16 characters); long tokens are split
+
+
+def put_long(store, platform_id: str, name: str, value: str) -> None:
+    """Store a secret of any length as numbered parts. Old parts beyond the new length are removed."""
+    if not value:
+        raise ValueError("empty secret")
+    parts = [value[i:i + CHUNK] for i in range(0, len(value), CHUNK)]
+    for i, part in enumerate(parts):
+        store.set(platform_id, f"{name}_{i}", part)
+    i = len(parts)
+    while store.delete(platform_id, f"{name}_{i}"):
+        i += 1
+
+
+def get_long(store, platform_id: str, name: str) -> str | None:
+    out, i = [], 0
+    while True:
+        part = store.get(platform_id, f"{name}_{i}")
+        if part is None:
+            break
+        out.append(part)
+        i += 1
+    return "".join(out) or None
+
+
+def delete_long(store, platform_id: str, name: str) -> bool:
+    i = 0
+    while store.delete(platform_id, f"{name}_{i}"):
+        i += 1
+    return i > 0

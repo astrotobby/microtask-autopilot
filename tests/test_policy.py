@@ -121,7 +121,8 @@ class EnforcementTests(unittest.TestCase):
         allowed_discovery = [p for p in ALL_IDS if policy.check_action(p, "public_discovery").allowed]
         allowed_api = [p for p in ALL_IDS if policy.check_action(p, "api_read").allowed]
         self.assertEqual(allowed_discovery, ["opentrain_ai"])
-        self.assertEqual(allowed_api, ["opentrain_ai"])
+        # OpenTrain: public jobs API. Whop: documented API with the owner's own OAuth authorization (read scope only).
+        self.assertEqual(sorted(allowed_api), ["opentrain_ai", "whop_workforce"])
 
     def test_restricted_platforms_cannot_be_discovered_or_read_by_api(self):
         for pid in ("microworkers", "sproutgigs", "gainworkers", "reworkio", "mindrift"):

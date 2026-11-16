@@ -204,6 +204,18 @@ class Handler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/api/status":
             return self.send_json(self.legacy_status())
+        if parsed.path == "/api/whop/oauth/callback":
+            # Whop sends your browser back here after you approve. The single-use code is exchanged at once and never shown or logged.
+            status, payload = self.api.handle("GET", parsed.path, parse_qs(parsed.query))
+            note = "connected" if status == 200 else "error"
+            self.send_response(303)
+            self.send_header("Location", f"/?whop={note}#whop")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Referrer-Policy", "no-referrer")
+            self.end_headers()
+            if status != 200:
+                LOG.warning("Whop authorization did not complete: %s", payload.get("error"))
+            return
         if parsed.path.startswith("/api/"):
             status, payload = self.api.handle("GET", parsed.path, parse_qs(parsed.query))
             return self.send_json(payload, status)
@@ -256,7 +268,8 @@ class Handler(SimpleHTTPRequestHandler):
         return status
 
     def log_message(self, fmt, *args):
-        LOG.info("%s - %s", self.address_string(), fmt % args)
+        from microtask_monitor.secret_store import redact          # request lines can carry an OAuth code: never log it
+        LOG.info("%s - %s", self.address_string(), redact(fmt % args))
 
 
 class LocalServer(ThreadingHTTPServer):
@@ -279,7 +292,32 @@ def serve(host: str = HOST, port: int = PORT, db_path: Path = DB_PATH, latest: P
                                                 "db_path": Path(db_path), "latest_path": Path(latest)})
     server = LocalServer((host, port), handler)
     handler.port = server.server_address[1]
+    handler.api.port = handler.port
     return server
+
+
+WHOP_INTERVAL_SECONDS = 1800
+
+
+def whop_scheduler(stop: threading.Event | None = None, interval: int = WHOP_INTERVAL_SECONDS, db_path: Path = DB_PATH) -> None:
+    """Refresh Whop bounties and your submission results while you are authorized. Silent when you are not."""
+    from microtask_monitor import secret_store, whop
+    while True:
+        try:
+            store = secret_store.default_store()
+            with closing(db.connect(db_path)) as conn:
+                if whop.oauth_status(conn, store)["authorized"]:
+                    result = whop.sync(conn, store)
+                    LOG.info("Whop sync: %s", result["bounties"])
+        except (whop.WhopError, secret_store.SecretStoreUnavailable, policy.PermissionDenied) as exc:
+            LOG.info("Whop sync skipped: %s", exc)
+        except Exception:                           # noqa: BLE001 - never let a background refresh stop the server
+            LOG.exception("Whop sync failed")
+        if stop is not None:
+            if stop.wait(interval):
+                return
+        else:
+            time.sleep(interval)
 
 
 def prepare_backend() -> None:
@@ -287,7 +325,10 @@ def prepare_backend() -> None:
     with closing(db.connect(DB_PATH)) as conn:
         with db.tx(conn):
             policy.sync_to_db(conn)
-        from microtask_monitor import intelligence
+        from microtask_monitor import intelligence, permissions
+        suspended = permissions.sync(conn)["suspended"]
+        if suspended:
+            LOG.warning("Automation suspended pending re-review of changed capability records: %s", ", ".join(suspended))
         with db.tx(conn):
             n = intelligence.backfill(conn)
         if n:
@@ -301,8 +342,11 @@ def main() -> None:
         prepare_backend()
     except Exception:                               # noqa: BLE001 - the server must still start; the error is logged
         LOG.exception("Backend preparation failed; continuing with the existing database")
-    threading.Thread(target=background_sync, daemon=True, name="github-report-sync").start()
-    threading.Thread(target=daily_scheduler, daemon=True, name="daily-analysis-scheduler").start()
+    # ONE scheduler owns every periodic job (report sync, discovery incl. Whop, daily analysis, upkeep, orchestrator, submissions),
+    # so jobs never overlap. background_sync / daily_scheduler / whop_scheduler above remain for tests and manual use only.
+    from microtask_monitor import scheduler as scheduler_module
+    engine = scheduler_module.Scheduler(DB_PATH, sync_fn=run_sync_guarded)
+    threading.Thread(target=engine.loop, daemon=True, name="autopilot-scheduler").start()
     try:
         server = serve()
     except OSError:

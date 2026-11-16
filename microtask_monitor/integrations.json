@@ -99,10 +99,10 @@
       "health": "manual_review_required"
     },
     "whop_workforce": {
-      "public_discovery": "manual_portal_review_only",
-      "authenticated_manual_review": "yes",
-      "automation_permitted": "none",
-      "health": "manual_review_required"
+      "public_discovery": "none_official_api_with_user_authorization_only",
+      "authenticated_manual_review": "task_proof_submission_withdrawal",
+      "automation_permitted": "read_only_official_api_with_user_oauth",
+      "health": "local_api"
     },
     "telus_digital_ai": {
       "public_discovery": "manual_portal_review_only",

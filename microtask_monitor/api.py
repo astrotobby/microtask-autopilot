@@ -14,10 +14,10 @@ from pathlib import Path
 from typing import Any, Callable
 
 try:
-    from microtask_monitor import (actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
+    from microtask_monitor import (control, engine_api, ledger, lifecycle, permissions, submission, assignments as asg, secret_store as ss, whop, actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa,
                                    reminders, workflow as wf)
 except ImportError:  # pragma: no cover
-    import actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
+    import control, engine_api, ledger, lifecycle, permissions, submission, assignments as asg, secret_store as ss, whop, actions, assistant, autonomy, connections as cx, execution as ex, workers as exec_workers, daily, db, guidance, intelligence as ig, notify, packets, policy, profile_answers as pa, reminders, workflow as wf
 
 ROOT = Path(__file__).resolve().parents[1]
 PLATFORMS_PATH = ROOT / "microtask_monitor" / "platforms.json"
@@ -53,7 +53,8 @@ def _first(query: dict, key: str, default: str = "") -> str:
 class Api:
     def __init__(self, db_path: Path | str, latest_report_path: Path | None = None,
                  trigger_sync: Callable[[], bool] | None = None, evidence_dir: Path | None = None,
-                 sync_running: Callable[[], bool] | None = None, launcher: Callable | None = None, profiles_dir: Path | None = None):
+                 sync_running: Callable[[], bool] | None = None, launcher: Callable | None = None, profiles_dir: Path | None = None,
+                 store: Any = None, whop_http: Callable | None = None, port: int = 8765):
         self.db_path = Path(db_path)
         self.latest_report_path = latest_report_path
         self.trigger_sync = trigger_sync
@@ -61,6 +62,7 @@ class Api:
         self.evidence_dir = evidence_dir or wf.EVIDENCE_DIR
         self.exec_dir = (Path(evidence_dir).parent / "executions") if evidence_dir else ex.EXEC_DIR
         self.launcher = launcher
+        self.store, self.whop_http, self.port = store, whop_http or whop.http_json, port
         self.profiles_dir = profiles_dir or ((Path(evidence_dir).parent / "browser-profiles") if evidence_dir else cx.PROFILES_DIR)
 
     # ----------------------------------------------------------------------------- dispatch
@@ -80,7 +82,14 @@ class Api:
             return 403, {"ok": False, "error": str(exc), "blocked": True}
         except cx.SessionRequired as exc:
             return 409, {"ok": False, "error": str(exc), "needs_user_action": True}
-        except (wf.WorkflowError, ex.ExecutionError, cx.ConnectionError_) as exc:
+        except whop.NotAuthorized as exc:
+            return 409, {"ok": False, "error": str(exc), "needs_user_action": True}
+        except ss.SecretStoreUnavailable as exc:
+            return 501, {"ok": False, "error": str(exc)}
+        except engine_api.EngineApiError as exc:
+            return exc.status, {"ok": False, "error": exc.message}
+        except (wf.WorkflowError, ex.ExecutionError, cx.ConnectionError_, asg.AssignmentError, whop.WhopError, control.ControlError,
+                lifecycle.LifecycleError, submission.SubmissionError, ledger.LedgerError) as exc:
             return 400, {"ok": False, "error": str(exc)}
 
     def _route(self, conn, method: str, path: str, q: dict, body: dict) -> Any:
@@ -97,6 +106,8 @@ class Api:
             return self.list_opportunities(conn, q)
         if key == ("GET", "platforms"):
             return self.platforms(conn)
+        if parts[:1] == ["engine"]:
+            return engine_api.route(self, conn, method, parts[1:], q, body)
         if key == ("GET", "autonomy"):
             return self.autonomy_status()
         if parts[:1] == ["applications"]:
@@ -125,6 +136,14 @@ class Api:
             return self.connection_endpoints(conn, method, parts[1:], body)
         if parts[:1] == ["executions"]:
             return self.execution_endpoints(conn, method, parts[1:], body)
+        if key == ("GET", "centre"):
+            return self.centre(conn)
+        if key == ("GET", "registry"):
+            return {"ok": True, "registry": policy.registry(), "classes": policy.PERMISSION_CLASSES}
+        if parts[:1] == ["assignments"]:
+            return self.assignment_endpoints(conn, method, parts[1:], body)
+        if parts[:1] == ["whop"]:
+            return self.whop_endpoints(conn, method, parts[1:], q, body)
         if parts[:1] == ["profile-answers"]:
             return self.profile_endpoints(conn, method, parts[1:], body)
         if key == ("GET", "guidance") and n == 2:
@@ -449,6 +468,96 @@ class Api:
             if action == "outcome":
                 return {"ok": True, "job": ex.record_outcome(conn, jid, str(body.get("outcome", "")))}
         raise ApiError(404, "No such executions endpoint")
+
+    # ----------------------------------------------------------------------------- execution centre / assignments / whop
+    def _secrets(self):
+        if self.store is None:
+            self.store = ss.default_store()
+        return self.store
+
+    def _sync_assignments(self, conn) -> None:
+        for r in conn.execute("SELECT id FROM assignments WHERE execution_job_id IS NOT NULL AND stage IN ('accepted','executing','qa')").fetchall():
+            asg.sync_from_job(conn, r["id"])
+
+    def centre(self, conn) -> dict[str, Any]:
+        """Everything the Execution Centre shows, from real records only."""
+        self._sync_assignments(conn)
+        items = asg.list_all(conn)
+        conns = cx.list_status(conn)
+        waiting = [{"assignment_id": a["id"], "title": a["title"], "platform_id": a["platform_id"], "stage": a["stage"], "action": a["next_action"]}
+                   for a in items if a["stage"] in ("qualified", "ready", "accepted", "qa", "ready_for_delivery", "work_accepted", "payment_pending")]
+        waiting += [{"connection": c["platform_id"], "title": c["name"], "action": c["required_action"]} for c in conns if c["status"] in ("needs_user_action", "check_due", "login_in_progress")]
+        return {"ok": True, "funnel": asg.funnel(conn), "assignments": items, "stage_order": list(asg.ORDER), "stage_labels": asg.LABELS,
+                "connections": [{k: c[k] for k in ("platform_id", "name", "status", "verified_by", "last_success_at", "automation_level", "permission_class", "required_action")} for c in conns],
+                "connected": {"api_verified": sum(1 for c in conns if c["status"] == "connected_verified"),
+                              "confirmed_by_you": sum(1 for c in conns if c["status"] == "connected_user_confirmed")},
+                "awaiting_you": waiting, "jobs_running": [j for j in ex.list_jobs(conn) if j["status"] == "running"]}
+
+    def assignment_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
+        """Assignments move only with evidence; see assignments.py. Nothing here contacts a platform."""
+        if method == "GET" and not rest:
+            self._sync_assignments(conn)
+            return {"ok": True, "assignments": asg.list_all(conn), "funnel": asg.funnel(conn)}
+        aid = _int(rest[0], 0) if rest else 0
+        if method == "GET" and len(rest) == 1:
+            return {"ok": True, "assignment": asg.sync_from_job(conn, aid)}
+        if method == "POST" and len(rest) == 2:
+            action, yes, ref = rest[1], body.get("confirmed_by_user") is True, str(body.get("reference", "")).strip()
+            if action == "ai-use":
+                return {"ok": True, "assignment": asg.set_ai_use(conn, aid, str(body.get("ai_use", "")), str(body.get("source", "")))}
+            if action == "ready":
+                return {"ok": True, "assignment": asg.mark_ready(conn, aid)}
+            if action == "accepted":
+                return {"ok": True, "assignment": asg.advance(conn, aid, "accepted", "user_confirmation", ref, "You took this task on the platform yourself", yes)}
+            if action == "start-execution":
+                return {"ok": True, "assignment": asg.start_execution(conn, aid, body.get("work_type") or None, self.exec_dir)}
+            if action == "submitted":
+                asg.sync_from_job(conn, aid)
+                a = asg.advance_through(conn, aid, "submitted", "user_confirmation", ref, "You submitted this yourself on the platform", yes)
+                job_id = a["execution_job_id"]
+                if job_id and ex.get_job(conn, job_id)["status"] == "ready_for_submission":
+                    ex.record_submitted(conn, job_id, True, ref, body.get("submitted_at"))
+                return {"ok": True, "assignment": asg.get(conn, aid)}
+            if action == "under-review":
+                return {"ok": True, "assignment": asg.advance(conn, aid, "awaiting_review", "user_confirmation", ref, "The platform shows the submission as received", yes)}
+            if action == "outcome":
+                outcome = {"accepted": "work_accepted", "rejected": "rejected"}.get(str(body.get("outcome", "")))
+                if not outcome:
+                    raise ApiError(400, "Outcome must be accepted or rejected")
+                return {"ok": True, "assignment": asg.advance(conn, aid, outcome, "user_confirmation", ref, str(body.get("detail", "")) or "Outcome shown by the platform", yes)}
+            if action == "payment-pending":
+                return {"ok": True, "assignment": asg.record_payment_pending(conn, aid, body.get("amount"), str(body.get("currency", "")))}
+            if action == "paid":
+                return {"ok": True, "assignment": asg.record_paid(conn, aid, body.get("amount"), str(body.get("currency", "")), str(body.get("received_date", "")),
+                                                                 str(body.get("method", "")), ref, yes)}
+            if action == "cancel":
+                return {"ok": True, "assignment": asg.advance(conn, aid, "cancelled", "user_confirmation", ref or "cancelled by you", "Cancelled by you", yes)}
+        raise ApiError(404, "No such assignments endpoint")
+
+    def whop_endpoints(self, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[str, Any]:
+        """Whop Workforce: official API only, with your own OAuth authorization. Tokens never pass through this API's bodies or replies."""
+        if method == "GET" and not rest:
+            try:
+                store = self._secrets()
+            except ss.SecretStoreUnavailable:
+                store = None
+            return {"ok": True, **whop.view(conn, store, self.port)}
+        if method == "GET" and rest == ["oauth", "callback"]:
+            st = whop.complete_oauth(conn, self._secrets(), _first(q, "code"), _first(q, "state"), self.port, self.whop_http,
+                                     _first(q, "error_description") or _first(q, "error"))
+            return {"ok": True, "connection": st}
+        if method == "POST" and rest == ["client"]:
+            return {"ok": True, "oauth": whop.set_client_id(conn, str(body.get("client_id", "")))}
+        if method == "POST" and rest == ["authorize"]:
+            policy.require(whop.PLATFORM, "api_read")
+            return {"ok": True, **whop.begin_oauth(conn, self.port)}
+        if method == "POST" and rest == ["sync"]:
+            return {"ok": True, **whop.sync(conn, self._secrets(), self.whop_http)}
+        if method == "POST" and rest == ["disconnect"]:
+            return {"ok": True, "oauth": whop.disconnect(conn, self._secrets())}
+        if method == "POST" and len(rest) == 3 and rest[0] == "bounties" and rest[2] == "track":
+            return {"ok": True, "assignment": whop.track(conn, rest[1], body.get("new_attempt") is True)}
+        raise ApiError(404, "No such whop endpoint")
 
     def action_endpoints(self, conn, method: str, rest: list[str], body: dict) -> dict[str, Any]:
         """The daily action list (what to do next), persisted per Nairobi day."""

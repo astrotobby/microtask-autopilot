@@ -147,8 +147,8 @@ def create_job(conn, title: str, instructions: str, platform_id: str | None = No
         raise ExecutionError("A job needs a title")
     if len((instructions or "").strip()) < 20:
         raise ExecutionError("Paste the real task instructions (at least a couple of sentences). Nothing is invented for you.")
-    if instructions_source not in ("user_provided", "user_file"):
-        raise ExecutionError("Instructions must come from you")
+    if instructions_source not in ("user_provided", "user_file", "platform_api"):
+        raise ExecutionError("Instructions must come from you or from the platform's official API")
     if platform_id:
         if platform_id not in policy.load_capabilities():
             raise ExecutionError(f"No capability record for '{platform_id}' (fail closed): choose a tracked platform")
@@ -176,7 +176,7 @@ def create_job(conn, title: str, instructions: str, platform_id: str | None = No
                             cls["work_type"], worker.name, json.dumps(cls), policy_value, (ai_source or "")[:500], json.dumps(rules), deadline, now, now))
         jid = cur.lastrowid
         ws = Path(base) / f"job-{jid}"
-        for sub in ("input", "output", "logs", "package"):
+        for sub in ("input", "output", "logs", "tests", "qa", "package"):
             (ws / sub).mkdir(parents=True, exist_ok=True)
         conn.execute("UPDATE execution_jobs SET workspace=? WHERE id=?", (str(ws), jid))
         (ws / "INSTRUCTIONS.md").write_text(f"# {title.strip()}\n\n(Provided by the user; source: {instructions_source})\n\n{instructions}\n", encoding="utf-8")
@@ -415,6 +415,27 @@ def approve_review(conn, job_id: int, approved_by_user: bool, acknowledged_manua
         _set(conn, job_id, "approved", "Approved by you", approved_at=_now(), manual_ack_at=_now() if acknowledged_manual else None)
         event(conn, job_id, "approved", "You approved the deliverables")
         db.audit(conn, "execution.approve", "execution_job", job_id)
+    return prepare_submission(conn, job_id)
+
+
+def approve_under_authorization(conn, job_id: int, authorization_ref: str) -> dict[str, Any]:
+    """Package work under your STANDING authorization (automation settings), without a per-task click.
+
+    Stricter than a manual approval: every check of the latest attempt must have been executed and passed, with nothing
+    left for manual review. It is logged as approved under the authorization, never as approved by you personally.
+    """
+    job = _job(conn, job_id)
+    if not (authorization_ref or "").strip():
+        raise ExecutionError("A standing authorization reference is required")
+    if job["status"] != "awaiting_review":
+        raise ExecutionError(f"Only work that passed QA and awaits review can be approved (status: {job['status']})")
+    latest = db.rows(conn.execute("SELECT * FROM execution_qa WHERE job_id=? AND attempt=?", (job_id, job["attempts"])))
+    if not latest or any(r["status"] != "pass" or not r["executed"] for r in latest):
+        raise ExecutionError("Standing authorization only covers work whose every quality check was executed and passed; this one needs your own review")
+    with db.tx(conn):
+        _set(conn, job_id, "approved", "Approved under your standing authorization", approved_at=_now())
+        event(conn, job_id, "approved", f"Approved under your standing authorization ({authorization_ref[:120]}); all {len(latest)} checks passed")
+        db.audit(conn, "execution.approve_authorized", "execution_job", job_id, {"authorization": authorization_ref[:120]}, actor="system")
     return prepare_submission(conn, job_id)
 
 

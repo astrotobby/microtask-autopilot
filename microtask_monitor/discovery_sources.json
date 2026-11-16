@@ -245,15 +245,15 @@
       "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
     },
     {
-      "id": "whop_workforce_portal",
+      "id": "whop_workforce_bounties",
       "platform_id": "whop_workforce",
-      "name": "Whop Workforce",
-      "url": "https://whop.com/workforce/",
-      "source_type": "official_workforce_portal",
-      "access_mode": "manual_review_required",
+      "name": "Whop Workforce bounties",
+      "url": "https://whop.com/whop-workforce/",
+      "source_type": "official_portal",
+      "access_mode": "official_api_with_user_oauth_local_only",
       "automated_fetch_enabled": false,
-      "reason": "Bounties are created by sellers and paid after seller approval. Whop Terms prohibit automated scraping/robots without written consent. Check each bounty's country, age and payout requirements manually.",
-      "use": "Open the official source yourself, check current country eligibility and the exact opportunity, and record real task details manually. No login scraping, application submission or task automation."
+      "reason": "The cloud scanner never reads Whop: bounties need the owner's OAuth token, which stays on this PC (whop.py runs locally only). The website itself is never fetched.",
+      "use": "Open the community yourself to take a bounty and submit proof."
     },
     {
       "id": "whop_workforce_earnings",

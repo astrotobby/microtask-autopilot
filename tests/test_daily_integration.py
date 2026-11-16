@@ -167,7 +167,11 @@ class SchedulerTests(unittest.TestCase):
 
     def test_scheduler_thread_is_started_by_main(self):
         source = Path(local_server.__file__).read_text(encoding="utf-8")
-        self.assertIn('target=daily_scheduler, daemon=True, name="daily-analysis-scheduler"', source)
+        # main() now starts ONE scheduler that owns every periodic job, including the 08:00 EAT daily analysis.
+        self.assertIn('target=engine.loop, daemon=True, name="autopilot-scheduler"', source)
+        self.assertNotIn('target=daily_scheduler, daemon=True', source)          # no second, competing loop
+        from microtask_monitor import scheduler
+        self.assertIn("daily_analysis", [j.name for j in scheduler.Scheduler(Path(tempfile.gettempdir()) / "autopilot-unused.sqlite3").jobs])
 
 
 class CloudEmbedTests(unittest.TestCase):

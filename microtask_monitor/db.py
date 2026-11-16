@@ -218,7 +218,50 @@ def _m6_platform_connections(conn: sqlite3.Connection) -> None:
         required_action TEXT, human_step TEXT, last_checked_at TEXT, last_success_at TEXT, profile_dir TEXT, note TEXT, updated_at TEXT NOT NULL)""")
 
 
-def _m7_opportunity_risk(conn: sqlite3.Connection) -> None:
+ASSIGNMENT_STAGES = ("discovered", "qualified", "ready", "accepted", "executing", "qa", "ready_for_delivery", "submitted",
+                     "awaiting_review", "work_accepted", "rejected", "payment_pending", "paid", "cancelled")
+AI_USE = ("unknown", "allowed", "prohibited", "human_only")
+
+
+def _m7_assignments_and_whop(conn: sqlite3.Connection) -> None:
+    """Real assignments with an evidence-backed lifecycle, Whop Workforce bounties/submissions, and how a connection was verified.
+
+    Purely additive (new tables and nullable columns), so it is reversed by dropping the three tables; no existing row is changed.
+    """
+    conn.execute(f"""CREATE TABLE IF NOT EXISTS assignments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, platform_id TEXT NOT NULL, external_id TEXT NOT NULL, origin TEXT NOT NULL,
+        title TEXT NOT NULL, instructions TEXT, source_url TEXT,
+        stage TEXT NOT NULL DEFAULT 'discovered' CHECK (stage IN ({_q(ASSIGNMENT_STAGES)})), stage_reason TEXT,
+        ai_use TEXT NOT NULL DEFAULT 'unknown' CHECK (ai_use IN ({_q(AI_USE)})), ai_use_source TEXT,
+        deadline TEXT, reward_gross REAL, reward_net REAL, currency TEXT, requirements_json TEXT,
+        execution_job_id INTEGER REFERENCES execution_jobs(id) ON DELETE SET NULL,
+        application_id INTEGER REFERENCES applications(id) ON DELETE SET NULL,
+        submission_reference TEXT, earning_id INTEGER REFERENCES earnings(id) ON DELETE SET NULL,
+        payment_id INTEGER REFERENCES payments(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(platform_id, external_id))""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_assign_stage ON assignments(stage, updated_at DESC)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS assignment_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, assignment_id INTEGER NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+        at TEXT NOT NULL, from_stage TEXT, to_stage TEXT NOT NULL, evidence_kind TEXT NOT NULL, evidence_ref TEXT NOT NULL,
+        detail TEXT, actor TEXT NOT NULL DEFAULT 'system')""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_assign_events ON assignment_events(assignment_id, id)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS whop_bounties (
+        id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT, status TEXT, currency TEXT, gross_reward REAL, net_reward REAL,
+        spots_remaining INTEGER, accepted_limit INTEGER, per_user_limit INTEGER, viewer_accepted INTEGER,
+        business_goal_type TEXT, deliverable_types_json TEXT, allowed_countries_json TEXT, min_verified_seconds INTEGER,
+        hosting_route TEXT, hosting_title TEXT, poster_username TEXT, experience_id TEXT, discussion_json TEXT,
+        scheduled_publish_at TEXT, remote_created_at TEXT, remote_updated_at TEXT,
+        decision TEXT, reasons_json TEXT, flags_json TEXT, routing_json TEXT, hardware_ok INTEGER,
+        source TEXT NOT NULL, first_seen_at TEXT NOT NULL, last_verified_at TEXT NOT NULL, raw_json TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_whop_decision ON whop_bounties(decision, net_reward DESC)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS whop_submissions (
+        id TEXT PRIMARY KEY, bounty_id TEXT NOT NULL, status TEXT, claimed_at TEXT, submitted_at TEXT, resolved_at TEXT,
+        denial_reason TEXT, deliverable_json TEXT, source TEXT NOT NULL, last_checked_at TEXT NOT NULL)""")
+    for column, decl in (("verified_by", "TEXT"), ("verified_at", "TEXT"), ("verified_detail", "TEXT"), ("scopes", "TEXT"), ("account_label", "TEXT")):
+        _add_column(conn, "platform_connections", column, decl)
+
+
+def _opportunity_risk_columns(conn: sqlite3.Connection) -> None:
     """Persist deterministic legitimacy/risk signals without claiming independent verification."""
     for column, decl in (("risk_label", "TEXT"), ("risk_score", "INTEGER"),
                          ("risk_flags_json", "TEXT"), ("risk_evidence_json", "TEXT")):
@@ -226,7 +269,46 @@ def _m7_opportunity_risk(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_opp_risk ON opportunities(risk_label, risk_score DESC)")
 
 
-MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections), (7, _m7_opportunity_risk)]
+def _m8_converge_risk_and_assignments(conn: sqlite3.Connection) -> None:
+    """Two lines of work each shipped a different migration 7 (assignments/Whop locally, opportunity risk on GitHub).
+
+    Both are additive and idempotent, so version 8 applies both: a database that already ran either one ends up with the same schema.
+    """
+    _m7_assignments_and_whop(conn)
+    _opportunity_risk_columns(conn)
+
+
+def _m9_autonomy_engine(conn: sqlite3.Connection) -> None:
+    """Autonomous engine: permission evidence, task intelligence, work claims, submission attempts, scheduler state, payout routes.
+
+    Purely additive (new tables and nullable columns); no existing row is changed.
+    """
+    conn.execute("""CREATE TABLE IF NOT EXISTS permission_evidence (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, platform_id TEXT NOT NULL, action TEXT NOT NULL, result TEXT NOT NULL,
+        evidence_url TEXT, clause TEXT, scope TEXT, verified_on TEXT, last_reviewed TEXT, source TEXT NOT NULL,
+        record_hash TEXT, suspended_reason TEXT, updated_at TEXT NOT NULL, UNIQUE(platform_id, action))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS task_intel (
+        assignment_id INTEGER PRIMARY KEY REFERENCES assignments(id) ON DELETE CASCADE, category TEXT NOT NULL, automation_class TEXT NOT NULL,
+        reasons_json TEXT NOT NULL, extracted_json TEXT NOT NULL, economics_json TEXT NOT NULL, score REAL NOT NULL, classified_at TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_task_intel_score ON task_intel(score DESC)")
+    for column, decl in (("eligibility_checked_at", "TEXT"), ("hold", "TEXT"), ("hold_reason", "TEXT"),
+                         ("claimed_by", "TEXT"), ("claim_until", "TEXT"), ("paused_from", "TEXT")):
+        _add_column(conn, "assignments", column, decl)
+    conn.execute("""CREATE TABLE IF NOT EXISTS submission_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, assignment_id INTEGER NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+        idempotency_key TEXT NOT NULL UNIQUE, platform_id TEXT NOT NULL, destination TEXT NOT NULL, package_sha256 TEXT NOT NULL,
+        status TEXT NOT NULL, platform_reference TEXT, response_json TEXT, error TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS scheduler_jobs (
+        name TEXT PRIMARY KEY, last_started TEXT, last_finished TEXT, last_status TEXT, last_error TEXT, next_due TEXT,
+        lease_owner TEXT, lease_until TEXT, runs INTEGER NOT NULL DEFAULT 0, consecutive_failures INTEGER NOT NULL DEFAULT 0,
+        disabled_reason TEXT)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS payout_routes (
+        platform_id TEXT NOT NULL, method TEXT NOT NULL, general_availability TEXT NOT NULL, account_verified INTEGER NOT NULL DEFAULT 0,
+        evidence TEXT, updated_at TEXT NOT NULL, PRIMARY KEY(platform_id, method))""")
+
+
+MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections),
+              (7, _m7_assignments_and_whop), (8, _m8_converge_risk_and_assignments), (9, _m9_autonomy_engine)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

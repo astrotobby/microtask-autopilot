@@ -272,6 +272,28 @@ Jobs, events, files and QA are stored in SQLite (migration 5). Pause and cancel 
   - Enabling it requires verified terms, the action listed in `permitted_automation`, your authorization and a live session.
 - **Claude Code sign-in.** `tools/claude-login.ps1` signs in with your own Claude account in one PowerShell window. It ignores the machine-wide `ANTHROPIC_*` variables that point to a Gemini endpoint. The execution engine also drops a non-Anthropic `ANTHROPIC_BASE_URL` for Claude runs.
 
+## Execution Centre, assignments and Whop Workforce (platform 13)
+
+The dashboard now opens on the **Execution Centre**. It shows, from real records only: discovered opportunities, applications submitted, assignments qualified and accepted, work actually performed, deliverables completed, submissions confirmed, work accepted, and payments confirmed. Each number counts a different thing; a quoted reward is never income.
+
+**Assignments** (`microtask_monitor/assignments.py`, database migration 7) follow this lifecycle, one stage at a time, and every move stores its evidence:
+
+`Discovered -> Qualified -> Ready -> Accepted -> Executing -> Quality assurance -> Ready for delivery -> Submitted -> Awaiting review -> Work accepted / Rejected -> Payment pending -> Paid`
+
+- Executing, QA and Ready for delivery are derived from the linked execution job (it really started, checks were really executed, you approved and it was packaged).
+- Accepted, Submitted, Awaiting review and the review outcome need a platform record or your confirmation with a reference.
+- Payment pending needs an earnings entry with the amount the platform shows; Paid needs a payment you received, with its payout reference.
+
+**Whop Workforce** (`microtask_monitor/whop.py`): bounties are read with Whop's documented API and your own OAuth authorization.
+
+1. In Whop's Developer Dashboard (https://whop.com/dashboard/developer) create an app (free), add the redirect URL `http://localhost:8765/api/whop/oauth/callback` and enable only the scope `bounty:basic:read`.
+2. In the dashboard's **Whop Workforce** tab paste the app's client id (`app_...`, not a secret), press **Authorize on Whop** and approve in your own browser.
+3. Press **Sync from Whop**. The connection shows as verified only after the API answers. Tokens are kept in Windows Credential Manager, never in SQLite, logs or the page. While authorized, the local agent refreshes every 30 minutes.
+
+Each bounty is checked for: open status, remaining winner slots, your per-person allowance, Kenya (`KE` listed, or an empty list, documented as worldwide), device needs (data-capture bounties need an iPhone and are excluded for the Samsung A05), suspicious or vague instructions, and rewards that depend on other people buying or signing up. Engagement tasks (like, follow, comment, share, post) are never automated: if you choose to do one, you do it personally. Starting an attempt, posting, recording, submitting proof and withdrawing are done by you on Whop; the review result is then read from the API.
+
+The **Connections** tab also shows the 13-platform permission registry: one of five classes per platform, with the sources read and the date.
+
 ## Eligibility and safety policy
 
 - Treat Kenya eligibility as unconfirmed until the official signup flow or role explicitly accepts Kenya.
@@ -332,3 +354,25 @@ Manual record files are gitignored and never created with fabricated listings. A
 - `blend_projects.json`
 
 Each record can use `id`, `title`, `url`, `description`, `skills`, `region`, `payment` or `budget`, `status`, `deadline` and `posted`. Keep the evidence real: a missing or blank region stays unverified; it is never automatically treated as Kenya-eligible. Applications, qualification tests, task acceptance, work, proof/delivery and payment steps are still performed by you.
+
+## Autonomous engine (2026-11-15)
+
+The dashboard is now the control centre of an autonomous pipeline: discover → check eligibility → classify → rank → execute → independent QA → package → submit → track payment. Every automated step is gated by recorded platform permission (`permissions.py`, levels 0–5).
+
+**What is automated today, honestly:**
+
+| Step | Status |
+|---|---|
+| Discovery | OpenTrain AI (public API) and, once you authorize it, Whop Workforce (official API, read-only). The other platforms have no automated access: you import task details. |
+| Eligibility, classification, pricing, ranking | Automatic for every task in the pipeline |
+| Execution + QA + packaging without per-task approval | Your own client's work (the "Direct client work" lane), when you enable it in Automation Settings |
+| Execution on a registered platform | Blocked: no platform's terms have been verified to permit it |
+| Automatic submission | Blocked: verified on no platform; you submit and record the reference |
+| Payments | Recorded by you with a reference; withdrawals are never automated |
+
+New dashboard views: **Control Centre**, **Platform Manager**, **Task Pipeline**, **Autopilot Queue**, **Submissions**, **Earnings Ledger**, **Automation Settings**, and a **STOP ALL AUTOMATION** button on every page. New API: `/api/engine/*`. One scheduler now owns all periodic jobs.
+
+Start with `reports/USER_ONBOARDING_GUIDE.md`; the per-platform truth is in `reports/PLATFORM_CAPABILITY_MATRIX.md`.
+
+- Test suite: `py -3 -m unittest discover -s tests -v` (the engine's own tests: `py -3 -m unittest tests.test_autonomy_engine -v`).
+- The access-class sentence above ("the other 10") predates the 25-platform registry: the current classification of all 25 is in the capability matrix.
