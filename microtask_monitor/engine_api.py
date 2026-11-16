@@ -218,6 +218,15 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
             return {"ok": True, "health": discovery.health(conn), "adapters": [a.identify_platform() for a in discovery.default_adapters()]}
         if head == "tasks" and n == 2:
             return {"ok": True, "assignment": lifecycle.view(conn, _int(rest[1]))}
+        if head == "owner":
+            from microtask_monitor import shorts_service
+            try:
+                cfg = shorts_service.load_config()
+            except shorts_service.ServiceError as exc:
+                cfg, err = None, str(exc)
+            else:
+                err = None
+            return {"ok": True, **shorts_service.view(conn, cfg, api.store), "config_error": err}
     if method == "PUT" and rest == ["settings"]:
         return {"ok": True, "settings": control.update_settings(conn, body)}
     if method == "POST":
@@ -272,6 +281,16 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
             return {"ok": True, **submission.submit(conn, _int(rest[1]))}
         if head == "attempts" and n == 3 and rest[2] == "reconcile":
             return {"ok": True, "attempt": submission.reconcile(conn, _int(rest[1]), None, yes, str(body.get("reference", "")), body.get("not_submitted") is True)}
+        if rest == ["owner", "run"]:
+            from microtask_monitor import clip_worker, seller, shorts_service
+            try:
+                cfg = shorts_service.load_config()
+                media = clip_worker.Media(Path(cfg["clipper_dir"]), cfg.get("caption_font", "Arial Black"), cfg.get("whisper_model", "small"))
+                return {"ok": True, **shorts_service.run(conn, seller.Seller(cfg["account_id"], api.store), media, cfg, budget_seconds=120)}
+            except (shorts_service.ServiceError, seller.SellerError, clip_worker.ClipError) as exc:
+                raise EngineApiError(409, str(exc))
+        if rest == ["payout-methods"]:
+            return {"ok": True, "methods": ledger.set_owned_methods(conn, body.get("methods"), yes)}
         if rest == ["payout-routes"]:
             return {"ok": True, "route": ledger.set_route(conn, str(body.get("platform_id", "")), str(body.get("method", "")), body.get("account_verified") is True,
                                                            str(body.get("evidence", "")), yes)}

@@ -73,6 +73,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <button data-tab="submissions">Submissions</button>
   <button data-tab="ledger">Earnings Ledger</button>
   <button data-tab="automation">Automation Settings</button>
+  <button data-tab="owner">My Shorts Service</button>
   <button data-tab="execution">Execution Centre</button>
   <button class="active" data-tab="overview">Overview</button>
   <button data-tab="daily">Daily Earning Opportunities</button>
@@ -350,6 +351,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
    <label class="check"><input type="checkbox" id="as_auto_execute"><span><b>Run permitted tasks without asking each time</b></span></label>
    <label class="check"><input type="checkbox" id="as_ai_runs_preauthorized"><span>Allow AI-based specialists to start under that authorization (uses your existing Claude Code / Codex sign-in; no paid API)</span></label>
    <label class="check"><input type="checkbox" id="as_auto_approve_clean_qa"><span>Package work whose every QA check passed with nothing left for manual review</span></label>
+   <label class="check"><input type="checkbox" id="as_owner_shorts_enabled"><span><b>Run my Shorts service by itself</b> (owner lane: fulfil and deliver paid Whop orders automatically)</span></label>
    <div class="form-grid" style="margin-top:8px">
     <div><label>Maximum concurrency</label><input id="as_max_concurrency" type="number" min="1" max="4"></div>
     <div><label>Maximum task value (USD)</label><input id="as_max_task_value_usd" type="number" min="0" step="0.01"></div>
@@ -365,6 +367,14 @@ footer{padding:22px 0;color:#778398;font-size:12px}
    <div><div class="card"><h3>Excluded task types</h3><div id="as_excluded"></div></div>
    <div class="card" style="margin-top:12px"><h3>Permitted submission actions</h3><p class="muted">Automatic submission can be ticked only for a platform verified to permit it.</p><div id="as_submit"></div></div></div></div>
   <div class="right" style="margin-top:12px"><button class="btn primary" onclick="saveAutomation()">Save settings</button></div>
+ </section>
+
+ <section id="owner" class="panel">
+  <div class="section-head"><h1>My Shorts Service (owner lane)</h1><button class="btn" onclick="runOwner()">Run one pass now</button></div>
+  <p class="muted">Your own Whop business sells Podcast Shorts. Each paid order is handled end to end: the buyer is asked for the episode link in the Whop chat, the clips are cut and checked, and they are delivered in the same chat. Only refunds, disputes, unknown plans, unusable footage or clips that fail checks twice come to you. It never refunds, withdraws or changes prices.</p>
+  <div class="card" id="ownerSetup"></div>
+  <div class="grid" id="ownerCards" style="margin-top:12px"></div>
+  <div class="section-head"><h2>Orders</h2></div><div id="ownerOrders"></div>
  </section>
 
  <section id="notifications" class="panel">
@@ -1138,7 +1148,7 @@ async function loadLedger() {
     row("4 · Deliverables submitted", t.deliverables_submitted), row("5 · Work accepted", t.work_accepted), row("6 · Payment pending", t.payment_pending),
     card("7 · Money actually received", sums(t.money_received.by_currency), t.money_received.count + " recorded payment(s)"),
     card("Expected compensation (estimate)", sums(t.expected_compensation.by_currency), "ranking estimate, not income")].join("");
-  E("ledgerNote").textContent = t.note;
+  E("ledgerNote").textContent = t.note + (d.owned_methods && d.owned_methods.methods.length ? " Payout methods you have: " + d.owned_methods.methods.join(", ").replace(/_/g, " ") + "." : "");
   const m = v => v == null ? "—" : v;
   E("ledgerEntries").innerHTML = table(["Assignment", "Platform", "Advertised", "Expected", "Submitted", "Accepted", "Pending", "Received", "Payment ref / date"], d.entries.map(e =>
     "<tr><td>#" + e.assignment_id + " " + esc(e.title) + "</td><td>" + esc(e.platform_id) + "</td><td>" + esc(e.currency || "") + " " + m(e.advertised) + "</td><td>" + m(e.expected) + "</td><td>" + m(e.submitted) + "</td><td>" + m(e.accepted) +
@@ -1161,7 +1171,7 @@ async function setRoute(pid) {
 async function loadAutomation() {
   const d = await act(() => api("GET", "/api/engine/control")); if (!d) return;
   const s = d.settings;
-  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused"]) E("as_" + k).checked = !!s[k];
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled"]) E("as_" + k).checked = !!s[k];
   for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) E("as_" + k).value = s[k];
   const box = (cat, list, name) => '<label class="check"><input type="checkbox" name="' + name + '" value="' + cat + '"' + (list.includes(cat) ? " checked" : "") +
     (name === "as_cat" && d.human_only_categories.includes(cat) ? " disabled" : "") + "><span>" + esc(cat.replace(/_/g, " ")) + (d.human_only_categories.includes(cat) ? " (always you)" : "") + "</span></label>";
@@ -1174,7 +1184,7 @@ async function loadAutomation() {
 }
 async function saveAutomation() {
   const body = {}, picked = name => [...document.querySelectorAll('input[name="' + name + '"]:checked')].map(i => i.value);
-  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused"]) body[k] = E("as_" + k).checked;
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled"]) body[k] = E("as_" + k).checked;
   for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) body[k] = Number(E("as_" + k).value);
   body.permitted_categories = picked("as_cat"); body.excluded_task_types = picked("as_exc");
   body.auto_submit_platforms = Object.fromEntries(picked("as_sub").map(p => [p, true]));
@@ -1182,11 +1192,30 @@ async function saveAutomation() {
   const r = await act(() => api("PUT", "/api/engine/settings", body), "Automation settings saved"); if (r) { loadAutomation(); refreshStop(); }
 }
 
-Object.assign(loaders, {control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
+// ---------------------------------------------------------------- owner lane: my Shorts service
+async function loadOwner() {
+  const d = await act(() => api("GET", "/api/engine/owner")); if (!d) return;
+  const steps = [];
+  if (d.config_error) steps.push("Owner config: " + d.config_error);
+  if (d.api_key_stored === false) steps.push("Whop account API key not stored yet. Create one for AI Video Pro with: " + d.required_permissions.join(", ") + ". Then run in the repository folder: py -3 microtask_monitor/connect.py set-key owner_whop api_key");
+  if (!d.enabled) steps.push("Switched off: tick \"Run my Shorts service by itself\" in Automation Settings.");
+  E("ownerSetup").innerHTML = steps.length ? '<div class="banner bad">' + steps.map(esc).join("<br>") + "</div>" : '<div class="banner ok">Running: paid orders are handled automatically.</div>';
+  const c = d.counts || {};
+  E("ownerCards").innerHTML = [card("Waiting for episode link", c.awaiting_footage || 0), card("Being clipped", (c.footage_received || 0) + (c.clipping || 0) + (c.delivering || 0)),
+    card("Delivered", c.delivered || 0), card("Needs you", c.needs_you || 0)].join("");
+  E("ownerOrders").innerHTML = table(["Order", "Buyer", "State", "Clips", "Last events"], (d.orders || []).map(o => "<tr><td>" + esc(o.plan_label || o.variant_id) + (o.test_order ? " " + tag("test") : "") +
+    '<div class="muted">' + esc(o.payment_id) + " · " + esc(o.currency || "") + " " + (o.net_amount ?? "") + " after fees</div></td><td>" + esc(o.buyer_username || o.buyer_user_id) + "</td><td>" +
+    tag(o.state, o.state === "delivered" ? "ok" : o.state === "needs_you" ? "bad" : "info") + '<div class="muted">' + esc(o.state_reason || "") + "</div></td><td>" + o.clips_delivered + " / " + o.clips_total +
+    '<div class="muted">' + o.clips.map(x => esc(x.status)).join(", ") + "</div></td><td>" + o.events.slice(0, 4).map(e => '<div class="muted">' + when(e.at) + " " + esc(e.kind) + ": " + esc((e.detail || "").slice(0, 120)) + "</div>").join("") + "</td></tr>"),
+    "No orders yet. When someone buys a Shorts plan, it appears here and is handled automatically.");
+}
+async function runOwner() { const r = await act(() => api("POST", "/api/engine/owner/run", {}), "Pass finished"); if (r) { if (r.skipped) toast(r.skipped, true); loadOwner(); } }
+
+Object.assign(loaders, {owner: loadOwner, control: loadControl, pmanager: loadPManager, pipeline: loadPipeline, autopilot: loadAutopilot, submissions: loadSubmissions, ledger: loadLedger, automation: loadAutomation});
 document.addEventListener("DOMContentLoaded", () => { refreshStop(); setInterval(refreshStop, 30000); });
 if (document.readyState !== "loading") refreshStop();
 E("it_platform").innerHTML = '<option value="direct_client">Direct client work (my own client)</option>' + PLATFORMS.map(p => '<option value="' + p.id + '">' + esc(p.name) + "</option>").join("");
-if (["control", "pmanager", "pipeline", "autopilot", "submissions", "ledger", "automation"].includes(ui.tab)) setTimeout(() => setTab(ui.tab), 300);
+if (["control", "pmanager", "pipeline", "autopilot", "submissions", "ledger", "automation", "owner"].includes(ui.tab)) setTimeout(() => setTab(ui.tab), 300);
 </script>
 </body>
 </html>

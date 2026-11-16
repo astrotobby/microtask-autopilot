@@ -80,7 +80,8 @@ class Scheduler:
                 Job("orchestrator", 120, lambda s, c, n: orchestrator.tick(c, s.runner, s.db_path, s.exec_dir, background=True)),
                 Job("submissions", 300, lambda s, c, n: {"recovered": submission.recover(c, n), **submission.process_queue(c)}),
                 Job("payment_monitor", 3600, _payment_monitor),
-                Job("cleanup", 86400, lambda s, c, n: cleanup(c, n, s.exec_dir))]
+                Job("cleanup", 86400, lambda s, c, n: cleanup(c, n, s.exec_dir)),
+                Job("owner_shorts", 300, _owner_shorts)]
 
     # ---------------------------------------------------------------- leases and state
     def _state(self, conn, name: str) -> dict[str, Any]:
@@ -223,6 +224,24 @@ def _payment_monitor(s: Scheduler, conn, now: datetime) -> dict[str, int]:
         notify.create(conn, "payment_update", f"{waiting} accepted assignment(s) await payment", "Withdraw yourself, then record the payout reference.",
                       severity="info", key=f"payments_waiting:{waiting}:{now.date().isoformat()}")
     return {"awaiting_payment": waiting}
+
+
+def _owner_shorts(s: Scheduler, conn, now: datetime) -> Any:
+    """Owner lane: your Shorts service's orders, end to end. Off until you switch it on; a missing key or config is reported, not retried hard."""
+    try:
+        from microtask_monitor import clip_worker, seller, shorts_service
+    except ImportError:  # pragma: no cover
+        import clip_worker, seller, shorts_service
+    if not control.settings(conn).get("owner_shorts_enabled"):
+        return "switched off"
+    try:
+        cfg = shorts_service.load_config()
+        media = clip_worker.Media(Path(cfg["clipper_dir"]), cfg.get("caption_font", "Arial Black"), cfg.get("whisper_model", "small"))
+        return shorts_service.run(conn, seller.Seller(cfg["account_id"], s.store), media, cfg, now, budget_seconds=600)
+    except (shorts_service.ServiceError, seller.NotConfigured, clip_worker.ClipError) as exc:
+        notify.create(conn, "task_attention", "Shorts autopilot needs setup", str(exc)[:900], severity="important",
+                      key=f"owner-setup:{str(exc)[:60]}:{now.date().isoformat()}")
+        return f"setup needed: {exc}"
 
 
 def cleanup(conn, now: datetime | None = None, exec_dir: Path | None = None) -> dict[str, int]:

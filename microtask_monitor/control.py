@@ -38,6 +38,7 @@ DEFAULTS: dict[str, Any] = {
     "retention_days": 30,
     "auto_submit_platforms": {},           # {platform_id: true}; only honoured where the platform is verified at level 5
     "paused": False,
+    "owner_shorts_enabled": False,         # owner lane: your own Shorts service fulfils its Whop orders by itself
 }
 _LIMITS = {"max_concurrency": (1, 4), "max_task_value_usd": (0, 100000), "min_hourly_rate_usd": (0, 10000), "max_daily_execution_minutes": (0, 1440),
            "min_free_disk_mb": (100, 1_000_000), "min_free_memory_mb": (64, 1_000_000), "job_timeout_seconds": (60, 14400), "retention_days": (1, 3650)}

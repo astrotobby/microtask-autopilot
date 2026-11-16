@@ -307,8 +307,29 @@ def _m9_autonomy_engine(conn: sqlite3.Connection) -> None:
         evidence TEXT, updated_at TEXT NOT NULL, PRIMARY KEY(platform_id, method))""")
 
 
+def _m10_owner_shorts(conn: sqlite3.Connection) -> None:
+    """Owner lane: orders of your own Podcast Shorts service on Whop, their clips and an event log. Purely additive."""
+    conn.execute("""CREATE TABLE IF NOT EXISTS owner_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, payment_id TEXT NOT NULL UNIQUE, account_id TEXT NOT NULL, product_id TEXT, variant_id TEXT,
+        plan_label TEXT, buyer_user_id TEXT NOT NULL, buyer_username TEXT, clips_total INTEGER NOT NULL, per_link INTEGER NOT NULL,
+        clips_delivered INTEGER NOT NULL DEFAULT 0, gross_amount REAL, net_amount REAL, currency TEXT, paid_at TEXT, channel_id TEXT,
+        state TEXT NOT NULL, state_reason TEXT, footage_url TEXT, footage_message_id TEXT, batch INTEGER NOT NULL DEFAULT 0,
+        footage_requested_at TEXT, reminder_sent_at TEXT, last_message_seen TEXT, booked_payment_row INTEGER, test_order INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_owner_orders_state ON owner_orders(state, updated_at)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS owner_clips (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER NOT NULL REFERENCES owner_orders(id) ON DELETE CASCADE, batch INTEGER NOT NULL,
+        idx INTEGER NOT NULL, source_url TEXT NOT NULL, start REAL NOT NULL, end REAL NOT NULL, status TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0,
+        path TEXT, sha256 TEXT, qc_json TEXT, hook TEXT, caption TEXT, hashtags_json TEXT, file_id TEXT, file_url TEXT, error TEXT,
+        created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(order_id, batch, idx))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS owner_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER REFERENCES owner_orders(id) ON DELETE CASCADE, at TEXT NOT NULL,
+        kind TEXT NOT NULL, detail TEXT, key TEXT UNIQUE)""")
+
+
 MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections),
-              (7, _m7_assignments_and_whop), (8, _m8_converge_risk_and_assignments), (9, _m9_autonomy_engine)]
+              (7, _m7_assignments_and_whop), (8, _m8_converge_risk_and_assignments), (9, _m9_autonomy_engine),
+              (10, _m10_owner_shorts)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

@@ -133,6 +133,26 @@ def payout_compatibility(conn) -> list[dict[str, Any]]:
     return out
 
 
+OWNED_METHODS = ("paypal", "payoneer", "mpesa", "airtel_money", "card", "crypto", "stripe", "bank_transfer")
+
+
+def set_owned_methods(conn, methods: Any, confirmed_by_user: bool) -> list[str]:
+    """The payout methods YOU have accounts for. This says nothing about which ones a given platform pays out to."""
+    if confirmed_by_user is not True:
+        raise LedgerError("Only you can record which payout methods you have (confirmed_by_user=true)")
+    if not isinstance(methods, list) or any(m not in OWNED_METHODS for m in methods):
+        raise LedgerError("Methods must be a list from: " + ", ".join(OWNED_METHODS))
+    clean = sorted(set(methods))
+    with db.tx(conn):
+        db.set_state(conn, "payout_methods_owned", {"methods": clean, "recorded_at": db.now_iso()})
+        db.audit(conn, "ledger.owned_methods", "settings", "payout", {"methods": clean})
+    return clean
+
+
+def owned_methods(conn) -> dict[str, Any]:
+    return db.get_state(conn, "payout_methods_owned", {}) or {"methods": []}
+
+
 def view(conn) -> dict[str, Any]:
     return {"totals": totals(conn), "entries": entries(conn), "by_platform": by_platform(conn), "trend": trend(conn),
-            "payout_compatibility": payout_compatibility(conn), "methods": list(METHODS)}
+            "payout_compatibility": payout_compatibility(conn), "methods": list(METHODS), "owned_methods": owned_methods(conn)}

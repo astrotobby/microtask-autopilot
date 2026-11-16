@@ -37,13 +37,14 @@ def main(argv: list[str], store=None, ask=getpass.getpass, out=print) -> int:
         out(__doc__)
         return 2
     pid, name = argv[1], argv[2]
-    if pid not in caps:
+    owner = pid == "owner_whop"          # the account API key of YOUR OWN Whop business (owner lane), not a worker platform
+    if pid not in caps and not owner:
         out(f"Unknown platform '{pid}'")
         return 2
     if argv[0] == "delete-key":
         out("Deleted." if store.delete(pid, name) else "Nothing stored under that name.")
         return 0
-    if (caps[pid].get("access_class") != "official_api_permitted"):
+    if not owner and caps[pid].get("access_class") != "official_api_permitted":
         out(f"{pid} has no documented API that uses a key ({caps[pid].get('access_class')}). Nothing stored.")
         return 1
     value = ask(f"Paste the API key for {pid}/{name} (hidden): ")
