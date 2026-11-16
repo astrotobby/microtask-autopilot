@@ -1,7 +1,7 @@
 # Milestone 2: Freelance Business Engine
 
 Date: 2026-11-16
-Branch: `milestone-2/freelance-business`
+Branch: `main`
 Repository: https://github.com/astrotobby/microtask-autopilot
 
 ## What was completed
@@ -32,10 +32,12 @@ This milestone adds a direct-client freelance business lane alongside (not in pl
 
 Checked on the user's Windows computer on 2026-11-16:
 
-- Local API health: `ok`.
 - SQLite integrity: `ok`; schema version: `12`.
-- The local server was already running and had applied migration 12.
-- Latest business cycle: `2026-11-16T11:16:45Z`; discovery, inbound, proposal preparation and recurring-finance steps completed without a recorded source error.
+- The local server was restarted after the initial API health check became unresponsive. It is now listening on loopback `127.0.0.1:8765`.
+- `GET /api/health`: `ok=true`, database version 12.
+- `GET /api/business/health`: `ok=true`; latest business tick `2026-11-16T11:16:45Z`.
+- `GET /api/business`: successful in approximately 839 ms; returns the dashboard's 60-lead view, 5 proposal records and 0 projects.
+- Latest business cycle: discovery, inbound, proposal preparation and recurring-finance steps completed without a recorded source error.
 - Business lead table: 96 total (22 qualified, 69 rejected, 5 moved to proposal-prepared).
 - Proposals: 5 prepared, 0 sent.
 - Projects awarded: 0; invoices: 0; payments recorded: 0.
