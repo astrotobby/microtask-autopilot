@@ -19,7 +19,7 @@ Everything is off until you turn it on.
 | Setting | What it means | Suggested start |
 |---|---|---|
 | Run permitted tasks without asking each time | The engine starts work that passes every check | On, once you have read this guide |
-| Allow AI-based specialists | Starts Claude Code / Codex on this PC using your existing sign-in (no paid API) | Off until you have tried one job by hand in the Execution Centre |
+| Allow AI-based specialists | Starts Claude Code / Codex / OpenCode on this PC using your existing sign-in (no paid API) | Off until you have tried one job by hand in the Execution Centre |
 | Package work whose every QA check passed | Zips deliverables with a QA report and manifest | On |
 | Permitted task categories | Only these are ever started | Data processing, spreadsheet processing |
 | Maximum task value / minimum hourly rate / daily minutes / concurrency | Limits | USD 50 / 0 / 240 / 1 |

@@ -5,6 +5,7 @@ import unittest
 import zipfile
 from datetime import date, datetime, timezone
 from pathlib import Path
+from unittest import mock
 
 os.environ.setdefault("AUTOPILOT_NO_SLEEP", "1")
 os.environ.setdefault("AUTOPILOT_NO_NOTIFY", "1")
@@ -556,7 +557,7 @@ class ComplianceTests(unittest.TestCase):
 
     def test_unavailable_runner_returns_none_when_no_tool_is_installed(self):
         from unittest import mock
-        with mock.patch("shutil.which", return_value=None):
+        with mock.patch("shutil.which", return_value=None), mock.patch("microtask_monitor.workers.opencode_executable", return_value=None):
             self.assertIsNone(workers.available_runner())
 
     def test_child_tool_does_not_inherit_a_parent_claude_session_or_secrets(self):
@@ -574,6 +575,55 @@ class ComplianceTests(unittest.TestCase):
         x = workers.CliRunner("codex", "codex").command(Path("w"))
         self.assertEqual(x[-1], "-")
         self.assertIn("workspace-write", x)
+
+    def test_opencode_runner_is_non_interactive_and_defaults_to_the_free_model(self):
+        c = workers.CliRunner("opencode", "opencode-cli").command(Path("w"))
+        self.assertEqual(c[1], "run")
+        self.assertIn("--standalone", c)
+        self.assertIn("--archived", c)
+        self.assertIn("--auto", c)
+        self.assertEqual(c[c.index("--model") + 1], "opencode/deepseek-v4.1-flash-free")
+        self.assertNotIn("Read the file", " ".join(c))          # the prompt is a reference to a file, never argv text
+
+    def test_opencode_run_is_confined_to_the_workspace_and_denies_everything_else(self):
+        with tempfile.TemporaryDirectory() as d:
+            ws = Path(d)
+            message = workers.CliRunner("opencode", "oc")._prepare_opencode("the real prompt", ws)
+            rules = json.loads((ws / ".opencode" / "opencode.json").read_text(encoding="utf-8"))["permissions"]
+            self.assertEqual(rules[0], {"action": "*", "resource": "*", "effect": "deny"})
+            allowed = {(r["action"], r["resource"]) for r in rules if r["effect"] == "allow"}
+            self.assertIn(("edit", "*"), allowed)
+            self.assertIn(("shell", "python *"), allowed)
+            self.assertNotIn(("webfetch", "*"), allowed)
+            self.assertNotIn(("external_directory", "*"), allowed)
+            self.assertEqual((ws / workers.OPENCODE_TASK_FILE).read_text(encoding="utf-8"), "the real prompt")
+            self.assertIn(workers.OPENCODE_TASK_FILE, message)
+
+    def test_opencode_runner_refuses_a_paid_model_unless_explicitly_allowed(self):
+        with tempfile.TemporaryDirectory() as d:
+            paid = workers.CliRunner("opencode", "oc", model="opencode/big-pickle")
+            with self.assertRaises(workers.WorkerError):
+                paid._prepare_opencode("p", Path(d))
+        with tempfile.TemporaryDirectory() as d, mock.patch.dict(os.environ, {"AUTOPILOT_ALLOW_PAID_RUNNER": "1"}):
+            workers.CliRunner("opencode", "oc", model="opencode/big-pickle")._prepare_opencode("p", Path(d))
+
+    def test_opencode_is_only_a_fallback_or_explicit_choice(self):
+        with mock.patch("shutil.which", side_effect=lambda k: {"claude": "/bin/claude", "codex": "/bin/codex"}.get(k)), \
+             mock.patch.object(workers, "opencode_executable", return_value="/bin/opencode"):
+            self.assertEqual(workers.available_runner().kind, "claude")           # existing behaviour is unchanged
+            self.assertEqual(workers.available_runner("opencode").kind, "opencode")
+        with mock.patch("shutil.which", return_value=None), mock.patch.object(workers, "opencode_executable", return_value="/bin/opencode"):
+            self.assertEqual(workers.available_runner().kind, "opencode")         # used when nothing else is installed
+
+    def test_timeout_and_cancel_end_the_runner_process(self):
+        import sys
+        with tempfile.TemporaryDirectory() as d:
+            r = workers.CliRunner("opencode", sys.executable)
+            r.command = lambda cwd: [sys.executable, "-c", "import time; time.sleep(30)"]  # a stuck tool
+            with self.assertRaises(workers.WorkerError):
+                r.run("p", Path(d), timeout=0, should_stop=lambda: None, log=lambda m: None)
+            with self.assertRaises(workers.Stopped):
+                r.run("p", Path(d), timeout=30, should_stop=lambda: "cancel", log=lambda m: None)
 
 
 if __name__ == "__main__":

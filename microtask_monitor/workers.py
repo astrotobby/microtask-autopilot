@@ -3,7 +3,8 @@
 Two kinds of worker:
 * deterministic local workers (no AI): ``DataWorker`` applies a spec you supply to CSV data;
 * agent workers (software, writing, evaluation, content, automation): hand the real instructions to a local AI coding
-  tool (Claude Code or Codex CLI, using your own existing sign-in) running inside the job's isolated workspace.
+  tool (Claude Code, Codex CLI, or the OpenCode CLI, using your own existing sign-in) running inside the job's isolated
+  workspace.
 
 Agent workers are only ever started when AI help is recorded as permitted for the task AND you approved that run.
 Nothing here contacts a work platform; the AI tool's own network access is the tool's, not this program's.
@@ -62,27 +63,112 @@ def claude_env(env: dict[str, str]) -> dict[str, str]:
 
 CLAUDE_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash(python:*)", "Bash(py:*)", "Bash(node:*)", "Bash(npm test:*)"]
 
+RUNNER_KINDS = ("claude", "codex", "opencode")
+OPENCODE_MODEL_DEFAULT = "opencode/deepseek-v4.1-flash-free"
+OPENCODE_TASK_FILE = ".opencode-task.md"
+# The workspace-local policy is loaded last, so it overrides any config found in an ancestor directory.
+# Everything is denied unless listed: files only inside the job workspace, no web, no browser, no questions.
+# The narrow shell prefixes mirror what the Claude runner already allows (python/py/node and npm test).
+OPENCODE_PERMISSIONS = [
+    {"action": "*", "resource": "*", "effect": "deny"},
+    {"action": "read", "resource": "*", "effect": "allow"},
+    {"action": "edit", "resource": "*", "effect": "allow"},
+    {"action": "glob", "resource": "*", "effect": "allow"},
+    {"action": "grep", "resource": "*", "effect": "allow"},
+    {"action": "shell", "resource": "python *", "effect": "allow"},
+    {"action": "shell", "resource": "py *", "effect": "allow"},
+    {"action": "shell", "resource": "node *", "effect": "allow"},
+    {"action": "shell", "resource": "npm test *", "effect": "allow"},
+    {"action": "read", "resource": "*.env", "effect": "deny"},
+    {"action": "read", "resource": "*.env.*", "effect": "deny"},
+]
+
+
+def opencode_executable() -> str | None:
+    """Find the OpenCode CLI. Only an explicit path or the app's own install folder is used; nothing is guessed."""
+    override = os.environ.get("AUTOPILOT_OPENCODE_BIN", "").strip()
+    if override and Path(override).is_file():
+        return override
+    exe = shutil.which("opencode")
+    if exe:
+        return exe
+    appdata = os.environ.get("APPDATA")
+    roots = [Path(appdata) / "ai.opencode.desktop" / "cli"] if appdata else []
+    found: list[Path] = []
+    for root in roots:
+        try:
+            if root.is_dir():
+                found += [p for p in root.glob("*/opencode-cli.exe") if p.is_file()]
+        except OSError:
+            continue
+    if not found:
+        return None
+    found.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return str(found[0])
+
+
+def _end(proc: subprocess.Popen) -> None:
+    """Stop a runner and its children, so a timed-out or cancelled job leaves no process behind."""
+    if os.name == "nt":
+        try:
+            subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, check=False)
+        except OSError:
+            pass
+    else:
+        proc.kill()
+    try:
+        proc.wait(5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        try:
+            proc.wait(5)
+        except subprocess.TimeoutExpired:
+            pass
+
 
 class CliRunner:
-    """Runs a local AI CLI non-interactively inside a workspace. The prompt is passed on stdin (no quoting problems)."""
+    """Runs a local AI CLI non-interactively inside a workspace. Claude/Codex get the prompt on stdin; OpenCode reads it from a file in the workspace."""
 
-    def __init__(self, kind: str, executable: str):
+    def __init__(self, kind: str, executable: str, model: str | None = None):
         self.kind, self.executable = kind, executable
         self.name = kind
+        self.model = model or os.environ.get("AUTOPILOT_OPENCODE_MODEL", "").strip() or OPENCODE_MODEL_DEFAULT
 
     def command(self, cwd: Path) -> list[str]:
         if self.kind == "claude":
             return [self.executable, "-p", "--permission-mode", "acceptEdits", "--output-format", "text", "--allowedTools", *CLAUDE_TOOLS]
+        if self.kind == "opencode":
+            # --standalone keeps the run out of the shared app server; --archived keeps it out of session lists;
+            # --auto only approves what the workspace policy does not deny.
+            return [self.executable, "run", "--standalone", "--archived", "--auto", "--model", self.model]
         return [self.executable, "exec", "--sandbox", "workspace-write", "--skip-git-repo-check", "-C", str(cwd), "-"]
 
+    def _prepare_opencode(self, prompt: str, cwd: Path) -> str:
+        if os.environ.get("AUTOPILOT_ALLOW_PAID_RUNNER") != "1" and not self.model.rsplit("/", 1)[-1].endswith("-free"):
+            raise WorkerError(f"The OpenCode runner is limited to free models; '{self.model}' is not one. Set AUTOPILOT_ALLOW_PAID_RUNNER=1 to opt in to paid usage.")
+        policy = cwd / ".opencode" / "opencode.json"
+        policy.parent.mkdir(parents=True, exist_ok=True)
+        policy.write_text(json.dumps({"$schema": "https://opencode.ai/config.json", "permissions": OPENCODE_PERMISSIONS}, indent=2), encoding="utf-8")
+        (cwd / OPENCODE_TASK_FILE).write_text(prompt, encoding="utf-8")
+        return (f"Read the file {OPENCODE_TASK_FILE} in this workspace and carry out its instructions exactly. It contains your role, "
+                f"the rules and the real task. Work only inside this workspace; put every deliverable in output/.")
+
     def run(self, prompt: str, cwd: Path, timeout: int, should_stop: Callable[[], str | None], log: Callable[[str], None]) -> RunResult:
-        proc = subprocess.Popen(self.command(cwd), cwd=str(cwd), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                                env=claude_env(_clean_env()) if self.kind == "claude" else _clean_env(), text=True, encoding="utf-8", errors="replace")
-        try:
-            proc.stdin.write(prompt)
-            proc.stdin.close()
-        except OSError:
-            pass
+        cwd = Path(cwd)
+        args = self.command(cwd)
+        if self.kind == "opencode":
+            args.append(self._prepare_opencode(prompt, cwd))
+        proc = subprocess.Popen(args, cwd=str(cwd), stdin=subprocess.PIPE if self.kind != "opencode" else subprocess.DEVNULL,
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                env=claude_env(_clean_env()) if self.kind == "claude" else _clean_env(),
+                                text=True, encoding="utf-8", errors="replace")
+        if self.kind != "opencode":
+            try:
+                proc.stdin.write(prompt)
+                proc.stdin.close()
+            except OSError:
+                pass
         chunks: list[str] = []
         import threading
         reader = threading.Thread(target=lambda: chunks.extend(iter(proc.stdout.readline, "")), daemon=True)
@@ -90,11 +176,11 @@ class CliRunner:
         started = time.monotonic()
         while proc.poll() is None:
             if time.monotonic() - started > timeout:
-                proc.kill()
+                _end(proc)
                 raise WorkerError(f"The {self.kind} run exceeded the {timeout}s time limit and was stopped")
             why = should_stop()
             if why:
-                proc.kill()
+                _end(proc)
                 raise Stopped(why)
             time.sleep(1.0)
         reader.join(5)
@@ -102,10 +188,13 @@ class CliRunner:
 
 
 def available_runner(preferred: str | None = None) -> CliRunner | None:
-    order = [preferred] if preferred in ("claude", "codex") else []
-    order += [k for k in ("claude", "codex") if k not in order]
+    order = [preferred] if preferred in RUNNER_KINDS else []
+    wanted = os.environ.get("AUTOPILOT_AI_RUNNER", "").strip().lower()
+    if wanted in RUNNER_KINDS and wanted not in order:
+        order.append(wanted)
+    order += [k for k in ("claude", "codex", "opencode") if k not in order]
     for kind in order:
-        exe = shutil.which(kind)
+        exe = opencode_executable() if kind == "opencode" else shutil.which(kind)
         if exe:
             return CliRunner(kind, exe)
     return None
@@ -167,7 +256,7 @@ class AgentWorker(Worker):
     def run(self, job, paths, runner, log, should_stop) -> dict[str, Any]:
         runner = runner or available_runner()
         if runner is None:
-            raise WorkerError("No local AI tool was found. Install and sign in to Claude Code (claude) or Codex (codex), then resume.")
+            raise WorkerError("No local AI tool was found. Install and sign in to Claude Code (claude), Codex (codex) or OpenCode (opencode), then resume.")
         timeout = int(os.environ.get("AUTOPILOT_EXEC_TIMEOUT", "1800"))
         prompt = self.prompt(job, paths)
         paths["logs"].mkdir(parents=True, exist_ok=True)
