@@ -827,6 +827,29 @@ class SchedulerTests(Base):
         scheduler.enable(self.conn, "discovery", True)
         self.assertTrue(s.run_pending(now + timedelta(days=31))[0]["ran"])
 
+    def test_an_internet_outage_pauses_jobs_and_never_stops_them(self):
+        def offline_job(s, c, n):
+            raise RuntimeError("Whop API not reachable: <urlopen error [Errno 11001] getaddrinfo failed>")
+        def no_net(*a):
+            raise OSError("offline")
+        s, now = scheduler.Scheduler(self.dbp, jobs=[scheduler.Job("owner_shorts", 300, offline_job)], exec_dir=self.execs, probe=no_net), datetime.now(timezone.utc)
+        for i in range(scheduler.MAX_FAILURES + 3):
+            out = s.run_pending(now + timedelta(hours=i))[0]
+            self.assertTrue(out.get("offline"), out)
+        st = dict(self.conn.execute("SELECT * FROM scheduler_jobs WHERE name='owner_shorts'").fetchone())
+        self.assertEqual((st["consecutive_failures"], st["disabled_reason"], st["last_status"]), (0, None, "offline"))
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM notifications WHERE title LIKE 'Automation stopped%'").fetchone()[0], 0)
+
+    def test_a_job_stopped_by_an_old_outage_resumes_once_online(self):
+        ran = []
+        self.conn.execute("INSERT INTO scheduler_jobs(name, disabled_reason, consecutive_failures) VALUES('report_sync', ?, 5)",
+                          ("Stopped automatically after 5 failures in a row: [network]: Could not reach api.github.com: getaddrinfo failed",))
+        s = scheduler.Scheduler(self.dbp, jobs=[scheduler.Job("report_sync", 900, lambda s, c, n: ran.append(1))], exec_dir=self.execs, probe=lambda *a: True)
+        self.assertTrue(s.run_pending()[0]["ran"])
+        self.assertEqual(ran, [1])
+        self.conn.execute("UPDATE scheduler_jobs SET disabled_reason='Stopped automatically after 5 failures in a row: bad config', next_due=NULL")
+        self.assertFalse(s.run_pending()[0]["ran"])                     # a real failure still needs you
+
     def test_notifications_are_deduplicated(self):
         s, now = self.sched([]), datetime.now(timezone.utc)
         cx.open_login(self.conn, "clickworker", profiles_dir=Path(self.tmp.name) / "p", launcher=lambda cmd: None, browser="test-browser")

@@ -218,6 +218,19 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
             return {"ok": True, "health": discovery.health(conn), "adapters": [a.identify_platform() for a in discovery.default_adapters()]}
         if head == "tasks" and n == 2:
             return {"ok": True, "assignment": lifecycle.view(conn, _int(rest[1]))}
+        if head == "outreach":
+            from microtask_monitor import outreach
+            try:
+                ocfg, oerr = outreach.load_config(), None
+            except outreach.OutreachError as exc:
+                ocfg, oerr = None, str(exc)
+            data = outreach.view(conn, ocfg)
+            if ocfg and ocfg.get("templates_path"):
+                try:
+                    data["templates_text"] = Path(ocfg["templates_path"]).read_text(encoding="utf-8")
+                except OSError as exc:
+                    data["templates_text"], oerr = None, f"Templates file not readable: {exc}"
+            return {"ok": True, **data, "config_error": oerr}
         if head == "owner":
             from microtask_monitor import shorts_service
             try:
@@ -289,6 +302,18 @@ def route(api, conn, method: str, rest: list[str], q: dict, body: dict) -> dict[
                 return {"ok": True, **shorts_service.run(conn, seller.Seller(cfg["account_id"], api.store), media, cfg, budget_seconds=120)}
             except (shorts_service.ServiceError, seller.SellerError, clip_worker.ClipError) as exc:
                 raise EngineApiError(409, str(exc))
+        if head == "outreach":
+            from microtask_monitor import outreach
+            try:
+                ocfg = outreach.load_config()
+                if rest == ["outreach", "approve"]:
+                    return {"ok": True, "sha256": outreach.approve_templates(conn, Path(ocfg["templates_path"]).read_text(encoding="utf-8"), yes)}
+                if rest == ["outreach", "import-legacy"]:
+                    return {"ok": True, **outreach.import_legacy(conn, Path(ocfg["legacy_leads_path"]))}
+                if n == 4 and rest[1] == "leads" and rest[3] == "release":
+                    return {"ok": True, "lead": outreach.release(conn, _int(rest[2]), yes)}
+            except (outreach.OutreachError, OSError, KeyError, ValueError) as exc:
+                raise EngineApiError(400, str(exc))
         if rest == ["payout-methods"]:
             return {"ok": True, "methods": ledger.set_owned_methods(conn, body.get("methods"), yes)}
         if rest == ["payout-routes"]:

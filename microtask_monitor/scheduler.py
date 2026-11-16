@@ -56,6 +56,26 @@ def owner() -> str:
     return f"scheduler:pid:{os.getpid()}"
 
 
+OFFLINE_SIGNS = ("getaddrinfo", "not reachable", "could not reach", "name or service not known", "network is unreachable",
+                 "no route to host", "temporary failure in name resolution", "connection timed out", "timed out", "connection reset")
+OFFLINE_RETRY_SECONDS = 300
+
+
+def online(probe=None) -> bool:
+    """Can this PC reach the internet right now? The check itself lives in reliability.py (network helpers)."""
+    try:
+        from microtask_monitor import reliability
+    except ImportError:  # pragma: no cover
+        import reliability
+    return reliability.online(probe)
+
+
+def offline_error(exc: BaseException | str, probe=None) -> bool:
+    """A failure caused by this PC being offline, not by the job: it must pause the job, never stop it."""
+    text = str(exc).lower()
+    return any(s in text for s in OFFLINE_SIGNS) and not online(probe)
+
+
 def backoff(failures: int, interval: int) -> int:
     """Seconds until the next try after ``failures`` consecutive failures (60 s, doubling, capped)."""
     return interval if failures <= 0 else int(min(max(interval, BACKOFF_CAP_SECONDS), 60 * (2 ** (failures - 1))))
@@ -63,7 +83,8 @@ def backoff(failures: int, interval: int) -> int:
 
 class Scheduler:
     def __init__(self, db_path: Path | str | None = None, jobs: list[Job] | None = None, sync_fn: Callable[[], Any] | None = None,
-                 store: Any = None, runner: Any = None, exec_dir: Path | None = None):
+                 store: Any = None, runner: Any = None, exec_dir: Path | None = None, probe: Callable | None = None):
+        self.probe = probe                                          # tests replace the connectivity check
         self.db_path, self.sync_fn, self.store, self.runner, self.exec_dir = Path(db_path or db.DB_PATH), sync_fn, store, runner, exec_dir
         self.jobs = jobs if jobs is not None else self.default_jobs()
         self.heartbeat_at: str | None = None
@@ -81,7 +102,8 @@ class Scheduler:
                 Job("submissions", 300, lambda s, c, n: {"recovered": submission.recover(c, n), **submission.process_queue(c)}),
                 Job("payment_monitor", 3600, _payment_monitor),
                 Job("cleanup", 86400, lambda s, c, n: cleanup(c, n, s.exec_dir)),
-                Job("owner_shorts", 300, _owner_shorts)]
+                Job("owner_shorts", 300, _owner_shorts),
+                Job("owner_outreach", 1800, _owner_outreach)]
 
     # ---------------------------------------------------------------- leases and state
     def _state(self, conn, name: str) -> dict[str, Any]:
@@ -107,6 +129,11 @@ class Scheduler:
 
     def is_due(self, conn, job: Job, now: datetime) -> tuple[bool, str]:
         st = self._state(conn, job.name)
+        if st["disabled_reason"] and any(s in st["disabled_reason"].lower() for s in OFFLINE_SIGNS) and online(self.probe):
+            with db.tx(conn):                                       # stopped only because the PC was offline: resume by itself
+                conn.execute("UPDATE scheduler_jobs SET disabled_reason=NULL, consecutive_failures=0, next_due=NULL WHERE name=?", (job.name,))
+                db.audit(conn, "scheduler.job_resumed_online", "scheduler_job", job.name, actor="system")
+            st = self._state(conn, job.name)
         if st["disabled_reason"]:
             return False, st["disabled_reason"]
         if job.name not in ALWAYS:
@@ -134,6 +161,13 @@ class Scheduler:
                                 runs=runs+1, consecutive_failures=0 WHERE name=?""", (db.now_iso(), (now + timedelta(seconds=job.interval)).isoformat(), job.name))
             return {"job": job.name, "ran": True, "ok": True, "result": result}
         except Exception as exc:                                    # noqa: BLE001 - a failing job must not stop the scheduler
+            if offline_error(exc, self.probe):                      # no internet: wait and retry; it is not the job's fault
+                with db.tx(conn):
+                    conn.execute("""UPDATE scheduler_jobs SET last_finished=?, last_status='offline', last_error=?, next_due=?, lease_owner=NULL,
+                                    lease_until=NULL, runs=runs+1 WHERE name=?""",
+                                 (db.now_iso(), str(exc)[:500], (now + timedelta(seconds=OFFLINE_RETRY_SECONDS)).isoformat(), job.name))
+                LOG.info("Scheduled job %s waiting for the internet: %s", job.name, str(exc)[:160])
+                return {"job": job.name, "ran": True, "ok": False, "offline": True, "error": str(exc)[:300]}
             fails = st["consecutive_failures"] + 1
             disabled = f"Stopped automatically after {fails} failures in a row: {str(exc)[:160]}" if fails >= MAX_FAILURES else None
             with db.tx(conn):
@@ -241,6 +275,25 @@ def _owner_shorts(s: Scheduler, conn, now: datetime) -> Any:
     except (shorts_service.ServiceError, seller.NotConfigured, clip_worker.ClipError) as exc:
         notify.create(conn, "task_attention", "Shorts autopilot needs setup", str(exc)[:900], severity="important",
                       key=f"owner-setup:{str(exc)[:60]}:{now.date().isoformat()}")
+        return f"setup needed: {exc}"
+
+
+def _owner_outreach(s: Scheduler, conn, now: datetime) -> Any:
+    """Owner lane phase 2: buyers found and emailed a free sample, within your caps and approved templates. Off until you switch it on."""
+    try:
+        from microtask_monitor import clip_worker, outreach, seller, shorts_service, youtube_leads
+    except ImportError:  # pragma: no cover
+        import clip_worker, outreach, seller, shorts_service, youtube_leads
+    if not control.settings(conn).get("owner_outreach_enabled"):
+        return "switched off"
+    try:
+        cfg = outreach.load_config()
+        shop = shorts_service.load_config()
+        media = clip_worker.Media(Path(shop["clipper_dir"]), shop.get("caption_font", "Arial Black"), shop.get("whisper_model", "small"), cfg.get("sample_height", 480))
+        return outreach.run(conn, cfg, outreach.Mailer(cfg["from_address"], s.store), youtube_leads.YouTube(store=s.store), media,
+                            seller.Seller(shop["account_id"], s.store), now)
+    except (outreach.OutreachError, youtube_leads.YouTubeError, shorts_service.ServiceError, seller.NotConfigured, clip_worker.ClipError) as exc:
+        notify.create(conn, "task_attention", "Outreach needs setup", str(exc)[:900], severity="important", key=f"outreach-setup:{str(exc)[:60]}:{now.date().isoformat()}")
         return f"setup needed: {exc}"
 
 

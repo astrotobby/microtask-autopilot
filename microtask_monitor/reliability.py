@@ -142,3 +142,13 @@ def ranged_download(url: str, part_path: Path, *, expected_size: int | None = No
     if expected_size is not None and size != expected_size:
         raise DownloadIncomplete(f"got {size} of {expected_size} bytes" + (f" ({last_error})" if last_error else ""))
     return part_path.read_bytes()
+
+
+def online(probe=None) -> bool:
+    """Can this PC resolve a well-known host right now? Used to tell "the internet is down" apart from a real job failure."""
+    import socket
+    try:
+        (probe or socket.getaddrinfo)("dns.google", 443)
+        return True
+    except OSError:
+        return False

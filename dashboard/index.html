@@ -351,6 +351,7 @@ footer{padding:22px 0;color:#778398;font-size:12px}
    <label class="check"><input type="checkbox" id="as_auto_execute"><span><b>Run permitted tasks without asking each time</b></span></label>
    <label class="check"><input type="checkbox" id="as_ai_runs_preauthorized"><span>Allow AI-based specialists to start under that authorization (uses your existing Claude Code / Codex sign-in; no paid API)</span></label>
    <label class="check"><input type="checkbox" id="as_auto_approve_clean_qa"><span>Package work whose every QA check passed with nothing left for manual review</span></label>
+   <label class="check"><input type="checkbox" id="as_owner_outreach_enabled"><span><b>Find buyers and email them a free sample</b> (owner lane outreach: approved templates, daily cap, opt-outs honoured)</span></label>
    <label class="check"><input type="checkbox" id="as_owner_shorts_enabled"><span><b>Run my Shorts service by itself</b> (owner lane: fulfil and deliver paid Whop orders automatically)</span></label>
    <div class="form-grid" style="margin-top:8px">
     <div><label>Maximum concurrency</label><input id="as_max_concurrency" type="number" min="1" max="4"></div>
@@ -375,6 +376,12 @@ footer{padding:22px 0;color:#778398;font-size:12px}
   <div class="card" id="ownerSetup"></div>
   <div class="grid" id="ownerCards" style="margin-top:12px"></div>
   <div class="section-head"><h2>Orders</h2></div><div id="ownerOrders"></div>
+  <div class="section-head"><h2>Finding buyers (outreach)</h2><button class="btn" onclick="approveTemplates()">Approve these email templates</button></div>
+  <p class="muted">Podcasts whose Shorts get far fewer views than their episodes, in your chosen countries, that publish a business email, get one free sample clip from their own latest episode and at most one follow-up. Any reply stops the emails; "no thanks" blocks the address forever. Every email carries your postal address and an opt-out line.</p>
+  <div class="card" id="outreachSetup"></div>
+  <div class="grid" id="outreachCards" style="margin-top:12px"></div>
+  <details style="margin-top:12px"><summary>Email templates as they will be sent</summary><pre class="draft" id="outreachTemplates"></pre></details>
+  <div id="outreachLeads" style="margin-top:12px"></div>
  </section>
 
  <section id="notifications" class="panel">
@@ -1171,7 +1178,7 @@ async function setRoute(pid) {
 async function loadAutomation() {
   const d = await act(() => api("GET", "/api/engine/control")); if (!d) return;
   const s = d.settings;
-  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled"]) E("as_" + k).checked = !!s[k];
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled", "owner_outreach_enabled"]) E("as_" + k).checked = !!s[k];
   for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) E("as_" + k).value = s[k];
   const box = (cat, list, name) => '<label class="check"><input type="checkbox" name="' + name + '" value="' + cat + '"' + (list.includes(cat) ? " checked" : "") +
     (name === "as_cat" && d.human_only_categories.includes(cat) ? " disabled" : "") + "><span>" + esc(cat.replace(/_/g, " ")) + (d.human_only_categories.includes(cat) ? " (always you)" : "") + "</span></label>";
@@ -1184,7 +1191,7 @@ async function loadAutomation() {
 }
 async function saveAutomation() {
   const body = {}, picked = name => [...document.querySelectorAll('input[name="' + name + '"]:checked')].map(i => i.value);
-  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled"]) body[k] = E("as_" + k).checked;
+  for (const k of ["auto_execute", "ai_runs_preauthorized", "auto_approve_clean_qa", "paused", "owner_shorts_enabled", "owner_outreach_enabled"]) body[k] = E("as_" + k).checked;
   for (const k of ["max_concurrency", "max_task_value_usd", "min_hourly_rate_usd", "max_daily_execution_minutes", "min_free_disk_mb", "min_free_memory_mb", "job_timeout_seconds", "retention_days"]) body[k] = Number(E("as_" + k).value);
   body.permitted_categories = picked("as_cat"); body.excluded_task_types = picked("as_exc");
   body.auto_submit_platforms = Object.fromEntries(picked("as_sub").map(p => [p, true]));
@@ -1208,6 +1215,31 @@ async function loadOwner() {
     tag(o.state, o.state === "delivered" ? "ok" : o.state === "needs_you" ? "bad" : "info") + '<div class="muted">' + esc(o.state_reason || "") + "</div></td><td>" + o.clips_delivered + " / " + o.clips_total +
     '<div class="muted">' + o.clips.map(x => esc(x.status)).join(", ") + "</div></td><td>" + o.events.slice(0, 4).map(e => '<div class="muted">' + when(e.at) + " " + esc(e.kind) + ": " + esc((e.detail || "").slice(0, 120)) + "</div>").join("") + "</td></tr>"),
     "No orders yet. When someone buys a Shorts plan, it appears here and is handled automatically.");
+  loadOutreach();
+}
+async function loadOutreach() {
+  const d = await act(() => api("GET", "/api/engine/outreach")); if (!d) return;
+  const steps = [];
+  if (d.config_error) steps.push(d.config_error);
+  (d.config_problems || []).forEach(p => steps.push("Missing: " + p));
+  if (!d.templates_approved) steps.push("Email templates not approved yet (read them below, then press Approve).");
+  if (!d.enabled) steps.push("Switched off: tick \"Find buyers and email them a free sample\" in Automation Settings.");
+  E("outreachSetup").innerHTML = steps.length ? '<div class="banner bad">' + steps.map(esc).join("<br>") + "</div>" : '<div class="banner ok">Running within your daily cap.</div>';
+  const c = d.counts || {};
+  E("outreachCards").innerHTML = [card("Sent today", d.sent_today + " / " + d.daily_cap), card("Ready to send", c.sample_ready || 0), card("Emailed", (c.sent || 0) + (c.followed_up || 0)),
+    card("Replied", c.replied || 0), card("Opted out / bounced", (c.opted_out || 0) + (c.bounced || 0)), card("Held (contacted before)", c.manual_hold || 0)].join("");
+  E("outreachTemplates").textContent = d.templates_text || "";
+  E("outreachLeads").innerHTML = table(["Podcast", "Country", "Gap", "Status", ""], (d.leads || []).map(l => "<tr><td>" + esc(l.name) + '<div class="muted">' + esc(l.email) + "</div></td><td>" + esc(l.country || "?") +
+    "</td><td>" + (l.gap ? l.gap + "×" : "?") + "</td><td>" + tag(l.status, ["replied", "won"].includes(l.status) ? "ok" : ["opted_out", "bounced", "skipped"].includes(l.status) ? "bad" : "info") +
+    '<div class="muted">' + esc(l.status_reason || "") + "</div></td><td>" + (l.status === "manual_hold" ? '<button class="btn small" onclick="releaseLead(' + l.id + ')">Never emailed: release</button>' : "") + "</td></tr>"), "No leads yet.");
+}
+async function approveTemplates() {
+  if (!confirm("Approve the email templates exactly as shown? Every email will use them, with your postal address and an opt-out line added. Any later edit needs approval again.")) return;
+  await act(() => api("POST", "/api/engine/outreach/approve", {confirmed_by_user: true}), "Templates approved"); loadOutreach();
+}
+async function releaseLead(id) {
+  if (!confirm("Confirm this podcast was never actually emailed. It will be re-checked before anything is sent.")) return;
+  await act(() => api("POST", "/api/engine/outreach/leads/" + id + "/release", {confirmed_by_user: true}), "Released"); loadOutreach();
 }
 async function runOwner() { const r = await act(() => api("POST", "/api/engine/owner/run", {}), "Pass finished"); if (r) { if (r.skipped) toast(r.skipped, true); loadOwner(); } }
 

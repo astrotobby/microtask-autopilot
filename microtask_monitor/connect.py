@@ -5,6 +5,8 @@ sign in yourself in the dedicated browser window from the dashboard's Connection
 
   py -3 microtask_monitor/connect.py list
   py -3 microtask_monitor/connect.py set-key <platform_id> <key_name>     (asks with a hidden prompt)
+  py -3 microtask_monitor/connect.py set-key-from-clipboard <platform_id> <key_name>
+        (copy the secret first; it is read from the clipboard, stored, and the clipboard is cleared. Use this when pasting into the hidden prompt does not work.)
   py -3 microtask_monitor/connect.py delete-key <platform_id> <key_name>
 
 The value is typed into a hidden prompt, goes straight to Credential Manager and is never printed, logged or sent anywhere.
@@ -19,7 +21,24 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from microtask_monitor import policy, secret_store  # noqa: E402
 
 
-def main(argv: list[str], store=None, ask=getpass.getpass, out=print) -> int:
+def read_clipboard() -> str:
+    """Windows clipboard text via PowerShell (no extra package). The value is returned to the caller only, never printed."""
+    import subprocess
+    r = subprocess.run(["powershell", "-NoProfile", "-Command", "Get-Clipboard -Raw"], capture_output=True, text=True, timeout=20)
+    return (r.stdout or "").strip()
+
+
+def clear_clipboard() -> None:
+    import subprocess
+    subprocess.run(["powershell", "-NoProfile", "-Command", "Set-Clipboard -Value ' '"], capture_output=True, timeout=20)
+
+
+def main(argv: list[str], store=None, ask=getpass.getpass, out=print, clipboard=None, clear=None) -> int:
+    if argv and argv[0] == "set-key-from-clipboard":
+        value_source = clipboard or read_clipboard
+        argv = ["set-key", *argv[1:]]
+        ask = lambda prompt: value_source()          # noqa: E731
+        clear = clear or clear_clipboard
     if not argv or argv[0] not in ("list", "set-key", "delete-key"):
         out(__doc__)
         return 2
@@ -37,7 +56,7 @@ def main(argv: list[str], store=None, ask=getpass.getpass, out=print) -> int:
         out(__doc__)
         return 2
     pid, name = argv[1], argv[2]
-    owner = pid == "owner_whop"          # the account API key of YOUR OWN Whop business (owner lane), not a worker platform
+    owner = pid in ("owner_whop", "owner_gmail", "owner_youtube")   # YOUR OWN business accounts (owner lane), not worker platforms
     if pid not in caps and not owner:
         out(f"Unknown platform '{pid}'")
         return 2
@@ -51,8 +70,13 @@ def main(argv: list[str], store=None, ask=getpass.getpass, out=print) -> int:
     if not value.strip():
         out("Empty value: nothing stored.")
         return 1
+    if pid == "owner_gmail":
+        value = value.replace(" ", "")               # Google shows app passwords in groups of four
     store.set(pid, name, value.strip())
-    out(f"Stored in Windows Credential Manager as {secret_store.target(pid, name)}. The value was not displayed or logged.")
+    if clear:
+        clear()
+    out(f"Stored in Windows Credential Manager as {secret_store.target(pid, name)} ({len(value.strip())} characters). The value was not displayed or logged."
+        + (" The clipboard was cleared." if clear else ""))
     return 0
 
 

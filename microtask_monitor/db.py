@@ -327,9 +327,25 @@ def _m10_owner_shorts(conn: sqlite3.Connection) -> None:
         kind TEXT NOT NULL, detail TEXT, key TEXT UNIQUE)""")
 
 
+def _m11_owner_outreach(conn: sqlite3.Connection) -> None:
+    """Owner lane phase 2: outreach leads, every email sent (once per key), and a permanent do-not-contact list. Purely additive."""
+    conn.execute("""CREATE TABLE IF NOT EXISTS outreach_leads (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, channel_id TEXT NOT NULL UNIQUE, name TEXT NOT NULL, channel_url TEXT, email TEXT NOT NULL,
+        email_source TEXT, country TEXT, subscribers INTEGER, shorts_median INTEGER, episodes_median INTEGER, gap REAL,
+        episode_id TEXT, episode_title TEXT, clip_path TEXT, clip_url TEXT, clip_seconds REAL, status TEXT NOT NULL, status_reason TEXT,
+        first_sent_at TEXT, followup_sent_at TEXT, replied_at TEXT, origin TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL)""")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_outreach_status ON outreach_leads(status, updated_at)")
+    conn.execute("""CREATE TABLE IF NOT EXISTS outreach_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, lead_id INTEGER NOT NULL REFERENCES outreach_leads(id) ON DELETE CASCADE, kind TEXT NOT NULL,
+        idem_key TEXT NOT NULL UNIQUE, to_email TEXT NOT NULL, subject TEXT NOT NULL, message_id TEXT, status TEXT NOT NULL, error TEXT,
+        template_sha TEXT, sent_at TEXT, created_at TEXT NOT NULL)""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS outreach_suppression (
+        email TEXT PRIMARY KEY, reason TEXT NOT NULL, at TEXT NOT NULL)""")
+
+
 MIGRATIONS = [(1, _m1_baseline), (2, _m2_intelligence_and_work), (3, _m3_daily_pipeline), (4, _m4_first_earning_workflow), (5, _m5_execution_engine), (6, _m6_platform_connections),
               (7, _m7_assignments_and_whop), (8, _m8_converge_risk_and_assignments), (9, _m9_autonomy_engine),
-              (10, _m10_owner_shorts)]
+              (10, _m10_owner_shorts), (11, _m11_owner_outreach)]
 LATEST_VERSION = MIGRATIONS[-1][0]
 
 

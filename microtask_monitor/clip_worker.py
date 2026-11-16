@@ -82,8 +82,8 @@ def english_ratio(words: list[W]) -> float:
 class Media:
     """Real tools: yt-dlp, gdown, ffmpeg/ffprobe and the clipper package. Tests replace this class."""
 
-    def __init__(self, clipper_dir: Path, font: str = "Arial Black", whisper_model: str = "small"):
-        self.clipper_dir, self.font, self.whisper_model = Path(clipper_dir), font, whisper_model
+    def __init__(self, clipper_dir: Path, font: str = "Arial Black", whisper_model: str = "small", max_height: int = 1080):
+        self.clipper_dir, self.font, self.whisper_model, self.max_height = Path(clipper_dir), font, whisper_model, int(max_height)
         if not (self.clipper_dir / "clipper" / "render.py").exists():
             raise ClipError(f"Clipper not found at {self.clipper_dir}")
         if str(self.clipper_dir) not in sys.path:
@@ -111,7 +111,8 @@ class Media:
 
     def download_section(self, url: str, start: float, end: float, out: Path) -> Path:
         out.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["yt-dlp", "--no-playlist", "-f", "bv*[height<=1080]+ba/b[height<=1080]/b", "--merge-output-format", "mp4",
+        h = self.max_height
+        subprocess.run(["yt-dlp", "--no-playlist", "-f", f"bv*[height<={h}]+ba/b[height<={h}]/b", "--merge-output-format", "mp4",
                         "--download-sections", f"*{max(0.0, start):.2f}-{end:.2f}", "--force-keyframes-at-cuts", "-o", str(out), url],
                        check=True, capture_output=True, timeout=1800)
         if not out.exists():
