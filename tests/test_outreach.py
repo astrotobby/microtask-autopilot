@@ -264,6 +264,28 @@ class FlowTests(Base):
         self.assertNotIn("sample_ready", statuses)
 
 
+class RateLimitTests(Base):
+    def test_youtube_rate_limit_pauses_samples_and_keeps_the_leads(self):
+        class Limited(FakeMedia):
+            calls = 0
+
+            def captions(self, url, work):
+                Limited.calls += 1
+                raise RuntimeError("ERROR: Unable to download video subtitles for 'en': HTTP Error 429: Too Many Requests")
+        self.media = Limited()
+        out = self.run_pass()
+        self.assertIn("rate-limiting", out["samples_paused"])
+        self.assertEqual(Limited.calls, 1)                               # stops at the first refusal, no hammering
+        statuses = [r["status"] for r in self.conn.execute("SELECT status FROM outreach_leads")]
+        self.assertNotIn("skipped", statuses)                            # nobody is dropped because YouTube said "later"
+        self.run_pass()
+        self.assertEqual(Limited.calls, 1)                               # still paused: no new attempt
+        self.media = FakeMedia()
+        later = datetime.now(timezone.utc) + timedelta(hours=7)
+        self.run_pass(now=later)
+        self.assertTrue(self.mailer.sent)
+
+
 class ConnectTests(unittest.TestCase):
     def test_gmail_and_youtube_secrets_go_to_the_secret_store(self):
         store = ss.MemoryStore()

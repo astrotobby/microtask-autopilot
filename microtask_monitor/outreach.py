@@ -36,6 +36,8 @@ except ImportError:  # pragma: no cover
     from secret_store import redact
 
 FOLLOWUP_AFTER = timedelta(days=4)
+RATE_LIMIT_PAUSE = timedelta(hours=6)
+RATE_LIMITED = re.compile(r"429|too many requests|sign in to confirm|not a bot", re.I)
 OPT_OUT = re.compile(r"\b(no thanks|no thank you|unsubscribe|stop|remove me|not interested|don'?t (?:email|contact)|opt[- ]?out)\b", re.I)
 STATUSES = ("new", "qualified", "sample_ready", "sent", "followed_up", "replied", "opted_out", "bounced", "skipped", "manual_hold", "won")
 GMAIL_KEY = ("owner_gmail", "app_password")
@@ -44,6 +46,10 @@ FIELDS = ("first_name_or_team", "episodes_median", "shorts_median", "episode_tit
 
 class OutreachError(RuntimeError):
     pass
+
+
+class SamplesPaused(OutreachError):
+    """YouTube refused downloads for now (rate limit). Sample-making waits; nothing else stops."""
 
 
 # ------------------------------------------------------------------------------------------- templates and approval
@@ -286,6 +292,13 @@ def make_sample(conn, lid: int, media: Any, seller: Any, cfg: dict[str, Any]) ->
         (a, b), = cw.plan_moments(media, url, work, 1, cfg.get("min_clip_seconds", 25), cfg.get("max_clip_seconds", 50), [])
         r = cw.make_clip(media, url, a, b, work, work / "sample.mp4", cfg.get("min_clip_seconds", 25), cfg.get("max_clip_seconds", 50))
     except Exception as exc:                                       # noqa: BLE001 - this lead is skipped, the rest continue
+        detail = " ".join(str(x) for x in (exc, getattr(exc, "stderr", b"") or b""))
+        if RATE_LIMITED.search(detail if isinstance(detail, str) else str(detail)):
+            # YouTube is rate-limiting this PC: wait and retry later. Never work around it (no proxies, cookies or impersonation).
+            with db.tx(conn):
+                db.set_state(conn, "outreach_samples_paused_until", (_now() + RATE_LIMIT_PAUSE).isoformat())
+                _set(conn, lid, status_reason="YouTube rate-limited the sample download; retrying after a pause")
+            raise SamplesPaused("YouTube is rate-limiting downloads from this PC; samples paused for 6 hours")
         with db.tx(conn):
             _set(conn, lid, status="skipped", status_reason=f"No sample possible: {str(exc)[:200]}")
         return False
@@ -455,11 +468,19 @@ def run(conn, cfg: dict[str, Any], mailer: Any, yt: Any = None, media: Any = Non
     if yt is not None and room > ready and conn.execute("SELECT COUNT(*) FROM outreach_leads WHERE status='qualified'").fetchone()[0] < room:
         out["discovery"] = discover(conn, yt, cfg)
     made = 0
+    paused = db.get_state(conn, "outreach_samples_paused_until", None)
+    if paused and paused > now.isoformat():
+        out["samples_paused_until"] = paused
+        media = None
     if media is not None and seller is not None:
         for r in conn.execute("SELECT id FROM outreach_leads WHERE status='qualified' AND episode_id IS NOT NULL ORDER BY gap DESC LIMIT ?", (max(0, room - ready),)).fetchall():
             if time.monotonic() > deadline:
                 break
-            made += make_sample(conn, r["id"], media, seller, cfg)
+            try:
+                made += make_sample(conn, r["id"], media, seller, cfg)
+            except SamplesPaused as exc:
+                out["samples_paused"] = str(exc)
+                break
     out["samples"] = made
     out["sent"] = send_firsts(conn, mailer, cfg, tpls, sha, now)
     return out
