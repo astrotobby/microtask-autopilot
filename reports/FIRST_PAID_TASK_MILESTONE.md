@@ -46,6 +46,8 @@ The existing five drafts were read in full first. The primary target had no draf
 
 **Correction (2026-11-16, before any submission).** The first version of the lead 87 packet contained personal details that the saved CV does not support: a years-of-experience figure, a phone number, weekly availability and working hours, and a personal rate preference. All of them were removed before anything was sent. The packet now states independent technology and software projects since January 2025, leaves the phone number and availability as owner-only placeholders, keeps the CV spelling of the name with a warning to match the legal ID, and treats USD 40–60/hour as the listing's advertised range rather than the owner's rate. The reusable profile answer and the two corrected drafts were fixed in the same pass. No application, interview or client contact took place.
 
+On 2026-11-17 the owner confirmed the legal-ID spelling (Tobias Chanzera), a real phone number (kept out of Git and recorded only in the private packet), part-time availability and an immediate start. The packet and the two drafts now carry those confirmed values; no hours-per-week figure or rate preference is asserted.
+
 ## 4. Execution-engine change (one proven blocker removed)
 
 All AI work previously required Claude Code or Codex. Both are installed on this machine, but both consume the owner's own subscription. The owner's constraint is no paid usage, so the only verified zero-cost AI runner is the bundled OpenCode CLI with a free model. That was the blocker removed.
