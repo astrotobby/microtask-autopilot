@@ -115,3 +115,13 @@ Existing suites (execution, QA, assignments, Whop, connections, policy, intellig
 | 20 | No platform restriction circumvented | True |
 
 The system is therefore complete as an engine, and **not yet earning by itself**: the remaining gap is not code but permission and your own steps (authorize Whop, import tasks, take and submit work on the platforms, or supply direct client work).
+
+## 6. Resumed validation on `main` — 2026-11-19
+
+The resumed task started from the public `main` checkout at `1c90fef`; it found all 25 registered platform records already present, including the original thirteen targets. No real database or platform account was available in this fresh sandbox checkout, and no user data was modified.
+
+The first full-suite run reproduced eight application-workflow test errors: the test fixture used a fixed 2026-11-09 opportunity date, so its 10-day deadlines had elapsed by the resumed run. The production deadline guard correctly rejected expired applications. Only the test fixture was changed to use a rolling test anchor; production validation was left unchanged. The focused `test_first_earning.py` suite then passed (48 tests). The full suite reported **768 tests, OK (1 skipped)**, and the isolated synthetic discovery-to-application-to-QA-to-partial/final-payment test passed (1 test). The synthetic path used only a temporary TEST DATA database.
+
+The fix was pushed to `main` as commit `15db8408a2b103f593018a6c6848087fa7ac0230` (`Keep first-earning tests valid beyond fixed dates`). GitHub Actions run [44560946597](https://github.com/astrotobby/microtask-autopilot/actions/runs/44560946597) completed successfully. The immediately preceding scheduled failure on the old commit had the same eight expired-fixture errors; the pushed test-only fix resolved that failure mode.
+
+The platform capability evidence remains dated 2026-11-08 through 2026-11-12 as documented above; this resumed validation did not re-read every target platform's current terms. Five separate live opportunity reviews are being recorded in the private task workspace, not committed here, and no application has been submitted by this test work.
