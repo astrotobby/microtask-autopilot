@@ -14,7 +14,8 @@ from microtask_monitor import profile_answers as pa, reminders, workflow as wf
 
 CAPS = policy.load_capabilities()
 PROFILE = ig.load_profile()
-NOW = datetime(2026, 11, 9, 10, 0, tzinfo=timezone.utc)        # 13:00 EAT
+NOW = datetime.now(timezone.utc).replace(microsecond=0) + timedelta(days=3)
+DAY = NOW.date()
 URL = "https://www.opentrain.ai/jobs/j1"
 
 
@@ -58,7 +59,8 @@ class Base(unittest.TestCase):
     def approve(self, app):
         return wf.approve_draft(self.conn, app["drafts"][0]["id"], True)
 
-    def submit(self, app, when="2026-11-09"):
+    def submit(self, app, when=None):
+        when = when or DAY.isoformat()
         return wf.mark_submitted(self.conn, app["id"], when, confirmed_by_user=True)
 
 
@@ -208,24 +210,29 @@ class FollowUpTests(Base):
 
     def test_submission_creates_an_event_and_a_seven_day_followup_date(self):
         app = self.submitted()
-        self.assertEqual((app["status"], app["submitted_at"], app["next_followup_at"]), ("submitted", "2026-11-09", "2026-11-16"))
+        self.assertEqual((app["status"], app["submitted_at"], app["next_followup_at"]),
+                         ("submitted", DAY.isoformat(), (DAY + timedelta(days=7)).isoformat()))
         self.assertEqual([e["kind"] for e in app["events"]], ["submitted"])
 
     def test_followup_interview_decision_timeline(self):
         app = self.submitted()
-        app = wf.log_event(self.conn, app["id"], "followup_sent", "Emailed the employer", "2026-11-16")
-        self.assertEqual(app["next_followup_at"], "2026-11-23")
-        app = wf.log_event(self.conn, app["id"], "interview_scheduled", "Voice interview", "2026-11-20T14:00")
-        self.assertEqual((app["status"], app["interview_at"], app["next_followup_at"]), ("interview", "2026-11-20T14:00", None))
-        app = wf.log_event(self.conn, app["id"], "interview_done", "Went fine", "2026-11-20")
-        self.assertEqual(app["next_followup_at"], "2026-11-27")
-        app = wf.log_event(self.conn, app["id"], "decision", "Offer received", "2026-11-25", decision="accepted")
-        self.assertEqual((app["status"], app["decision"], app["decision_at"], app["next_followup_at"]), ("accepted", "accepted", "2026-11-25", None))
+        followup = DAY + timedelta(days=7)
+        interview = DAY + timedelta(days=11)
+        interview_at = interview.isoformat() + "T14:00"
+        decision = interview + timedelta(days=5)
+        app = wf.log_event(self.conn, app["id"], "followup_sent", "Emailed the employer", followup.isoformat())
+        self.assertEqual(app["next_followup_at"], (followup + timedelta(days=7)).isoformat())
+        app = wf.log_event(self.conn, app["id"], "interview_scheduled", "Voice interview", interview_at)
+        self.assertEqual((app["status"], app["interview_at"], app["next_followup_at"]), ("interview", interview_at, None))
+        app = wf.log_event(self.conn, app["id"], "interview_done", "Went fine", interview.isoformat())
+        self.assertEqual(app["next_followup_at"], (interview + timedelta(days=7)).isoformat())
+        app = wf.log_event(self.conn, app["id"], "decision", "Offer received", decision.isoformat(), decision="accepted")
+        self.assertEqual((app["status"], app["decision"], app["decision_at"], app["next_followup_at"]), ("accepted", "accepted", decision.isoformat(), None))
         self.assertEqual([e["kind"] for e in reversed(app["events"])], ["submitted", "followup_sent", "interview_scheduled", "interview_done", "decision"])
 
     def test_response_is_logged_as_an_event_too(self):
         app = self.submitted()
-        app = wf.record_response(self.conn, app["id"], "interview", "They replied", "2026-11-12")
+        app = wf.record_response(self.conn, app["id"], "interview", "They replied", (DAY + timedelta(days=3)).isoformat())
         self.assertEqual(app["events"][0]["kind"], "response")
         self.assertIn("They replied", app["events"][0]["detail"])
 
@@ -289,7 +296,7 @@ class ReminderTests(Base):
 
     def test_followup_reminder_is_due_after_the_scheduled_date_and_only_then(self):
         app = self.application()
-        self.fill_profile(); self.approve(app); self.submit(app, "2026-11-09")
+        self.fill_profile(); self.approve(app); self.submit(app, DAY.isoformat())
         self.generate(NOW)
         f = self.reminders_for("followup")[0]
         self.assertFalse(f["is_due"])
@@ -300,10 +307,11 @@ class ReminderTests(Base):
     def test_interview_reminders_and_unscheduled_interview_prompt(self):
         app = self.application()
         self.fill_profile(); self.approve(app); self.submit(app)
-        wf.record_response(self.conn, app["id"], "interview", "Invited", "2026-11-10")
+        wf.record_response(self.conn, app["id"], "interview", "Invited", (DAY + timedelta(days=1)).isoformat())
         self.generate()
         self.assertTrue(any("Confirm the interview time" in r["title"] for r in self.reminders_for("interview")))
-        wf.log_event(self.conn, app["id"], "interview_scheduled", "Voice", "2026-11-20T14:00")
+        interview = DAY + timedelta(days=1)
+        wf.log_event(self.conn, app["id"], "interview_scheduled", "Voice", interview.isoformat() + "T14:00")
         self.generate()
         titles = [r["title"] for r in self.reminders_for("interview") if r["status"] == "pending"]
         self.assertTrue(any("tomorrow" in t for t in titles) and any("today" in t for t in titles))
@@ -425,9 +433,9 @@ class ActionListTests(Base):
     def test_accepted_work_without_a_task_prompts_setup_and_tasks_become_actions(self):
         app = self.application()
         self.fill_profile(); self.approve(app); self.submit(app)
-        wf.log_event(self.conn, app["id"], "decision", "Offer", "2026-11-12", decision="accepted")
+        wf.log_event(self.conn, app["id"], "decision", "Offer", (DAY + timedelta(days=3)).isoformat(), decision="accepted")
         self.assertIn(f"startwork:{app['id']}", self.build())
-        t = wf.create_task(self.conn, "Real work", "1. Do it.", application_id=app["id"], due_at="2026-11-10")
+        t = wf.create_task(self.conn, "Real work", "1. Do it.", application_id=app["id"], due_at=(DAY + timedelta(days=2)).isoformat())
         a = self.build()
         self.assertNotIn(f"startwork:{app['id']}", a)
         self.assertEqual(a[f"task:{t['id']}"]["priority"], 89)            # due within two days
@@ -458,7 +466,7 @@ class ActionListTests(Base):
     def test_a_new_day_starts_a_fresh_list(self):
         actions.persist_today(self.conn, NOW)
         tomorrow = actions.persist_today(self.conn, NOW + timedelta(days=1))
-        self.assertTrue(all(i["action_date"] == "2026-11-10" for i in tomorrow))
+        self.assertTrue(all(i["action_date"] == (DAY + timedelta(days=1)).isoformat() for i in tomorrow))
 
     def test_ticking_a_reminder_action_closes_the_reminder(self):
         self.application(deadline=(NOW + timedelta(days=1)).isoformat())
