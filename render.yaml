@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: microtask-autopilot-cloud
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    numInstances: 1
+    autoDeploy: true
+    disk:
+      name: microtask-autopilot-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: AUTOPILOT_RUNTIME
+        value: cloud
+      - key: AUTOPILOT_DATA_DIR
+        value: /app/data
+      - key: AUTOPILOT_ADMIN_TOKEN
+        generateValue: true
+      - key: AUTOPILOT_SECRET_ENCRYPTION_KEY
+        sync: false
+      - key: AUTOPILOT_ENABLE_OWNER_OUTREACH
+        value: "false"
+      - key: AUTOPILOT_ENABLE_FREELANCE_BUSINESS
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO

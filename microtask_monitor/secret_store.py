@@ -125,6 +125,110 @@ class WindowsCredentialStore:
             _adv.CredFree(arr)
 
 
+class EncryptedFileStore:
+    """Encrypted cloud secret vault for one persistent service instance.
+
+    The Fernet key is supplied by the hosting provider as AUTOPILOT_SECRET_ENCRYPTION_KEY.
+    Rotated OAuth tokens are encrypted at rest under the persistent data directory. Environment
+    secrets are accepted as bootstrap values; encrypted-file values take precedence after rotation.
+    """
+    ENV_PREFIX = "AUTOPILOT_SECRET__"
+
+    def __init__(self, path=None, key: str | None = None):
+        root = Path(os.environ.get("AUTOPILOT_DATA_DIR") or (Path(__file__).resolve().parents[1] / "data"))
+        self.path = Path(path or os.environ.get("AUTOPILOT_SECRETS_FILE") or (root / "secrets.enc"))
+        self.key = key if key is not None else os.environ.get("AUTOPILOT_SECRET_ENCRYPTION_KEY", "")
+
+    @staticmethod
+    def _env_name(platform_id: str, name: str) -> str:
+        target(platform_id, name)
+        return EncryptedFileStore.ENV_PREFIX + platform_id.upper() + "__" + name.upper()
+
+    def _fernet(self):
+        if not self.key:
+            raise SecretStoreUnavailable("Set AUTOPILOT_SECRET_ENCRYPTION_KEY in the cloud host before storing or rotating account tokens")
+        try:
+            from cryptography.fernet import Fernet
+            return Fernet(self.key.encode("ascii"))
+        except ImportError as exc:
+            raise SecretStoreUnavailable("Cloud secret encryption dependency is missing") from exc
+        except Exception as exc:
+            raise SecretStoreUnavailable("AUTOPILOT_SECRET_ENCRYPTION_KEY must be a valid Fernet key") from exc
+
+    def _load(self) -> dict[str, str]:
+        if not self.path.exists():
+            return {}
+        try:
+            raw = self._fernet().decrypt(self.path.read_bytes())
+            value = __import__("json").loads(raw.decode("utf-8"))
+            if not isinstance(value, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
+                raise ValueError("invalid secret map")
+            return value
+        except SecretStoreUnavailable:
+            raise
+        except Exception as exc:
+            raise SecretStoreUnavailable("Encrypted cloud secret file could not be decrypted; refusing to overwrite it") from exc
+
+    def _save(self, values: dict[str, str]) -> None:
+        import json
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        token = self._fernet().encrypt(json.dumps(values, separators=(",", ":"), sort_keys=True).encode("utf-8"))
+        temp = self.path.with_name(self.path.name + ".tmp")
+        try:
+            with open(temp, "wb") as f:
+                f.write(token)
+                f.flush()
+                os.fsync(f.fileno())
+            try:
+                os.chmod(temp, 0o600)
+            except OSError:
+                pass
+            os.replace(temp, self.path)
+        finally:
+            try:
+                temp.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+    def get(self, platform_id: str, name: str) -> str | None:
+        key = target(platform_id, name)
+        values = self._load()
+        if key in values:
+            return values[key]
+        return os.environ.get(self._env_name(platform_id, name)) or None
+
+    def set(self, platform_id: str, name: str, value: str) -> None:
+        if not value:
+            raise ValueError("empty secret")
+        key = target(platform_id, name)
+        values = self._load()
+        values[key] = str(value)
+        self._save(values)
+
+    def delete(self, platform_id: str, name: str) -> bool:
+        key = target(platform_id, name)
+        values = self._load()
+        found = key in values or self._env_name(platform_id, name) in os.environ
+        if key in values:
+            values.pop(key, None)
+            if values:
+                self._save(values)
+            else:
+                self.path.unlink(missing_ok=True)
+        os.environ.pop(self._env_name(platform_id, name), None)
+        return found
+
+    def names(self) -> list[tuple[str, str]]:
+        values = self._load()
+        found = {tuple(k[len(PREFIX):].split("/", 1)) for k in values if k.startswith(PREFIX) and "/" in k}
+        for key in os.environ:
+            if key.startswith(self.ENV_PREFIX):
+                rest = key[len(self.ENV_PREFIX):].lower()
+                if "__" in rest:
+                    found.add(tuple(rest.split("__", 1)))
+        return sorted(found)
+
+
 class MemoryStore:
     """In-memory store for tests only."""
 
@@ -147,6 +251,8 @@ class MemoryStore:
 
 
 def default_store():
+    if os.environ.get("AUTOPILOT_RUNTIME", "").lower() == "cloud":
+        return EncryptedFileStore()
     return WindowsCredentialStore()
 
 

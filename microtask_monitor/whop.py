@@ -18,6 +18,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import re
 import secrets
 import time
@@ -88,6 +89,11 @@ _pending: dict[str, tuple[str, float]] = {}          # state -> (code_verifier, 
 
 
 def redirect_uri(port: int = 8765) -> str:
+    public = (os.environ.get("AUTOPILOT_PUBLIC_BASE_URL") or os.environ.get("RENDER_EXTERNAL_URL") or "").strip().rstrip("/")
+    if public:
+        if not public.startswith("https://") or "@" in public:
+            raise WhopError("Cloud Whop OAuth requires the service's public HTTPS URL")
+        return f"{public}{REDIRECT_PATH}"
     return f"http://localhost:{port}{REDIRECT_PATH}"
 
 
@@ -201,7 +207,7 @@ def oauth_status(conn, store, port: int = 8765) -> dict[str, Any]:
     return {"client_id_saved": bool(meta.get("client_id")), "authorized": has_token, "scopes": meta.get("scopes") or [],
             "required_scopes": list(READ_SCOPES), "has_read_scope": READ_SCOPES[0] in (meta.get("scopes") or []),
             "obtained_at": meta.get("obtained_at"), "redirect_uri": redirect_uri(port), "missing_prerequisite": missing,
-            "developer_dashboard": "https://whop.com/dashboard/developer", "token_storage": "Windows Credential Manager (never SQLite, logs or this page)"}
+            "developer_dashboard": "https://whop.com/dashboard/developer", "token_storage": ("encrypted cloud secret file on the persistent disk" if os.environ.get("AUTOPILOT_RUNTIME", "").lower() == "cloud" else "Windows Credential Manager (never SQLite, logs or this page)")}
 
 
 # ------------------------------------------------------------------------------------------- API reads
