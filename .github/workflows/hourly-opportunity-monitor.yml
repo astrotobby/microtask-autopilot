@@ -1,4 +1,4 @@
-name: Cloud opportunity monitor (15-minute)
+name: Cloud opportunity monitor (5-minute)
 
 on:
   push:
@@ -19,7 +19,7 @@ on:
       - ".github/workflows/hourly-opportunity-monitor.yml"
   schedule:
     # Best-effort cloud discovery while the owner's PC is offline. GitHub may delay scheduled runs.
-    - cron: "7,22,37,52 * * * *"
+    - cron: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
     # Daily full validation and analysis at 08:00 East Africa Time / Africa/Nairobi (05:00 UTC).
     - cron: "0 5 * * *"
   workflow_dispatch:
@@ -70,7 +70,7 @@ jobs:
         # Public feeds, OpenTrain's documented public API, Mindrift's public policy monitor.
         # Account-facing platforms remain manual unless they provide explicit worker-side permission and a documented interface.
         env:
-          ANALYSIS_TRIGGER: ${{ github.event.schedule == '0 5 * * *' && 'daily' || 'hourly' }}
+          ANALYSIS_TRIGGER: ${{ github.event.schedule == '0 5 * * *' && 'daily' || 'frequent' }}
         run: python microtask_monitor/scan_feeds.py
       - name: Save HTML, JSON and CSV reports
         uses: actions/upload-artifact@v4
