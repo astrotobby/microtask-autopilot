@@ -20,6 +20,7 @@ GitHub's own schedule for the cloud scan is best-effort; nothing here promises e
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
 import shutil
@@ -311,9 +312,19 @@ def _email_discovery(s: Scheduler, conn, now: datetime) -> Any:
     if st.get("email_monitor_enabled"):
         try:
             cfg = outreach.load_config()
-            pw = outreach.Mailer(cfg["from_address"], s.store)._pw()
+            mailer = outreach.Mailer(cfg["from_address"], s.store)
+            pw = mailer._pw()
             out["gmail_readonly"] = ed.import_messages(conn, ed.ImapInbox(cfg["from_address"], pw).fetch(), "gmail_readonly")
-        except (outreach.OutreachError, OSError, KeyError) as exc:
+            if st.get("employer_auto_reply_enabled"):
+                try:
+                    from microtask_monitor import employer_replies
+                except ImportError:  # pragma: no cover
+                    import employer_replies
+                # The private profile is mounted/imported at AUTOPILOT_PROFILE_PATH on the cloud host.
+                profile_path = Path(os.environ.get("AUTOPILOT_PROFILE_PATH") or Path(__file__).with_name("profile.json"))
+                profile = json.loads(profile_path.read_text(encoding="utf-8"))
+                out["employer_replies"] = employer_replies.scan_and_reply(conn, mailer, profile, now)
+        except Exception as exc:  # noqa: BLE001 - inbox failure must not stop other scheduled jobs
             out["gmail_readonly"] = f"unavailable: {type(exc).__name__}: {str(exc)[:200]}"
     return out or "switched off"
 
