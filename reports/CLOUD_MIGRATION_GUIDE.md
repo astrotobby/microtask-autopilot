@@ -66,4 +66,4 @@ The cloud service does not automatically accept tasks, bypass assessments, claim
 
 ## Recovery
 
-The cloud service exposes `/health` for host restarts and `/admin/status` for authenticated scheduler and queue status. The persistent disk is intended for SQLite and work files. Keep periodic external backups as a separate operational task; the local database backup made during migration is preserved under `/app/data/backups`.
+The cloud service exposes `/health` for host restarts and `/admin/status` for authenticated scheduler and queue status. The service also creates a consistent SQLite online backup once per UTC day and retains the last 14 daily database snapshots under `/app/data/backups`. Render separately provides daily persistent-disk snapshots for paid disks. Keep an independent off-host export as an additional recovery option.

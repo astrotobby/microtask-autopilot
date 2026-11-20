@@ -63,6 +63,9 @@ jobs:
           python -m unittest discover -s tests -p 'test_policy.py' -v
           python -m unittest discover -s tests -p 'test_opentrain.py' -v
           python -m unittest discover -s tests -p 'test_whop.py' -v
+      - name: Build the persistent cloud service image
+        if: github.event_name != 'schedule' || github.event.schedule == '0 5 * * *'
+        run: docker build --pull --tag microtask-autopilot-cloud:ci .
       - name: Scan the 27-platform directory and permitted public sources
         # Public feeds, OpenTrain's documented public API, Mindrift's public policy monitor.
         # Account-facing platforms remain manual unless they provide explicit worker-side permission and a documented interface.

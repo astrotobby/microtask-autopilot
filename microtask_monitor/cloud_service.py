@@ -30,6 +30,7 @@ _started_at = time.time()
 _stop = threading.Event()
 _engine = None
 _engine_thread: threading.Thread | None = None
+_backup_thread: threading.Thread | None = None
 _server: ThreadingHTTPServer | None = None
 _store = None
 
@@ -157,6 +158,10 @@ def _restore_migration(bundle: bytes, passphrase: str) -> dict:
             _engine_thread.join(timeout=30)
             if _engine_thread.is_alive():
                 raise cloud_export.CloudExportError("Scheduler did not stop safely; migration cancelled")
+        if _backup_thread and _backup_thread.is_alive():
+            _backup_thread.join(timeout=30)
+            if _backup_thread.is_alive():
+                raise cloud_export.CloudExportError("Database backup thread did not stop safely; migration cancelled")
         stopped = True
 
         # Always preserve the pre-import database on the persistent disk.
@@ -332,8 +337,58 @@ button{cursor:pointer;background:#174f94;color:white;border:0}label{display:bloc
 </body></html>"""
 
 
+def _backup_database_once() -> dict:
+    """Create an atomic SQLite online backup and retain the last 14 daily snapshots."""
+    from microtask_monitor import db
+
+    data_dir = Path(db.DATA_DIR)
+    source_path = Path(db.DB_PATH)
+    backup_dir = data_dir / "backups"
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc)
+    final_path = backup_dir / ("daily-" + stamp.strftime("%Y%m%d") + ".sqlite3")
+    temp_path = final_path.with_suffix(".sqlite3.tmp")
+    source = sqlite3.connect(str(source_path), timeout=30)
+    target = sqlite3.connect(str(temp_path), timeout=30)
+    try:
+        source.backup(target)
+        result = target.execute("PRAGMA integrity_check").fetchone()
+        if not result or result[0] != "ok":
+            raise RuntimeError("Daily SQLite backup failed integrity_check")
+        target.commit()
+    finally:
+        target.close()
+        source.close()
+    try:
+        os.chmod(temp_path, 0o600)
+    except OSError:
+        pass
+    os.replace(temp_path, final_path)
+    old = sorted(backup_dir.glob("daily-*.sqlite3"))
+    for path in old[:-14]:
+        path.unlink(missing_ok=True)
+    return {"path": str(final_path), "integrity": "ok"}
+
+
+def _backup_loop():
+    """Take a consistent database backup once per UTC day, with cancellation on shutdown."""
+    from datetime import timedelta
+    while not _stop.is_set():
+        now = datetime.now(timezone.utc)
+        next_run = now.replace(hour=2, minute=15, second=0, microsecond=0)
+        if next_run <= now:
+            next_run += timedelta(days=1)
+        if _stop.wait(max(1.0, (next_run - now).total_seconds())):
+            return
+        try:
+            result = _backup_database_once()
+            LOG.info("Daily database backup completed: %s", Path(result["path"]).name)
+        except Exception:
+            LOG.exception("Daily database backup failed")
+
+
 def _worker_start():
-    global _engine, _engine_thread
+    global _engine, _engine_thread, _backup_thread
     _engine = _prepare_engine()
 
     def run():
@@ -341,7 +396,9 @@ def _worker_start():
         _engine.loop(_stop, tick=15)
 
     _engine_thread = threading.Thread(target=run, name="autopilot-cloud-scheduler", daemon=True)
+    _backup_thread = threading.Thread(target=_backup_loop, name="autopilot-daily-db-backup", daemon=True)
     _engine_thread.start()
+    _backup_thread.start()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -506,6 +563,8 @@ def main():
         _server.server_close()
         if _engine_thread:
             _engine_thread.join(timeout=20)
+        if _backup_thread:
+            _backup_thread.join(timeout=20)
 
 
 if __name__ == "__main__":

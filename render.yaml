@@ -27,5 +27,11 @@ services:
         value: "false"
       - key: AUTOPILOT_ENABLE_FREELANCE_BUSINESS
         value: "false"
+      - key: AUTOPILOT_ENABLE_CLOUD_AI
+        value: "false"
+      - key: AUTOPILOT_AI_RUNNER
+        value: codex
+      - key: CODEX_API_KEY
+        sync: false
       - key: LOG_LEVEL
         value: INFO

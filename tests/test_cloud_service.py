@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+import sqlite3
+import zipfile
 import os
 import tempfile
 import unittest
@@ -8,8 +12,8 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from microtask_monitor import cloud_export, secret_store, whop
-from microtask_monitor.cloud_service import authorize_header, filter_cloud_jobs, public_base_url
+from microtask_monitor import cloud_export, db, secret_store, whop, workers
+from microtask_monitor.cloud_service import _backup_database_once, _parse_multipart, authorize_header, filter_cloud_jobs, public_base_url
 
 
 class CloudSecretStoreTests(unittest.TestCase):
@@ -41,6 +45,69 @@ class CloudSecretStoreTests(unittest.TestCase):
         }, clear=False):
             store = secret_store.EncryptedFileStore(path=Path(tmp) / "none.enc", key="")
             self.assertEqual(store.names(), [("owner_gmail", "app_password_0")])
+
+
+    def test_cloud_ai_runner_stays_disabled_without_explicit_opt_in(self):
+        with mock.patch.dict(os.environ, {"AUTOPILOT_RUNTIME":"cloud", "AUTOPILOT_ENABLE_CLOUD_AI":"false", "CODEX_API_KEY":"not-a-real-key"}, clear=True):
+            with mock.patch.object(workers.shutil, "which", return_value="/usr/bin/codex"):
+                self.assertIsNone(workers.available_runner())
+
+    def test_cloud_ai_runner_requires_a_dedicated_api_key(self):
+        with mock.patch.dict(os.environ, {"AUTOPILOT_RUNTIME":"cloud", "AUTOPILOT_ENABLE_CLOUD_AI":"true"}, clear=True):
+            with mock.patch.object(workers.shutil, "which", return_value="/usr/bin/codex"):
+                self.assertIsNone(workers.available_runner())
+
+    def test_cloud_ai_runner_uses_codex_only_after_explicit_opt_in_and_key(self):
+        with mock.patch.dict(os.environ, {"AUTOPILOT_RUNTIME":"cloud", "AUTOPILOT_ENABLE_CLOUD_AI":"true", "CODEX_API_KEY":"not-a-real-key"}, clear=True):
+            with mock.patch.object(workers.shutil, "which", side_effect=lambda name: "/usr/bin/codex" if name == "codex" else None):
+                runner = workers.available_runner()
+                self.assertEqual(runner.kind, "codex")
+
+    def test_admin_multipart_parser_extracts_upload_without_logging_values(self):
+        boundary = "test-boundary-123"
+        raw = (
+            f"--{boundary}\r\nContent-Disposition: form-data; name=\"archive\"; filename=\"migration.enc\"\r\n"
+            "Content-Type: application/octet-stream\r\n\r\n"
+        ).encode() + b"encrypted-data" + (
+            f"\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"passphrase\"\r\n\r\n"
+            "private-passphrase-value\r\n"
+            f"--{boundary}--\r\n"
+        ).encode()
+        archive, passphrase = _parse_multipart(f"multipart/form-data; boundary={boundary}", raw)
+        self.assertEqual(archive, b"encrypted-data")
+        self.assertEqual(passphrase, "private-passphrase-value")
+
+    def test_daily_sqlite_backup_is_consistent_and_separate_from_live_db(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            live = root / "autopilot.sqlite3"
+            conn = sqlite3.connect(live)
+            conn.execute("CREATE TABLE marker (value TEXT)")
+            conn.execute("INSERT INTO marker VALUES ('daily-snapshot')")
+            conn.commit()
+            conn.close()
+            with mock.patch.object(db, "DATA_DIR", root), mock.patch.object(db, "DB_PATH", live):
+                result = _backup_database_once()
+            backup = Path(result["path"])
+            self.assertTrue(backup.is_file())
+            self.assertNotEqual(backup, live)
+            check = sqlite3.connect(backup)
+            try:
+                self.assertEqual(check.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+                self.assertEqual(check.execute("SELECT value FROM marker").fetchone()[0], "daily-snapshot")
+            finally:
+                check.close()
+
+    @unittest.skipUnless(importlib.util.find_spec("cryptography"), "cryptography is not installed")
+    def test_migration_rejects_browser_session_paths_even_if_bundle_is_encrypted(self):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("data/browser-profiles/cookies.sqlite", b"private-session")
+        encrypted = cloud_export.encrypt_zip(zip_buffer.getvalue(), "very-private-bundle-passphrase")
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(cloud_export.CloudExportError):
+                cloud_export.unpack_to_staging(encrypted, "very-private-bundle-passphrase", Path(tmp))
+
 
 
 class CloudMigrationTests(unittest.TestCase):

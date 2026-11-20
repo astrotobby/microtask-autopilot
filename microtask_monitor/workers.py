@@ -188,6 +188,14 @@ class CliRunner:
 
 
 def available_runner(preferred: str | None = None) -> CliRunner | None:
+    if os.environ.get("AUTOPILOT_RUNTIME", "").lower() == "cloud":
+        # A cloud CLI must be separately opted in and have a dedicated API credential.
+        # Never assume the local Windows/ChatGPT sign-in exists in the container.
+        if os.environ.get("AUTOPILOT_ENABLE_CLOUD_AI", "").lower() not in {"1", "true", "yes", "on"}:
+            return None
+        if not os.environ.get("CODEX_API_KEY"):
+            return None
+        preferred = "codex"
     order = [preferred] if preferred in RUNNER_KINDS else []
     wanted = os.environ.get("AUTOPILOT_AI_RUNNER", "").strip().lower()
     if wanted in RUNNER_KINDS and wanted not in order:
