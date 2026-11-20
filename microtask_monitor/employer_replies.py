@@ -23,7 +23,7 @@ MAX_REPLIES_PER_PASS = 5
 LOOKBACK_DAYS = 45
 
 _JOB_SUBJECT = re.compile(r"\b(application|job|position|vacancy|career|interview|recruit(?:er|ment)?|hiring|role|candidate|employment|talent)\b", re.I)
-_SECURITY = re.compile(r"\\b(password|passcode|one[- ]time|otp|2fa|verification code|login code|security code|bank details|bank account|passport|national id|identity document|social security|ssn|date of birth|birth date|driver.?s license|id card)\\b", re.I)
+_SECURITY = re.compile(r"\b(password|passcode|one[- ]time|otp|2fa|verification code|login code|security code|bank details|bank account|passport|national id|identity document|social security|ssn|date of birth|birth date|driver.?s license|id card)\b", re.I)
 _AUTOMATED = re.compile(r"\b(auto(?:matic)? reply|out of office|do not reply|no[- ]reply|delivery status notification|undeliverable|message delivered)\b", re.I)
 _OPT_OUT = re.compile(r"\b(do not contact|don't contact|unsubscribe|remove me|stop emailing|no further contact)\b", re.I)
 _ASSESSMENT = re.compile(r"\b(assessment|test link|coding challenge|take[- ]home|technical challenge|complete (?:your )?(?:ai )?interview|interview questions|answer (?:the following|these) questions|screening questions|record (?:a )?(?:video|response)|one[- ]way interview)\b", re.I)
