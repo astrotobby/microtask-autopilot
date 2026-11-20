@@ -110,6 +110,23 @@ class CloudSecretStoreTests(unittest.TestCase):
 
 
 
+    @unittest.skipUnless(importlib.util.find_spec("cryptography"), "cryptography is not installed")
+    def test_migration_manifest_cannot_reference_paths_outside_staging(self):
+        manifest = {
+            "format": "microtask-autopilot-cloud-migration", "version": 1, "file_count": 1,
+            "included": [{"path": "../../outside.txt", "size": 0, "sha256": "invalid"}],
+        }
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as archive:
+            archive.writestr("manifest.json", json.dumps(manifest))
+            archive.writestr("data/autopilot.sqlite3", b"not-a-database")
+        bundle = cloud_export.encrypt_zip(buf.getvalue(), "safe-test-migration-passphrase")
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(cloud_export.CloudExportError):
+                cloud_export.unpack_to_staging(bundle, "safe-test-migration-passphrase", Path(tmp))
+
+
+
 class CloudMigrationTests(unittest.TestCase):
     @unittest.skipUnless(importlib.util.find_spec("cryptography"), "cryptography is not installed")
     def test_encrypted_export_preserves_database_and_private_profile_but_not_browser_sessions(self):

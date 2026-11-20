@@ -223,8 +223,20 @@ def unpack_to_staging(bundle: bytes, passphrase: str, staging: Path) -> dict:
             raise CloudExportError("Migration manifest file list is inconsistent")
         for record in records:
             name = record.get("path", "")
-            p = staging / name
-            if not p.is_file():
+            pure = PurePosixPath(name) if isinstance(name, str) else PurePosixPath(".")
+            if (name == "manifest.json" or name not in seen or pure.is_absolute() or ".." in pure.parts or
+                    not pure.parts or pure.parts[0] not in allowed_roots):
+                raise CloudExportError("Migration manifest contains a disallowed or missing path")
+            if pure.parts[0] == "private" and pure.parts != ("private", "profile.json"):
+                raise CloudExportError("Only the private profile.json file may be imported")
+            if pure.parts[0] == "data":
+                rel = pure.parts[1:]
+                allowed_file = len(rel) == 1 and rel[0] in ({"autopilot.sqlite3"} | set(DATA_FILES))
+                allowed_dir = len(rel) >= 2 and rel[0] in set(DATA_DIRS)
+                if not (allowed_file or allowed_dir):
+                    raise CloudExportError("Migration manifest lists a disallowed data path")
+            p = staging.joinpath(*pure.parts)
+            if not p.is_file() or p.is_symlink():
                 raise CloudExportError("A file listed in the manifest is missing")
             raw = p.read_bytes()
             if len(raw) != int(record.get("size", -1)) or hashlib.sha256(raw).hexdigest() != record.get("sha256"):
