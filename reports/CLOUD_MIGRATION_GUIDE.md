@@ -4,7 +4,7 @@ Updated 20 November 2026.
 
 ## What is already live
 
-The public discovery workflow is on GitHub Actions and runs on a best-effort 15-minute schedule while the Windows PC is off. It scans the permitted public sources, validates the registry and publishes its report to the `report-data` branch.
+The public discovery workflow is on GitHub Actions and runs on a best-effort 5-minute schedule while the Windows PC is off. It scans the permitted public sources, validates the registry and publishes its report to the `report-data` branch.
 
 ## What needs a paid host
 
