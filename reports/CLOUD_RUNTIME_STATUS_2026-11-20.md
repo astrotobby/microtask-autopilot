@@ -2,7 +2,7 @@
 
 ## What is now running independently of the owner's PC
 
-The public GitHub Actions workflow is configured for best-effort discovery every 15 minutes, with a daily full test run at 08:00 Africa/Nairobi. It runs on GitHub-hosted Linux runners and publishes a signed-by-hash report bundle to the public `report-data` branch. The local PC can be switched off without stopping these scheduled public scans.
+The public GitHub Actions workflow is configured for best-effort discovery every 5 minutes, with a daily full test run at 08:00 Africa/Nairobi. It runs on GitHub-hosted Linux runners and publishes a signed-by-hash report bundle to the public `report-data` branch. The local PC can be switched off without stopping these scheduled public scans.
 
 The cloud report registry now contains 27 platform records and 37 discovery-source records. The report is a directory and status view, not proof that every platform has a live feed or that an account can receive work in Kenya.
 
@@ -14,7 +14,7 @@ The cloud report registry now contains 27 platform records and 37 discovery-sour
 
 The other platform entries are represented with the least-permissive approved status. Manual-review adapters only read task snapshots a user has exported into the local `data/manual` directory; they do not sign in, scrape account pages, accept tasks, complete timed assessments, upload evidence or submit applications. Micro1 and Sovrano remain account/manual-review paths.
 
-GitHub scheduled workflows are best-effort: runs may start late or be dropped during high load. The 15-minute schedule is not a real-time or strict SLA guarantee.
+GitHub scheduled workflows are best-effort: runs may start late or be dropped during high load. The 5-minute schedule is not a real-time or strict SLA guarantee.
 
 ## What is not yet an offline-capable cloud worker
 
