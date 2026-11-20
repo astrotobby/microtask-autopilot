@@ -287,5 +287,3 @@ def scan_and_reply(conn, mailer: Any, profile: dict[str, Any], now: datetime | N
         with db.tx(conn):
             db.set_state(conn, "employer_email_reply_state", state)
     return counts
-
-[executed on device: DESKTOP-8CRRB6G (6c914e80-efa3-459f-9dac-5e673d08264f)]
