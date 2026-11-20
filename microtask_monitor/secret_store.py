@@ -13,6 +13,7 @@ import ctypes
 import os
 import re
 from typing import Any
+from pathlib import Path
 
 PREFIX = "MicrotaskAutopilot/"
 NAME_RE = re.compile(r"^[a-z0-9_]{2,40}$")
