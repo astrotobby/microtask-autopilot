@@ -39,6 +39,7 @@ DEADLINE_RX = re.compile(r"(?:deadline|due(?: date)?|expires?(?: on)?|closes?(?:
 AVAIL_RX = re.compile(r"(\d+\s+(?:spots?|slots?|places?|tasks?|seats?)\s+(?:left|remaining|available))|(limited (?:spots|slots|availability))|(first come,? first served)", re.I)
 COUNTRY_RX = re.compile(r"(?i:available|open|eligible)\s+(?i:only\s+)?(?i:in|to|for)\s*:?\s*([A-Z][A-Za-z ,&]+?)(?:\.|\n|$)", re.M)
 WORLDWIDE_RX = re.compile(r"\b(worldwide|all countries|any country|globally|from anywhere)\b", re.I)
+SECURITY_MESSAGE_RX = re.compile(r"\b(?:security|verification|one[- ]time|sign[- ]in|login|authentication)\s+(?:code|passcode|password|token)\b|\b(?:one[- ]time password|passcode|OTP|2FA|two[- ]factor code)\b", re.I)
 COUNTRY_CODES = {"kenya": "KE", "united states": "US", "usa": "US", "us": "US", "canada": "CA", "united kingdom": "GB", "uk": "GB", "australia": "AU",
                  "new zealand": "NZ", "india": "IN", "nigeria": "NG", "south africa": "ZA", "germany": "DE", "france": "FR", "philippines": "PH", "ireland": "IE"}
 CURRENCY = {"$": "USD", "us$": "USD", "usd": "USD", "dollars": "USD", "kes": "KES", "ksh": "KES", "eur": "EUR", "€": "EUR", "gbp": "GBP", "£": "GBP"}
@@ -79,6 +80,9 @@ def parse(raw: bytes) -> dict[str, Any] | None:
     sender = str(msg.get("From") or "")
     subject = re.sub(r"\s+", " ", str(msg.get("Subject") or "")).strip()
     body = _text(msg)
+    # Never persist authentication notices or security codes as task instructions.
+    if SECURITY_MESSAGE_RX.search(subject + "\n" + body):
+        return None
     domains = platform_domains()
     host = (re.search(r"@([A-Za-z0-9.-]+)", sender) or [None, ""])[1].lower()
     pid = domains.get(".".join(host.split(".")[-2:])) if host else None
