@@ -99,7 +99,7 @@ class RegistryTests(unittest.TestCase):
         self.assertEqual({s["platform_id"] for s in self.load("discovery_sources.json")["sources"]}, EXPECTED_27)
         dash = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
         block = dash[dash.index("const PLATFORMS = ["):dash.index("const GROUPS=")]
-        self.assertEqual(set(re.findall(r'\{id:"([a-z_]+)"', block)), EXPECTED_27)
+        self.assertEqual(set(re.findall(r'\{id:"([a-z0-9_]+)"', block)), EXPECTED_27)
         self.assertEqual({a.platform_id for a in discovery.default_adapters()}, EXPECTED_27)
         self.assertEqual({m["platform_id"] for m in permissions.matrix()}, EXPECTED_27)
 
