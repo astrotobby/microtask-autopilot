@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -20,7 +21,7 @@ except ImportError:  # pragma: no cover
     import db, opportunity_common as oc, policy, risk
 
 ROOT = Path(__file__).resolve().parents[1]
-PROFILE_PATH = ROOT / "microtask_monitor" / "profile.json"
+PROFILE_PATH = Path(os.environ.get("AUTOPILOT_PROFILE_PATH") or (ROOT / "microtask_monitor" / "profile.json"))
 
 KENYA_CONFIRMED = "KENYA_CONFIRMED"
 WORLDWIDE_CONFIRMED = "WORLDWIDE_CONFIRMED"

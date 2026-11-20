@@ -26,6 +26,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 try:
@@ -446,7 +447,7 @@ def upsert_bounties(conn, bounties: list[dict[str, Any]], source: str, complete:
 
 def _profile() -> dict:
     try:
-        return json.loads((policy.ROOT / "microtask_monitor" / "profile.json").read_text(encoding="utf-8"))
+        return json.loads(Path(os.environ.get("AUTOPILOT_PROFILE_PATH") or (policy.ROOT / "microtask_monitor" / "profile.json")).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 

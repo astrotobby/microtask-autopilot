@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from microtask_monitor import secret_store, whop
+from microtask_monitor import cloud_export, secret_store, whop
 from microtask_monitor.cloud_service import authorize_header, filter_cloud_jobs, public_base_url
 
 
@@ -41,6 +41,46 @@ class CloudSecretStoreTests(unittest.TestCase):
         }, clear=False):
             store = secret_store.EncryptedFileStore(path=Path(tmp) / "none.enc", key="")
             self.assertEqual(store.names(), [("owner_gmail", "app_password_0")])
+
+
+class CloudMigrationTests(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec("cryptography"), "cryptography is not installed")
+    def test_encrypted_export_preserves_database_and_private_profile_but_not_browser_sessions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "data").mkdir()
+            (root / "microtask_monitor").mkdir()
+            sqlite3 = __import__("sqlite3")
+            conn = sqlite3.connect(root / "data" / "autopilot.sqlite3")
+            conn.execute("CREATE TABLE marker (value TEXT)")
+            conn.execute("INSERT INTO marker VALUES ('preserved-state')")
+            conn.commit()
+            conn.close()
+            (root / "microtask_monitor" / "profile.json").write_text('{"country":"Kenya"}', encoding="utf-8")
+            (root / "data" / "outreach_config.json").write_text('{"max_channels_per_run":0}', encoding="utf-8")
+            (root / "data" / "browser-profiles").mkdir()
+            (root / "data" / "browser-profiles" / "cookies.sqlite").write_text("must-not-export", encoding="utf-8")
+            output = root / "cloud-migration.enc"
+            result = cloud_export.build_bundle(root, output, "a-very-private-migration-passphrase")
+            self.assertEqual(result["database_integrity"], "ok")
+            self.assertTrue(output.is_file())
+            with tempfile.TemporaryDirectory() as staged:
+                manifest = cloud_export.unpack_to_staging(output.read_bytes(), "a-very-private-migration-passphrase", Path(staged))
+                self.assertEqual(manifest["database_integrity"], "ok")
+                self.assertTrue((Path(staged) / "data" / "autopilot.sqlite3").is_file())
+                self.assertTrue((Path(staged) / "private" / "profile.json").is_file())
+                self.assertFalse((Path(staged) / "data" / "browser-profiles").exists())
+                dbconn = sqlite3.connect(Path(staged) / "data" / "autopilot.sqlite3")
+                try:
+                    self.assertEqual(dbconn.execute("SELECT value FROM marker").fetchone()[0], "preserved-state")
+                finally:
+                    dbconn.close()
+
+    @unittest.skipUnless(importlib.util.find_spec("cryptography"), "cryptography is not installed")
+    def test_wrong_passphrase_fails_closed(self):
+        with self.assertRaises(cloud_export.CloudExportError):
+            cloud_export.decrypt_bundle(cloud_export.encrypt_zip(b"zip", "correct-private-passphrase"), "incorrect-private-passphrase")
+
 
 
 class CloudServicePolicyTests(unittest.TestCase):

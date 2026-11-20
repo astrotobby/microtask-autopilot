@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
@@ -23,7 +24,7 @@ HERE = Path(__file__).resolve().parent
 DEFAULTS_PATH = HERE / "business_defaults.json"
 SOURCES_PATH = HERE / "business_sources.json"
 USER_PATH = db.DATA_DIR / "business_config.json"
-PROFILE_PATH = HERE / "profile.json"
+PROFILE_PATH = Path(os.environ.get("AUTOPILOT_PROFILE_PATH") or (HERE / "profile.json"))
 OUTREACH_PATH = db.DATA_DIR / "outreach_config.json"
 
 

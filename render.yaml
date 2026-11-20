@@ -17,6 +17,8 @@ services:
         value: cloud
       - key: AUTOPILOT_DATA_DIR
         value: /app/data
+      - key: AUTOPILOT_PROFILE_PATH
+        value: /app/data/profile.json
       - key: AUTOPILOT_ADMIN_TOKEN
         generateValue: true
       - key: AUTOPILOT_SECRET_ENCRYPTION_KEY

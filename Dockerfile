@@ -3,7 +3,8 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     AUTOPILOT_RUNTIME=cloud \
-    AUTOPILOT_DATA_DIR=/app/data
+    AUTOPILOT_DATA_DIR=/app/data \
+    AUTOPILOT_PROFILE_PATH=/app/data/profile.json
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt

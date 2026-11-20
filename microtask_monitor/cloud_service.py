@@ -11,9 +11,15 @@ import html
 import json
 import logging
 import os
-import signal
+import shutil
+import sqlite3
+import tempfile
 import threading
 import time
+from datetime import datetime, timezone
+from email.parser import BytesParser
+from email.policy import default as email_policy
+from pathlib import Path
 from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -122,6 +128,130 @@ def _db_status() -> dict:
     return {"heartbeat": heartbeat, "counts": counts, "jobs": jobs}
 
 
+def _restore_migration(bundle: bytes, passphrase: str) -> dict:
+    """Stop the scheduler, validate a passphrase-encrypted export, back up, then import operating state."""
+    from microtask_monitor import cloud_export, connections, db, policy
+
+    data_dir = Path(db.DATA_DIR)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    stage_parent = Path(tempfile.mkdtemp(prefix="autopilot-restore-", dir=str(data_dir)))
+    stopped = False
+    backup = None
+    replaced = False
+    try:
+        manifest = cloud_export.unpack_to_staging(bundle, passphrase, stage_parent / "staged")
+        staged_data = stage_parent / "staged" / "data"
+        target_db = Path(db.DB_PATH)
+
+        # Validate the incoming database again immediately before stopping the service.
+        incoming = sqlite3.connect(str(staged_data / "autopilot.sqlite3"))
+        try:
+            check = incoming.execute("PRAGMA integrity_check").fetchone()
+            if not check or check[0] != "ok":
+                raise cloud_export.CloudExportError("Imported SQLite database failed its final integrity check")
+        finally:
+            incoming.close()
+
+        _stop.set()
+        if _engine_thread and _engine_thread.is_alive():
+            _engine_thread.join(timeout=30)
+            if _engine_thread.is_alive():
+                raise cloud_export.CloudExportError("Scheduler did not stop safely; migration cancelled")
+        stopped = True
+
+        # Always preserve the pre-import database on the persistent disk.
+        if target_db.exists():
+            backup_dir = data_dir / "backups"
+            backup_dir.mkdir(exist_ok=True)
+            backup = backup_dir / ("pre-restore-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + ".sqlite3")
+            src = sqlite3.connect(str(target_db))
+            dst = sqlite3.connect(str(backup))
+            try:
+                src.backup(dst)
+                if dst.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+                    raise cloud_export.CloudExportError("Pre-import database backup failed integrity verification")
+            finally:
+                dst.close()
+                src.close()
+
+        os.replace(staged_data / "autopilot.sqlite3", target_db)
+        replaced = True
+        # Copy only the export format's explicit allowlist. Never import cookies, browser profiles or secrets.enc.
+        for name in cloud_export.DATA_FILES:
+            source = staged_data / name
+            if source.is_file():
+                shutil.copy2(source, data_dir / name)
+        for name in cloud_export.DATA_DIRS:
+            source = staged_data / name
+            if source.is_dir():
+                destination = data_dir / name
+                if destination.exists():
+                    shutil.rmtree(destination)
+                shutil.copytree(source, destination)
+
+        private_profile = stage_parent / "staged" / "private" / "profile.json"
+        if private_profile.is_file():
+            profile_path = data_dir / "profile.json"
+            shutil.copy2(private_profile, profile_path)
+            try:
+                os.chmod(profile_path, 0o600)
+            except OSError:
+                pass
+            os.environ["AUTOPILOT_PROFILE_PATH"] = str(profile_path)
+
+        # Windows browser sessions are not portable. Mark every formerly-confirmed session as requiring sign-in.
+        with closing(db.connect(db.DB_PATH)) as conn:
+            statuses = connections.list_status(conn)
+            for item in statuses:
+                if item.get("status") == "connected_user_confirmed":
+                    connections.report_expired(conn, item["platform_id"])
+        _prepare_engine()
+        return {
+            "ok": True,
+            "files_imported": manifest["file_count"],
+            "database_integrity": "ok",
+            "pre_restore_backup": str(backup) if backup else None,
+            "browser_sessions": "not imported; all previously confirmed sessions require fresh sign-in",
+            "profile_imported": private_profile.is_file(),
+            "secrets": "not imported; reconnect Whop and Gmail in cloud admin",
+        }
+    except Exception:
+        # Never leave the worker stopped, and roll back the database swap if the import did not finish.
+        if replaced and backup and backup.exists():
+            recovery = target_db.with_name(target_db.name + ".rollback")
+            shutil.copy2(backup, recovery)
+            os.replace(recovery, target_db)
+        raise
+    finally:
+        if stopped:
+            _stop.clear()
+            try:
+                _worker_start()
+            except Exception:
+                LOG.exception("Could not restart cloud scheduler after migration")
+        shutil.rmtree(stage_parent, ignore_errors=True)
+
+
+def _parse_multipart(content_type: str, raw: bytes) -> tuple[bytes, str]:
+    if not content_type.lower().startswith("multipart/form-data;"):
+        raise ValueError("Upload must use the multipart form")
+    msg = BytesParser(policy=email_policy).parsebytes(
+        ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode("ascii") + raw
+    )
+    archive = None
+    passphrase = ""
+    for part in msg.iter_parts():
+        name = part.get_param("name", header="content-disposition")
+        payload = part.get_payload(decode=True) or b""
+        if name == "archive":
+            archive = payload
+        elif name == "passphrase":
+            passphrase = payload.decode("utf-8", "strict")
+    if not archive or not passphrase:
+        raise ValueError("Choose the encrypted migration file and enter its passphrase")
+    return archive, passphrase
+
+
 def _response_json(handler, status: int, value: dict):
     raw = json.dumps(value, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     handler.send_response(status)
@@ -170,6 +300,15 @@ button{cursor:pointer;background:#174f94;color:white;border:0}label{display:bloc
 <section><h2>Platform discovery and execution</h2>
 <p>The public scanner runs independently of your PC. The cloud scheduler processes the persistent queue and only calls adapters whose platform permissions allow the action. Side-effectful prospecting is disabled by default. No withdrawal or prohibited assessment is automated.</p>
 <p><a href="/admin/status">View scheduler status and queue counts</a></p></section>
+<section><h2>Import your current PC state</h2>
+<p>Upload the encrypted bundle created by <code>python -m microtask_monitor.cloud_export</code>. It restores the database, queue, history, permitted account metadata, configuration and work files. Browser sessions and Windows secrets are deliberately excluded and must be reconnected here.</p>
+<form method="post" action="/admin/restore" enctype="multipart/form-data">
+<label>Encrypted migration file <input type="file" name="archive" accept=".enc,application/octet-stream" required></label>
+<label>Migration passphrase <input type="password" name="passphrase" required minlength="12" autocomplete="off"></label>
+<button type="submit">Validate and import current engine state</button>
+</form>
+<p class="muted">The current cloud database is backed up before replacement. Never upload a plaintext database or browser profile.</p>
+</section>
 <section><h2>Whop read-only connection</h2>
 <p>Status: <b>""" + html.escape(whop_state) + """</b></p>
 <p class="muted">OAuth redirect URL to add to your Whop developer app:</p><code>""" + html.escape(redirect_uri) + """</code>
@@ -277,7 +416,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         path = urlparse(self.path).path
-        if path not in ("/admin/whop/client-id", "/admin/whop/authorize", "/admin/secrets/gmail"):
+        if path not in ("/admin/whop/client-id", "/admin/whop/authorize", "/admin/secrets/gmail", "/admin/restore"):
             self.send_error(404)
             return
         if not self._admin_required():
@@ -286,6 +425,14 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(403, "Same-origin HTTPS request required")
             return
         try:
+            if path == "/admin/restore":
+                from microtask_monitor import cloud_export
+                raw_upload = self._body(limit=cloud_export.MAX_UPLOAD_BYTES + 1024 * 1024)
+                bundle, passphrase = _parse_multipart(self.headers.get("Content-Type", ""), raw_upload)
+                result = _restore_migration(bundle, passphrase)
+                _response_html(self, 200, "<!doctype html><title>Migration complete</title><h1>Cloud engine state imported</h1><pre>" +
+                               html.escape(json.dumps(result, indent=2)) + "</pre><p>Reconnect Whop and Gmail, then review /admin/status.</p><p><a href='/admin'>Return to cloud control</a></p>")
+                return
             from contextlib import closing
             from microtask_monitor import db, secret_store, whop
             raw = self._body()
