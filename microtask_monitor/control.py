@@ -42,6 +42,7 @@ DEFAULTS: dict[str, Any] = {
     "owner_outreach_enabled": False,       # owner lane: find podcast buyers and email them a free sample (approved templates only)
     "email_import_enabled": True,          # read exported .eml notification files from data/email_inbox (local only)
     "email_monitor_enabled": False,        # read your own Gmail inbox READ-ONLY for platform notifications (uses the stored app password)
+    "employer_auto_reply_enabled": False,  # factual replies in matched job threads only; assessments and sensitive topics are held
     "min_reward_usd": 0.0,                 # opportunities paying less are "not economically worthwhile"
     "max_daily_tasks": 20,                 # cap on new executions started per day
     "preferred_platforms": [],             # ranked higher when everything else is equal
