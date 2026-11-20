@@ -873,7 +873,7 @@ class SchedulerTests(Base):
         self.assertEqual(len(names), len(set(names)))
         for needed in ("report_sync", "discovery", "daily_analysis", "stale_check", "connection_health", "policy_review", "orchestrator", "submissions", "payment_monitor", "cleanup"):
             self.assertIn(needed, names)
-        self.assertEqual({j.name: j.interval for j in scheduler.Scheduler(self.dbp).jobs}["discovery"], 3600)
+        self.assertEqual({j.name: j.interval for j in scheduler.Scheduler(self.dbp).jobs}["discovery"], 900)
 
     def test_cleanup_only_removes_temporary_folders_inside_the_executions_dir(self):
         aid, out = self.run_direct()

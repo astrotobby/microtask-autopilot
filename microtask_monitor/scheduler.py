@@ -3,7 +3,7 @@
 One loop owns every periodic job, so jobs never overlap or compete for the same record:
 
     report_sync       every 15 min   download the cloud scan's report (existing sync)
-    discovery         hourly         permitted adapters only (discovery.py)
+    discovery         every 15 min   all 27 registered adapters; account/API calls remain permission-gated
     daily_analysis    08:00 Nairobi (05:00 UTC), once per Nairobi day; a missed run is recovered after a restart
     maintenance       every 10 min   reminders and today's action list
     stale_check       every 6 h      stale listings and passed deadlines
@@ -93,7 +93,7 @@ class Scheduler:
     def default_jobs(self) -> list[Job]:
         return [Job("report_sync", 900, lambda s, c, n: s.sync_fn() if s.sync_fn else "no sync function in this process"),
                 Job("maintenance", 600, _maintenance),
-                Job("discovery", 3600, _discovery),
+                Job("discovery", 900, _discovery),
                 Job("daily_analysis", 600, _daily, due=lambda c, n: daily.due_today(c, n)),
                 Job("stale_check", 21600, lambda s, c, n: discovery.stale_check(c, n)),
                 Job("connection_health", 21600, _connection_health),
