@@ -111,7 +111,7 @@ class PlatformRegistryTests(unittest.TestCase):
         page = dashboard.read_text(encoding="utf-8")
         for section in ("overview", "platforms", "opportunities", "applications", "earnings"):
             self.assertIn('id="' + section + '"', page)
-        for platform_id in ALL_TWENTY_FIVE:
+        for platform_id in ALL_TWENTY_SEVEN:
             self.assertIn('id:"' + platform_id + '"', page)
         self.assertIn("importReport", page)
         self.assertIn("exportBackup", page)

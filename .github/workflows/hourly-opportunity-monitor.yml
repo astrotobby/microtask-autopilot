@@ -20,7 +20,7 @@ on:
   schedule:
     # Best-effort cloud discovery while the owner's PC is offline. GitHub may delay scheduled runs.
     - cron: "7,22,37,52 * * * *"
-    # Daily full validation and analysis at 08:00 Africa/Nairobi (05:00 UTC).
+    # Daily full validation and analysis at 08:00 East Africa Time / Africa/Nairobi (05:00 UTC).
     - cron: "0 5 * * *"
   workflow_dispatch:
 

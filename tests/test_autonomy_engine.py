@@ -322,7 +322,7 @@ class DiscoveryTests(Base):
         with mock.patch("urllib.request.urlopen", side_effect=AssertionError("network used")):
             out = discovery.run(self.conn, adapters)
         self.assertEqual(out["adapters"]["whop_workforce"]["status"], "needs_you")
-        self.assertEqual(sum(1 for v in out["adapters"].values() if v["status"] == "manual_import_only"), 22)
+        self.assertEqual(sum(1 for v in out["adapters"].values() if v["status"] == "manual_import_only"), 24)
 
     def test_stale_listings_expire(self):
         now = datetime.now(timezone.utc)
@@ -964,7 +964,7 @@ class EngineApiTests(Base):
             self.assertIn(key, row["clickworker"])
         self.assertEqual(row["opentrain_ai"]["discovery"]["mode"], "public_api")
         s, r = self.call("GET", "/onboarding")
-        self.assertEqual(len(r["platforms"]), 25)
+        self.assertEqual(len(r["platforms"]), 27)
         self.assertIn("Do not sign up", " ".join({p["platform_id"]: p for p in r["platforms"]}["prolific"]["steps"]))
         self.assertEqual(self.call("GET", "/nope")[0], 404)
 
