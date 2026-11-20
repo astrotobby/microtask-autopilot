@@ -21,7 +21,7 @@ from microtask_monitor import (api as api_module, assignments as asg, connection
                                orchestrator, permissions, policy, qa_gate, scheduler, submission, task_intel)
 
 ROOT = Path(__file__).resolve().parents[1]
-EXPECTED_25 = {
+EXPECTED_27 = {
     "atlas_capture", "clickworker", "gainworkers", "hivemicro", "microworkers", "rapidworkers", "sproutgigs", "timebucks",
     "afterquery", "crowdgen", "handshake_ai", "mindrift", "neevo", "oneforma", "opentrain_ai", "telus_digital_ai",
     "blend", "braintrust", "reworkio", "paidviewpoint", "prolific", "swagbucks", "user_interviews", "usertesting", "whop_workforce", "micro1_talent", "sovrano_ai"}
@@ -38,7 +38,7 @@ PERMIT = {"status": "permitted", "evidence_url": "https://app.opentrain.ai/terms
 
 
 def permissive_caps(pid="opentrain_ai"):
-    """The real 25 records with ONE platform given explicit (simulated) evidence for execution and submission."""
+    """The real 27 records with ONE platform given explicit (simulated) evidence for execution and submission."""
     caps = copy.deepcopy(policy.load_capabilities())
     rec = caps[pid]
     rec["execution"] = {**(rec.get("execution") or {}), "automated_execution": PERMIT, "automated_submission": PERMIT}
@@ -87,21 +87,21 @@ class RegistryTests(unittest.TestCase):
     def load(self, name):
         return json.loads((ROOT / "microtask_monitor" / name).read_text(encoding="utf-8"))
 
-    def test_exactly_25_unique_platform_ids_everywhere(self):
+    def test_exactly_27_unique_platform_ids_everywhere(self):
         platforms = [p["id"] for p in self.load("platforms.json")["platforms"]]
         caps = [p["platform_id"] for p in self.load("capabilities.json")["platforms"]]
-        self.assertEqual(len(platforms), 25)
-        self.assertEqual(len(set(platforms)), 25)
-        self.assertEqual(set(platforms), EXPECTED_25)
-        self.assertEqual(len(caps), 25)
-        self.assertEqual(set(caps), EXPECTED_25)
-        self.assertEqual(set(self.load("integrations.json")["platforms"]), EXPECTED_25)
-        self.assertEqual({s["platform_id"] for s in self.load("discovery_sources.json")["sources"]}, EXPECTED_25)
+        self.assertEqual(len(platforms), 27)
+        self.assertEqual(len(set(platforms)), 27)
+        self.assertEqual(set(platforms), EXPECTED_27)
+        self.assertEqual(len(caps), 27)
+        self.assertEqual(set(caps), EXPECTED_27)
+        self.assertEqual(set(self.load("integrations.json")["platforms"]), EXPECTED_27)
+        self.assertEqual({s["platform_id"] for s in self.load("discovery_sources.json")["sources"]}, EXPECTED_27)
         dash = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
         block = dash[dash.index("const PLATFORMS = ["):dash.index("const GROUPS=")]
-        self.assertEqual(set(re.findall(r'\{id:"([a-z_]+)"', block)), EXPECTED_25)
-        self.assertEqual({a.platform_id for a in discovery.default_adapters()}, EXPECTED_25)
-        self.assertEqual({m["platform_id"] for m in permissions.matrix()}, EXPECTED_25)
+        self.assertEqual(set(re.findall(r'\{id:"([a-z_]+)"', block)), EXPECTED_27)
+        self.assertEqual({a.platform_id for a in discovery.default_adapters()}, EXPECTED_27)
+        self.assertEqual({m["platform_id"] for m in permissions.matrix()}, EXPECTED_27)
 
     def test_registered_platforms_are_not_presented_as_automated_integrations(self):
         levels = {m["platform_id"]: m["level"] for m in permissions.matrix()}
@@ -110,7 +110,7 @@ class RegistryTests(unittest.TestCase):
         self.assertFalse([p for p, n in levels.items() if n >= 4], "no real platform is verified for automated execution or submission")
         self.assertNotIn(permissions.DIRECT_LANE, levels)
         modes = {a.platform_id: a.mode for a in discovery.default_adapters()}
-        self.assertEqual(sum(1 for m in modes.values() if m == "manual_import"), 22)
+        self.assertEqual(sum(1 for m in modes.values() if m == "manual_import"), 24)
 
     def test_official_urls_are_https_and_unconfirmed_identity_is_not_guessed(self):
         for p in self.load("platforms.json")["platforms"]:
@@ -231,7 +231,7 @@ class ConnectionStateTests(Base):
         self.assertEqual(cx.connection_state(self.conn, "clickworker")["state"], "LOGIN_REQUIRED")
         self.assertEqual(cx.connection_state(self.conn, "mindrift")["state"], "DISABLED")
         self.assertEqual(cx.connection_state(self.conn, "microworkers")["automation"], "AUTOMATION_NOT_PERMITTED")
-        self.assertEqual(len(cx.list_states(self.conn)), 25)
+        self.assertEqual(len(cx.list_states(self.conn)), 27)
         for st in cx.list_states(self.conn):
             self.assertIn(st["state"], cx.CONNECTION_STATES)
 
@@ -777,7 +777,7 @@ class LedgerTests(Base):
 
     def test_payout_compatibility_separates_platform_from_your_account(self):
         rows = {p["platform_id"]: p for p in ledger.payout_compatibility(self.conn)}
-        self.assertEqual(len(rows), 25)
+        self.assertEqual(len(rows), 27)
         self.assertFalse(any(p["account_verified"] for p in rows.values()))
         with self.assertRaises(ledger.LedgerError):
             ledger.set_route(self.conn, "clickworker", "paypal", True, "", True)
@@ -952,13 +952,13 @@ class EngineApiTests(Base):
 
     def test_every_view_answers_from_real_records(self):
         s, r = self.call("GET", "")
-        self.assertEqual((s, r["registered_platforms"], r["tasks_executing"], r["verified_earnings"]["by_currency"]), (200, 25, 0, {}))
-        self.assertIn("not 25 automated integrations", r["note"])
+        self.assertEqual((s, r["registered_platforms"], r["tasks_executing"], r["verified_earnings"]["by_currency"]), (200, 27, 0, {}))
+        self.assertIn("not the same as automated integrations", r["note"])
         for path in ("/platforms", "/permissions", "/connections", "/onboarding", "/pipeline", "/execution", "/submissions", "/ledger", "/control", "/scheduler", "/discovery"):
             s, r = self.call("GET", path)
             self.assertEqual((s, r["ok"]), (200, True), path)
         s, r = self.call("GET", "/platforms")
-        self.assertEqual(len(r["platforms"]), 25)
+        self.assertEqual(len(r["platforms"]), 27)
         row = {p["platform_id"]: p for p in r["platforms"]}
         for key in ("official_url", "connection", "eligibility", "payment", "automation", "discovery", "opportunities", "required_manual_action"):
             self.assertIn(key, row["clickworker"])

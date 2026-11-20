@@ -290,8 +290,8 @@ class WorkflowAndDashboardTests(unittest.TestCase):
     WORKFLOW = (ROOT / ".github" / "workflows" / "hourly-opportunity-monitor.yml").read_text(encoding="utf-8")
     DASH = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
 
-    def test_workflow_has_the_hourly_and_the_0800_nairobi_schedules(self):
-        self.assertIn('cron: "17 * * * *"', self.WORKFLOW)
+    def test_workflow_has_the_15_minute_and_the_0800_nairobi_schedules(self):
+        self.assertIn('cron: "7,22,37,52 * * * *"', self.WORKFLOW)
         self.assertIn('cron: "0 5 * * *"', self.WORKFLOW)
         self.assertIn("08:00 East Africa Time", self.WORKFLOW)
         self.assertIn("ANALYSIS_TRIGGER", self.WORKFLOW)

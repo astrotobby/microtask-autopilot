@@ -22,13 +22,13 @@ BOUNTY = {"whop_workforce"}
 
 class ClassificationTests(unittest.TestCase):
     def test_all_twenty_seven_platforms_are_classified_into_five_groups(self):
-        self.assertEqual(len(PLATFORMS), 25)
+        self.assertEqual(len(PLATFORMS), 27)
         for ids, kind in ((MICROTASK, "microtask"), (AI_TRAINING, "ai_training"),
                           (PROFESSIONAL, "professional_marketplace"), (USER_RESEARCH, "user_research"),
                           (BOUNTY, "bounty_marketplace")):
             for pid in ids:
                 self.assertEqual(BY_ID[pid]["platform_type"], kind, pid)
-        self.assertEqual(len(MICROTASK | AI_TRAINING | PROFESSIONAL | USER_RESEARCH | BOUNTY), 25)
+        self.assertEqual(len(MICROTASK | AI_TRAINING | PROFESSIONAL | USER_RESEARCH | BOUNTY), 27)
 
     def test_reworkio_is_a_professional_marketplace_not_a_microtask_site(self):
         self.assertEqual(BY_ID["reworkio"]["platform_type"], "professional_marketplace")
@@ -125,7 +125,7 @@ class ReportIntegrationTests(unittest.TestCase):
                   "medium_review_count": 0, "important_note": "Verify."}
         page = scan_feeds.render_html(report)
         self.assertIn("Integration health", page)
-        self.assertIn("Twenty-five-platform", page)
+        self.assertIn("Twenty-seven-platform", page)
         self.assertIn("REWORKIO", page)
         self.assertIn("Job &lt;b&gt;1&lt;/b&gt;", page)
         self.assertNotIn("<b>1</b>", page)
@@ -137,8 +137,8 @@ class ReportIntegrationTests(unittest.TestCase):
 
 
 class DashboardDisplayTests(unittest.TestCase):
-    def test_twenty_five_platforms_in_five_groups_with_independent_eligibility_and_health(self):
-        self.assertIn("Platforms (25)", DASH)
+    def test_twenty_seven_platforms_in_five_groups_with_independent_eligibility_and_health(self):
+        self.assertIn("Platforms (27)", DASH)
         for pid in BY_ID:
             self.assertIn(f'id:"{pid}"', DASH)
         for title in ("Microtask platforms", "AI training and evaluation platforms",

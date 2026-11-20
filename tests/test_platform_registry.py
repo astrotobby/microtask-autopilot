@@ -14,7 +14,7 @@ EXPECTED = {
 NEW_FOUR = {"opentrain_ai", "gainworkers", "mindrift", "reworkio"}
 NEW_FIVE = {"usertesting", "user_interviews", "prolific", "paidviewpoint", "whop_workforce"}
 NEW_EIGHT = {"telus_digital_ai", "crowdgen", "oneforma", "hivemicro", "timebucks", "neevo", "swagbucks", "blend"}
-ALL_TWENTY_FIVE = EXPECTED | NEW_FOUR | NEW_FIVE | NEW_EIGHT
+ALL_TWENTY_SEVEN = EXPECTED | NEW_FOUR | NEW_FIVE | NEW_EIGHT | {"micro1_talent", "sovrano_ai"}
 
 
 class PlatformRegistryTests(unittest.TestCase):
@@ -26,8 +26,8 @@ class PlatformRegistryTests(unittest.TestCase):
     def test_original_eight_platforms_are_preserved(self):
         self.assertTrue(EXPECTED.issubset({p["id"] for p in self.platforms}))
 
-    def test_registry_contains_all_twenty_five_platforms(self):
-        self.assertEqual({p["id"] for p in self.platforms}, ALL_TWENTY_FIVE)
+    def test_registry_contains_all_twenty_seven_platforms(self):
+        self.assertEqual({p["id"] for p in self.platforms}, ALL_TWENTY_SEVEN)
         self.assertEqual(len(self.platforms), 27)
 
     def test_platform_ids_are_unique(self):
