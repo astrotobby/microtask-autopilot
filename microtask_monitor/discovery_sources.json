@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-12",
+  "updated_at": "2026-11-20",
   "country_focus": "Kenya",
   "sources": [
     {
@@ -364,6 +364,50 @@
       "automated_fetch_enabled": false,
       "reason": "Language-service projects are skill/language-specific; no public worker API verified.",
       "use": "Review language projects manually and confirm Kenya payment availability."
+    },
+    {
+      "id": "micro1_talent_opportunities",
+      "platform_id": "micro1_talent",
+      "name": "micro1 Talent public opportunities",
+      "url": "https://www.micro1.ai/experts/opportunities",
+      "source_type": "official_public_opportunities_page",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Micro1 Candidate Terms prohibit automated scripts, crawling and scraping. Role-by-role country eligibility and contract terms must be checked manually.",
+      "use": "Review the official public opportunity page manually; apply and complete screening/interviews yourself."
+    },
+    {
+      "id": "micro1_talent_dashboard",
+      "platform_id": "micro1_talent",
+      "name": "micro1 Talent candidate dashboard",
+      "url": "https://talent.micro1.ai/dashboard",
+      "source_type": "official_candidate_dashboard",
+      "access_mode": "manual_review_required",
+      "automated_fetch_enabled": false,
+      "reason": "Candidate-account dashboard; the Candidate Terms prohibit scripts and scraping. No logged-in automated access is enabled.",
+      "use": "Sign in yourself and review matched roles, application status, assessments and project instructions."
+    },
+    {
+      "id": "sovrano_ai_public_opportunities",
+      "platform_id": "sovrano_ai",
+      "name": "Sovrano AI public opportunities",
+      "url": "https://app.sovrano.ai/opportunities",
+      "source_type": "official_public_opportunities_page",
+      "access_mode": "manual_public_review",
+      "automated_fetch_enabled": false,
+      "reason": "Public listings can be browsed without sign-in, but no documented worker API or written permission for programmatic extraction was found. App Terms/robots content was not readable in the review.",
+      "use": "Browse the public opportunities board manually; verify country, rate, assessment rules and payout before applying."
+    },
+    {
+      "id": "sovrano_ai_help",
+      "platform_id": "sovrano_ai",
+      "name": "Sovrano AI official candidate guidance",
+      "url": "https://sovrano.ai/support/students/find-apply-projects/",
+      "source_type": "official_candidate_help",
+      "access_mode": "manual_public_review",
+      "automated_fetch_enabled": false,
+      "reason": "Official help documents browse/apply and assessment process; tasks, assessments and payout setup must be reviewed personally.",
+      "use": "Use for candidate guidance; never use AI in assessments unless the specific instructions explicitly permit it."
     }
   ],
   "current_reviewed_roles": [

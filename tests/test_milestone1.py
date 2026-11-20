@@ -1,5 +1,5 @@
 """Milestone 1, the Platform Access & Execution Engine: capability profiles and evidence, the four-part gate, the standard
-adapter interface for all 25 platforms, email discovery (.eml folder and a read-only inbox), the eight categories and
+adapter interface for all 27 platforms, email discovery (.eml folder and a read-only inbox), the eight categories and
 ranking preferences, the research worker, submission outcomes A/B/C, public states, ledger fields, endpoints and the
 dashboard.
 
@@ -57,14 +57,14 @@ def grant(pid="opentrain_ai", capability="ai_execution", **kw):
 class CapabilityTests(Base):
     def test_every_platform_has_all_eleven_capabilities_in_three_states(self):
         profiles = capmod.all_profiles()
-        self.assertEqual(len(profiles), 25)
+        self.assertEqual(len(profiles), 27)
         for p in profiles:
             self.assertEqual(tuple(p["capabilities"]), capmod.CAPABILITIES)
             self.assertTrue(set(p["capabilities"].values()) <= set(capmod.STATES), p["platform_id"])
             self.assertTrue(all(p["reasons"][c] for c in capmod.CAPABILITIES), p["platform_id"])
             self.assertEqual(set(p["permission_evidence"]), {"source_url", "source_type", "verified_at", "expires_at", "notes"})
 
-    def test_automatic_submission_stays_human_required_on_all_25(self):
+    def test_automatic_submission_stays_human_required_on_all_27(self):
         for p in capmod.all_profiles():
             self.assertEqual(p["capabilities"]["automatic_submission"], "prohibited", p["platform_id"])
             self.assertEqual(p["submission_mode"], "human_required", p["platform_id"])
@@ -124,7 +124,7 @@ class AdapterTests(Base):
 
     def test_every_platform_has_the_standard_interface(self):
         ads = pa.all_adapters(self.conn)
-        self.assertEqual(len(ads), 25)
+        self.assertEqual(len(ads), 27)
         for ad in ads:
             for m in self.METHODS:
                 self.assertTrue(callable(getattr(ad, m)), f"{ad.platform_id}.{m}")
@@ -140,9 +140,9 @@ class AdapterTests(Base):
         with self.assertRaises(policy.PermissionDenied):
             pa.adapter(self.conn, "made_up_platform")
 
-    def test_control_centre_lists_25_from_real_records(self):
+    def test_control_centre_lists_27_from_real_records(self):
         rows = pa.control_centre(self.conn)
-        self.assertEqual(len(rows), 25)
+        self.assertEqual(len(rows), 27)
         self.assertTrue(all(r["submission_mode"] == "human_required" for r in rows))
 
     def _import(self, pid, **row):
@@ -381,7 +381,7 @@ class StateLedgerApiTests(Base):
     def test_endpoints(self):
         ed.import_messages(self.conn, ed.EmlFolder(SAMPLES).fetch(), "eml_folder")
         r = engine_api.route(None, self.conn, "GET", ["capabilities"], {}, {})
-        self.assertEqual(len(r["platforms"]), 25)
+        self.assertEqual(len(r["platforms"]), 27)
         r = engine_api.route(None, self.conn, "GET", ["opportunities"], {}, {})
         self.assertEqual(len(r["opportunities"]), 2)
         self.assertEqual(sum(c["count"] for c in r["category_counts"]), 2)

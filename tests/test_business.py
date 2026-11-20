@@ -590,12 +590,12 @@ class ApiSiteDashboardTests(Base):
 
 
 class PreservationTests(Base):
-    def test_migration_is_additive_and_the_25_platforms_remain(self):
+    def test_migration_is_additive_and_the_27_platforms_remain(self):
         from microtask_monitor import policy
         self.assertEqual(db.user_version(self.conn), 12)
         tables = {r[0] for r in self.conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         self.assertTrue({"assignments", "payments", "opportunities", "outreach_leads", "biz_leads", "biz_projects", "biz_invoices", "biz_audit"} <= tables)
-        self.assertEqual(len(policy.load_capabilities()), 25)
+        self.assertEqual(len(policy.load_capabilities()), 27)
 
     def test_business_modules_stay_within_their_bounds(self):
         for name in ("biz_config", "biz_proposals", "biz_projects", "biz_finance", "biz_portfolio", "biz_engine", "biz_api"):

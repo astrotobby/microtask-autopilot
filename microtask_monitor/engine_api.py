@@ -72,7 +72,7 @@ def executive(conn) -> dict[str, Any]:
             "human_required": one("SELECT COUNT(*) FROM assignments WHERE hold='human_required'"), "policy_blocked": one("SELECT COUNT(*) FROM assignments WHERE hold='policy_blocked'"),
             "control": {k: v for k, v in control.view(conn).items() if k in ("kill_switch", "may_run", "blocked_reason", "resources")},
             "scheduler": {k: v for k, v in scheduler.status(conn).items() if k in ("alive", "heartbeat")},
-            "note": "25 registered platforms are not 25 automated integrations: each platform's real capability is listed in the Platform Manager."}
+            "note": "Registered platforms are not the same as automated integrations: each platform's real capability is listed in the Platform Manager."}
 
 
 def platform_manager(conn) -> list[dict[str, Any]]:

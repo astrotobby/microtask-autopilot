@@ -14,14 +14,14 @@ BY_ID = {p["id"]: p for p in PLATFORMS}
 DASH = (ROOT / "dashboard" / "index.html").read_text(encoding="utf-8")
 
 MICROTASK = {"atlas_capture", "clickworker", "microworkers", "rapidworkers", "sproutgigs", "gainworkers", "hivemicro", "timebucks"}
-AI_TRAINING = {"afterquery", "handshake_ai", "opentrain_ai", "mindrift", "telus_digital_ai", "crowdgen", "oneforma", "neevo"}
+AI_TRAINING = {"afterquery", "handshake_ai", "opentrain_ai", "mindrift", "telus_digital_ai", "crowdgen", "oneforma", "neevo", "micro1_talent", "sovrano_ai"}
 PROFESSIONAL = {"braintrust", "reworkio", "blend"}
 USER_RESEARCH = {"usertesting", "user_interviews", "prolific", "paidviewpoint", "swagbucks"}
 BOUNTY = {"whop_workforce"}
 
 
 class ClassificationTests(unittest.TestCase):
-    def test_all_twenty_five_platforms_are_classified_into_five_groups(self):
+    def test_all_twenty_seven_platforms_are_classified_into_five_groups(self):
         self.assertEqual(len(PLATFORMS), 25)
         for ids, kind in ((MICROTASK, "microtask"), (AI_TRAINING, "ai_training"),
                           (PROFESSIONAL, "professional_marketplace"), (USER_RESEARCH, "user_research"),

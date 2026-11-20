@@ -580,6 +580,67 @@
         "captcha_or_identity_bypass"
       ],
       "notes": "Bounties come from GET https://api.whop.com/api/v1/bounties with the owner's OAuth token (scope bounty:basic:read). https://whop.com/workforce/ redirects to the homepage; the community is https://whop.com/whop-workforce/. Kenya must be in a bounty's allowed_country_codes, or the list must be empty (documented as worldwide). Data-capture bounties need an iPhone and are excluded for the Samsung Galaxy A05."
+    },
+    {
+      "id": "micro1_talent",
+      "name": "micro1 Talent",
+      "platform_type": "ai_training",
+      "official_url": "https://www.micro1.ai/experts/opportunities",
+      "dashboard_url": "https://talent.micro1.ai/dashboard",
+      "identity_status": "official_site_and_candidate_terms_reviewed",
+      "kenya_eligibility": "role_specific_kenya_not_on_published_exclusion_list",
+      "automation_status": "manual_review_only_candidate_terms_prohibit_scripts_and_scraping",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery",
+        "scraping",
+        "automated_scripts",
+        "automated_logged_in_browsing",
+        "automated_application_submission",
+        "automated_interview_answers",
+        "automated_assessment_answers",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_or_identity_bypass",
+        "impersonation",
+        "credential_sharing"
+      ],
+      "notes": "Official opportunity directory and talent dashboard registered. Kenya is not named in micro1's published global hiring exclusion list, but every role's country/location must still be checked. Candidate Terms updated 2026-07-21 prohibit automated scripts, crawling and scraping, and prohibit third-party assistance with confidential interview answers unless the interviewer or instructions explicitly permit it. Use the portal personally; never supply account credentials to an agent."
+    },
+    {
+      "id": "sovrano_ai",
+      "name": "Sovrano AI",
+      "platform_type": "ai_training",
+      "official_url": "https://app.sovrano.ai/opportunities",
+      "dashboard_url": "https://app.sovrano.ai/",
+      "identity_status": "official_public_opportunities_and_help_center_reviewed",
+      "kenya_eligibility": "role_specific_verify_each_listing",
+      "automation_status": "manual_public_listing_review_no_documented_worker_api",
+      "allowed_actions": [
+        "track_status",
+        "public_information_review",
+        "manual_task_record_import",
+        "open_official_site"
+      ],
+      "blocked_actions": [
+        "automated_task_discovery_via_undocumented_endpoints",
+        "scraping_without_written_permission",
+        "automated_application_submission",
+        "automated_assessment_answers",
+        "automated_interview_answers",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_or_identity_bypass",
+        "fabricated_evidence_or_identity"
+      ],
+      "notes": "Official help says public opportunities can be browsed without an account; sign-in is required to apply. No documented worker-side public API was found, and the app Terms page returned only a JavaScript shell during review, so automated extraction is not enabled. Country eligibility, qualifications and AI-use rules are project-specific. Official help says assessments prohibit AI/LLM tools unless a task explicitly allows them. Payment guidance currently says policy is under update; verify the actual payout invitation and Kenya-compatible route before relying on income."
     }
   ]
 }

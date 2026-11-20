@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-12",
+  "updated_at": "2026-11-20",
   "note": "PUBLIC DISCOVERY = unauthenticated, documented, permitted automated reads. AUTHENTICATED MANUAL REVIEW = a human signs in and reviews. AUTOMATION PERMITTED = only the read-only monitoring listed here; no platform permits automated applications, task acceptance or submissions.",
   "platforms": {
     "atlas_capture": {
@@ -148,6 +148,18 @@
     },
     "blend": {
       "public_discovery": "manual_portal_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "micro1_talent": {
+      "public_discovery": "official_public_opportunities_page_manual_review_only",
+      "authenticated_manual_review": "yes",
+      "automation_permitted": "none",
+      "health": "manual_review_required"
+    },
+    "sovrano_ai": {
+      "public_discovery": "public_opportunities_page_manual_review_only",
       "authenticated_manual_review": "yes",
       "automation_permitted": "none",
       "health": "manual_review_required"

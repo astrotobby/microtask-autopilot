@@ -277,7 +277,7 @@ class CentreApiTests(ApiBase):
         self.assertEqual((s, r["assignment"]["stage"]), (200, "accepted"))
         self.assertEqual(self.post(f"/api/assignments/{aid}/paid", {"amount": 5, "currency": "USD", "received_date": TODAY, "reference": "x", "confirmed_by_user": True})[0], 400)
         s, r = self.get("/api/registry")
-        self.assertEqual((s, len(r["registry"])), (200, 25))
+        self.assertEqual((s, len(r["registry"])), (200, 27))
 
     def test_registry_rows_carry_sources_and_dates(self):
         rows = {x["platform_id"]: x for x in self.get("/api/registry")[1]["registry"]}

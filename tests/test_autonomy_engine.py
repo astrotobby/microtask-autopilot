@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPECTED_25 = {
     "atlas_capture", "clickworker", "gainworkers", "hivemicro", "microworkers", "rapidworkers", "sproutgigs", "timebucks",
     "afterquery", "crowdgen", "handshake_ai", "mindrift", "neevo", "oneforma", "opentrain_ai", "telus_digital_ai",
-    "blend", "braintrust", "reworkio", "paidviewpoint", "prolific", "swagbucks", "user_interviews", "usertesting", "whop_workforce"}
+    "blend", "braintrust", "reworkio", "paidviewpoint", "prolific", "swagbucks", "user_interviews", "usertesting", "whop_workforce", "micro1_talent", "sovrano_ai"}
 SAMPLE_CSV = (b"name,email,country,notes\n  alice  ,Alice@Example.com,ke,invoice for March\nBOB,bob@example.com,UG,refund request\n"
               b" ,,,\nalice,alice@example.com,KE,duplicate row\ncarol,,KE,missing email\ndave,dave@example.com,KE,general question\n")
 SPEC = {"input": "customers.csv", "output": "customers_clean.csv", "columns": ["name", "email", "country", "category"], "required": ["email"],

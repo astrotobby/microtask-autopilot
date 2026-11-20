@@ -1,4 +1,4 @@
-name: Hourly public opportunity monitor
+name: Cloud opportunity monitor (15-minute)
 
 on:
   push:
@@ -18,8 +18,9 @@ on:
       - "dashboard/**"
       - ".github/workflows/hourly-opportunity-monitor.yml"
   schedule:
-    - cron: "17 * * * *"
-    # 05:00 UTC = 08:00 East Africa Time (Africa/Nairobi, UTC+3). GitHub may delay scheduled runs.
+    # Best-effort cloud discovery while the owner's PC is offline. GitHub may delay scheduled runs.
+    - cron: "7,22,37,52 * * * *"
+    # Daily full validation and analysis at 08:00 Africa/Nairobi (05:00 UTC).
     - cron: "0 5 * * *"
   workflow_dispatch:
 
@@ -50,11 +51,19 @@ jobs:
           key: adapter-cache-${{ github.run_id }}
           restore-keys: |
             adapter-cache-
-      - name: Validate platform registry safety rules
+      - name: Run the full test suite on code changes, manual runs and daily validation
+        if: github.event_name != 'schedule' || github.event.schedule == '0 5 * * *'
         run: python -m unittest discover -s tests -v
-      - name: Scan feeds and update the 25-platform directory and permitted adapters
-        # OpenTrain: documented public API. Mindrift: public eligibility-policy monitor only.
-        # GainWorkers / REWORKIO and new contributor platforms: local manual-import adapters only; no network access.
+      - name: Run focused safety checks on frequent scheduled scans
+        if: github.event_name == 'schedule' && github.event.schedule != '0 5 * * *'
+        run: |
+          python -m unittest discover -s tests -p 'test_platform_registry.py' -v
+          python -m unittest discover -s tests -p 'test_policy.py' -v
+          python -m unittest discover -s tests -p 'test_opentrain.py' -v
+          python -m unittest discover -s tests -p 'test_whop.py' -v
+      - name: Scan the 27-platform directory and permitted public sources
+        # Public feeds, OpenTrain's documented public API, Mindrift's public policy monitor.
+        # Account-facing platforms remain manual unless they provide explicit worker-side permission and a documented interface.
         env:
           ANALYSIS_TRIGGER: ${{ github.event.schedule == '0 5 * * *' && 'daily' || 'hourly' }}
         run: python microtask_monitor/scan_feeds.py
@@ -69,12 +78,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
       - name: Publish latest report JSON to report-data branch
-        # Artifact downloads need authentication; this public copy does not.
+        # Public report mirror lets the local engine catch up after the PC returns online.
         run: |
           set -e
           latest=$(ls microtask_monitor/reports/*.json | sort | tail -n 1)
           cp "$latest" "$RUNNER_TEMP/latest.json"
-          # Resumable, integrity-checked copy: gzip + manifest (sizes and SHA-256 of both files).
           gzip -9 -n -c "$RUNNER_TEMP/latest.json" > "$RUNNER_TEMP/latest.json.gz"
           python - <<'PYEOF'
           import hashlib, json, os, pathlib

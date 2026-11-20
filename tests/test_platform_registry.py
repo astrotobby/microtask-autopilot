@@ -28,7 +28,7 @@ class PlatformRegistryTests(unittest.TestCase):
 
     def test_registry_contains_all_twenty_five_platforms(self):
         self.assertEqual({p["id"] for p in self.platforms}, ALL_TWENTY_FIVE)
-        self.assertEqual(len(self.platforms), 25)
+        self.assertEqual(len(self.platforms), 27)
 
     def test_platform_ids_are_unique(self):
         ids = [p["id"] for p in self.platforms]

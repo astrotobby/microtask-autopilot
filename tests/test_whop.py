@@ -95,7 +95,7 @@ class Base(unittest.TestCase):
 class RegistrationTests(unittest.TestCase):
     def test_whop_is_platform_thirteen_with_read_only_api_access(self):
         caps = policy.load_capabilities()
-        self.assertEqual(len(caps), 25)
+        self.assertEqual(len(caps), 27)
         self.assertEqual(list(caps)[-1], "whop_workforce")
         rec = caps["whop_workforce"]
         self.assertEqual((rec["access_class"], rec["permitted_automation"], rec["evidence_submission"]), ("official_api_permitted", ["api_read"], "human_only"))

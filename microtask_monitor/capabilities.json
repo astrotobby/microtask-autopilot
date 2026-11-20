@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-15",
+  "updated_at": "2026-11-20",
   "levels": [
     "PUBLIC_DISCOVERY_ALLOWED",
     "DOCUMENTED_API_ALLOWED",
@@ -1772,6 +1772,196 @@
         "read your own submissions and their review status"
       ],
       "access_note": "Documented API with your own OAuth authorization, read-only (bounty:basic:read). No website automation of any kind."
+    },
+    {
+      "platform_id": "micro1_talent",
+      "name": "micro1 Talent",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "manual_review_only_official_opportunities_portal",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": true,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_task_discovery",
+        "scraping",
+        "automated_scripts",
+        "automated_logged_in_browsing",
+        "automated_application_submission",
+        "automated_interview_answers",
+        "automated_assessment_answers",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_mfa_kyc_bypass",
+        "credential_sharing",
+        "impersonation",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "role_specific_not_in_published_exclusion_list",
+        "note": "Kenya is not on micro1's published global exclusion list, but verify country/location eligibility on every role."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Verify the specific contract's rate, payout provider, minimums, fees and Kenya payout route in the candidate account before accepting."
+      },
+      "last_policy_verified": "2026-11-20",
+      "policy_urls": [
+        "https://www.micro1.ai/experts/opportunities",
+        "https://www.micro1.ai/experts",
+        "https://www.micro1.ai/legal/terms-candidates",
+        "https://talent.micro1.ai/dashboard"
+      ],
+      "notes": "Official listings can be reviewed manually. Do not scrape or run scripts against the portal.",
+      "review": {
+        "reviewed_on": "2026-11-20",
+        "public_listing_interface": "Official public Opportunities page; talent dashboard for candidate-specific status. Manual review only.",
+        "automation_clause": "Candidate Terms expressly prohibit automated scripts, crawling and scraping; interview answers must be original and unaided unless interviewer/instructions explicitly permit assistance.",
+        "terms_read": [
+          "https://www.micro1.ai/legal/terms-candidates",
+          "https://www.micro1.ai/experts",
+          "https://www.micro1.ai/experts/opportunities"
+        ],
+        "not_read_or_unavailable": [
+          "Candidate-specific dashboard terms and any project-specific work instructions are only available in the candidate's own signed-in account."
+        ],
+        "findings": [
+          "The official candidate Terms (2026-07-21) prohibit sending spam, running automated scripts, and crawling/scraping platform pages or data.",
+          "The terms protect interview content as confidential and require original answers without third-party assistance unless explicitly permitted.",
+          "The official expert page says hiring is global except for a published exclusion list; Kenya is not listed, but job-level restrictions still apply.",
+          "A current indexed official listing for Adobe Video Editor (Premiere Pro & After Effects) advertises USD 15-80/hour, remote; its live country eligibility and application status must be checked manually."
+        ]
+      },
+      "execution": {
+        "verified_on": "2026-11-20",
+        "discovery": "Manual review of official public opportunity pages and candidate dashboard only; automated discovery is prohibited by candidate terms.",
+        "instructions_retrieval": "Manual review in the candidate's own account.",
+        "ai_assistance": {
+          "status": "prohibited_for_interviews_unless_explicitly_allowed",
+          "note": "Interview content is confidential and answers must be the candidate's original work without third-party assistance unless the interviewer or interview instructions explicitly allow it. Task-specific AI rules must be checked separately."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Open official opportunities and review a role yourself.",
+          "Check that the specific position accepts residents of Kenya and review its contract terms.",
+          "Complete any interview or assessment yourself, unaided unless the platform explicitly permits assistance.",
+          "Review project instructions and AI-use rules before starting paid work.",
+          "Verify the payout method and account requirements for Kenya before accepting a contract."
+        ],
+        "sources": [
+          "https://www.micro1.ai/legal/terms-candidates",
+          "https://www.micro1.ai/experts"
+        ]
+      },
+      "access_class": "human_assisted_only",
+      "access_note": "Manual candidate access only; automated scripts and scraping are expressly prohibited by Candidate Terms."
+    },
+    {
+      "platform_id": "sovrano_ai",
+      "name": "Sovrano AI",
+      "levels": [
+        "MANUAL_ONLY",
+        "HUMAN_APPROVAL_REQUIRED",
+        "UNVERIFIED"
+      ],
+      "public_discovery": "manual_public_opportunities_page_no_documented_api",
+      "documented_api": {
+        "available": false,
+        "url": null,
+        "scope": null
+      },
+      "login_required": false,
+      "manual_task_access": true,
+      "permitted_automation": [],
+      "prohibited_automation": [
+        "automated_application_submission",
+        "automated_assessment_answers",
+        "automated_interview_answers",
+        "automated_task_acceptance",
+        "automated_task_completion",
+        "automated_evidence_submission",
+        "captcha_or_identity_bypass",
+        "fabricated_evidence_or_identity"
+      ],
+      "application_submission": "human_only",
+      "evidence_submission": "human_only",
+      "country_eligibility": {
+        "kenya": "role_specific",
+        "note": "Public listings vary by country. Roles limited to US, CA, UK, AU, IE, EU or other named regions must not be treated as Kenya-eligible."
+      },
+      "payment_verification": {
+        "status": "unverified",
+        "note": "Help articles describe Deel payouts but also state that payment policy is being updated and older details may be out of date. Confirm the actual contract invitation and Kenya-compatible method before accepting."
+      },
+      "last_policy_verified": "2026-11-20",
+      "policy_urls": [
+        "https://app.sovrano.ai/opportunities",
+        "https://sovrano.ai/support/students/find-apply-projects/",
+        "https://sovrano.ai/support/students/how-assessments-work/",
+        "https://sovrano.ai/support/payments/payments-deel-setup/",
+        "https://sovrano.ai/support/students/earnings-dashboard/",
+        "https://app.sovrano.ai/terms"
+      ],
+      "notes": "Public opportunities may be browsed without login. Sign-in, applications, assessments, project work and payments require the candidate's own account and manual review.",
+      "review": {
+        "reviewed_on": "2026-11-20",
+        "public_listing_interface": "Public opportunities page; official help confirms listings are viewable without an account. No documented worker-facing API found.",
+        "automation_clause": "No written permission for programmatic listing extraction was found; no scraper or undocumented API access enabled.",
+        "terms_read": [
+          "https://sovrano.ai/support/students/find-apply-projects/",
+          "https://sovrano.ai/support/students/how-assessments-work/",
+          "https://sovrano.ai/support/payments/payments-deel-setup/",
+          "https://sovrano.ai/support/students/earnings-dashboard/"
+        ],
+        "not_read_or_unavailable": [
+          "https://app.sovrano.ai/terms served a JavaScript application shell without readable terms text; legal terms and robots policy remain unverified."
+        ],
+        "findings": [
+          "Official help says public opportunity listings can be browsed without an account but applications require a signed-in account.",
+          "Official assessment guidance says AI/LLM tools are strictly prohibited in assessments unless explicitly allowed.",
+          "Official help pages describing Deel and earnings say payment policy is being updated and may be out of date; payout details remain unverified.",
+          "The current public listing board includes many roles restricted to named countries/regions; no listing was confirmed Kenya-eligible in this review."
+        ]
+      },
+      "execution": {
+        "verified_on": "2026-11-20",
+        "discovery": "Manual public listing review only; no documented worker API or explicit permission for automated extraction was found.",
+        "instructions_retrieval": "Manual review in the signed-in candidate account.",
+        "ai_assistance": {
+          "status": "task_specific_and_assessment_restricted",
+          "note": "AI tools are prohibited during assessments unless explicitly allowed. Some projects may also prohibit AI-produced work; verify each project's instructions."
+        },
+        "automated_discovery_of_task_instructions": false,
+        "automated_task_execution_on_platform": false,
+        "automated_submission": false,
+        "manual_steps": [
+          "Browse public opportunities and confirm exact location eligibility before applying.",
+          "Sign in yourself to apply and complete prerequisite checklists.",
+          "Complete assessments personally without AI tools unless the assessment explicitly permits them.",
+          "Read the contract and task-level AI-use rules before accepting or performing work.",
+          "Confirm the exact payout provider and Kenya-compatible payment option during onboarding."
+        ],
+        "sources": [
+          "https://sovrano.ai/support/students/find-apply-projects/",
+          "https://sovrano.ai/support/students/how-assessments-work/",
+          "https://sovrano.ai/support/payments/payments-deel-setup/"
+        ]
+      },
+      "access_class": "human_assisted_only",
+      "access_note": "Public listings are browseable, but no documented worker API or permission for automatic extraction was verified; applications and assessments remain manual."
     }
   ]
 }
