@@ -338,7 +338,7 @@ button{cursor:pointer;background:#174f94;color:white;border:0}label{display:bloc
 
 
 def _backup_database_once() -> dict:
-    """Create an atomic SQLite online backup and retain the last 14 daily snapshots."""
+    """Create an atomic SQLite online backup and retain the last 7 daily snapshots."""
     from microtask_monitor import db
 
     data_dir = Path(db.DATA_DIR)
@@ -365,7 +365,7 @@ def _backup_database_once() -> dict:
         pass
     os.replace(temp_path, final_path)
     old = sorted(backup_dir.glob("daily-*.sqlite3"))
-    for path in old[:-14]:
+    for path in old[:-7]:
         path.unlink(missing_ok=True)
     return {"path": str(final_path), "integrity": "ok"}
 
